@@ -50,6 +50,11 @@ Feature: Maven shim translates Maven commands to Mill tasks
     When the command is parsed and mapped
     Then the Mill tasks should be "compile jar publishLocal"
 
+  Scenario: Skip tests with explicit true value
+    Given a Maven command with arguments "install -DskipTests=true"
+    When the command is parsed and mapped
+    Then the Mill tasks should be "compile jar publishLocal"
+
   Scenario: Skip tests flag removes test tasks
     Given a Maven command with arguments "clean test -DskipTests"
     When the command is parsed and mapped
