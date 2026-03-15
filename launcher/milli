@@ -1,16 +1,45 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${MILLI_VERSION:-@MILLI_DEFAULT_VERSION@}"
+default_version='@MILLI_DEFAULT_VERSION@'
+version_file='.mill-interceptor-version'
+config_version_file='.config/mill-interceptor-version'
+mode="${MILLI_LAUNCHER_MODE:-}"
+preferred_source="${MILLI_LAUNCHER_SOURCE:-maven}"
+use_netrc="${MILLI_LAUNCHER_USE_NETRC:-0}"
+dry_run="${MILLI_LAUNCHER_DRY_RUN:-0}"
+
+if [[ -n "${MILLI_VERSION:-}" ]]; then
+  version="$MILLI_VERSION"
+elif [[ -f "$version_file" ]]; then
+  version="$(tr '\r' '\n' <"$version_file" | head -n 1)"
+elif [[ -f "$config_version_file" ]]; then
+  version="$(tr '\r' '\n' <"$config_version_file" | head -n 1)"
+else
+  version="$default_version"
+fi
+
 cache_root="${MILLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/milli}"
-jar_name="milli-assembly-${version}.jar"
+jar_name="milli-dist-${version}.jar"
 jar_path="${cache_root}/${jar_name}"
-artifact_url="https://repo1.maven.org/maven2/io/github/eleven19/mill-interceptor/milli-assembly/${version}/${jar_name}"
+maven_artifact_url="https://repo1.maven.org/maven2/io/github/eleven19/mill-interceptor/milli-dist/${version}/${jar_name}"
+github_artifact_url="https://github.com/Eleven19/mill-interceptor/releases/download/v${version}/mill-interceptor-dist-v${version}.jar"
 
 mkdir -p "${cache_root}"
 
+if [[ "$dry_run" == "1" ]]; then
+  printf 'version=%s\n' "$version"
+  printf 'mode=%s\n' "$mode"
+  printf 'preferred_source=%s\n' "$preferred_source"
+  printf 'use_netrc=%s\n' "$use_netrc"
+  printf 'maven_artifact_url=%s\n' "$maven_artifact_url"
+  printf 'github_artifact_url=%s\n' "$github_artifact_url"
+  printf 'jar_path=%s\n' "$jar_path"
+  exit 0
+fi
+
 if [[ ! -f "${jar_path}" ]]; then
-  curl -fsSL "${artifact_url}" -o "${jar_path}"
+  curl -fsSL "${maven_artifact_url}" -o "${jar_path}"
 fi
 
 exec java -jar "${jar_path}" "$@"
