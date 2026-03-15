@@ -4,6 +4,7 @@ import kyo.*
 import maven.Mvn
 import sbt.Sbt
 import gradle.Gradle
+import shim.ShimGenerator
 
 object Main extends KyoApp:
     private val scribeLog = ScribeLog("io.github.eleven19.mill.interceptor")
@@ -18,6 +19,12 @@ object Main extends KyoApp:
                         Sbt.run(forwardedArgs).now
                     case CliResult.Run(InterceptTool.Gradle, forwardedArgs) =>
                         Gradle.run(forwardedArgs).now
+                    case CliResult.ShimGenerate(options) =>
+                        val generated = ShimGenerator.generate(options)
+                        val _ = Kyo.foreach(generated)(shim =>
+                            Log.info(s"Generated ${shim.platform} shim: ${shim.path}")
+                        ).now
+                        println(s"Generated ${generated.size} shim script(s)")
                     case CliResult.Help(error) =>
                         error match
                             case Some(message) =>
