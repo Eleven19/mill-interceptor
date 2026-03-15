@@ -28,7 +28,7 @@ Invoke the interceptor through the explicit parent command:
 
 ## Launcher scripts
 
-Releases also publish `milli` and `milli.bat` launchers. By default they prefer platform-native artifacts, fall back to the published `milli-dist` jar when native artifacts are unavailable, prefer Maven Central as the source, and fall back to GitHub Releases automatically.
+Releases also publish `milli` and `milli.bat` launchers. By default they prefer platform-native artifacts, fall back to the published assembly jar artifact (`milli-dist`) when native artifacts are unavailable, prefer Maven Central as the source, and fall back to GitHub Releases automatically.
 
 Launcher controls:
 
@@ -50,7 +50,7 @@ setup to work with common tools like maven, gradle, and sbt, but with no native 
 GitHub Releases publish:
 
 - platform-specific native archives named for `mise`'s GitHub backend
-- an executable dist jar
+- an executable assembly jar
 - `milli`
 - `milli.bat`
 

@@ -3,7 +3,7 @@
 This repository publishes:
 
 - GraalVM native executables through GitHub Releases as platform-specific archives compatible with `mise`
-- an executable dist jar through GitHub Releases
+- an executable assembly jar through GitHub Releases
 - `milli` and `milli.bat` launcher scripts through GitHub Releases
 - the `milli` artifact family through Maven Central
 
@@ -13,9 +13,9 @@ The release automation has four goals:
 
 1. Build a native executable for each supported target with Mill and GraalVM native-image.
 2. Package each executable into a predictable archive layout that `mise` can install from GitHub Releases.
-3. Publish an executable dist jar plus `milli` launcher scripts alongside the native archives in GitHub Releases.
+3. Publish an executable assembly jar plus `milli` launcher scripts alongside the native archives in GitHub Releases.
 4. Publish release notes that start with curated changelog content and then append generated `git-cliff` notes.
-5. Publish the `milli`, `milli-dist`, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
+5. Publish the `milli`, the `milli-dist` assembly jar artifact, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
 
 The workflow definitions live in:
 
@@ -55,7 +55,7 @@ The workflow shell logic is intentionally kept in `scripts/ci/` so the YAML stay
                         v
              +----------------------+
              | extras job           |
-             | - build dist jar     |
+             | - build assembly jar |
              | - stage milli        |
              | - stage milli.bat    |
              | - upload artifacts   |
@@ -180,7 +180,7 @@ The build job delegates shell logic to:
 
 This job runs once on Linux and produces the non-native release assets:
 
-- executable dist jar
+- executable assembly jar
 - `milli`
 - `milli.bat`
 
@@ -402,7 +402,7 @@ The Maven Central workflow is intentionally separate from GitHub Releases so pub
 
 - triggers on `v*` tags
 - normalizes the release version with the same metadata action used by `release.yml`
-- publishes `milli` and `milli-dist` on Linux
+- publishes `milli` and the `milli-dist` assembly jar artifact on Linux
 - publishes each platform-specific `milli-native-*` artifact on its matching runner
 
 The workflow expects Actions secrets for:
