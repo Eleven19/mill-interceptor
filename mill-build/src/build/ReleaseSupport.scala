@@ -12,7 +12,7 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
   private val toolName = "mill-interceptor"
   private val mavenGroup = "io.github.eleven19.mill-interceptor"
   private val libraryArtifact = "milli"
-  private val assemblyArtifact = "milli-assembly"
+  private val distArtifact = "milli-dist"
   private val defaultVersionToken = "@MILLI_DEFAULT_VERSION@"
   private val supportedReleaseTargets = Seq(
     "x86_64-unknown-linux-gnu",
@@ -38,8 +38,8 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
   private def assetNameFor(version: String, target: String): String =
     s"$toolName-v$version-$target.${archiveExtensionFor(target)}"
 
-  private def assemblyAssetNameFor(version: String): String =
-    s"$toolName-assembly-v$version.jar"
+  private def distAssetNameFor(version: String): String =
+    s"$toolName-dist-v$version.jar"
 
   private def nativeArtifactNameFor(target: String): String =
     validatedTarget(target) match
@@ -83,8 +83,8 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
     libraryArtifact
   }
 
-  def publishAssemblyArtifact = Task {
-    assemblyArtifact
+  def publishDistArtifact = Task {
+    distArtifact
   }
 
   def publishNativeArtifacts = Task {
@@ -131,12 +131,12 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
     PathRef(archivePath)
   }
 
-  def releaseAssemblyAssetName(version: String) = Task.Command {
-    assemblyAssetNameFor(version)
+  def releaseDistAssetName(version: String) = Task.Command {
+    distAssetNameFor(version)
   }
 
-  def releaseAssembly(version: String) = Task.Command {
-    val destination = Task.dest / assemblyAssetNameFor(version)
+  def releaseDist(version: String) = Task.Command {
+    val destination = Task.dest / distAssetNameFor(version)
     os.copy.over(assembly().path, destination, createFolders = true)
     PathRef(destination)
   }

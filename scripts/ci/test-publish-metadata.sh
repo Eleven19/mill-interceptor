@@ -9,24 +9,24 @@ summary="$(
 )"
 
 printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-assembly:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-dist:${version}\""
 printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-linux-amd64:${version}\""
 printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-linux-aarch64:${version}\""
 printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-macos-amd64:${version}\""
 printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-macos-aarch64:${version}\""
 printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-windows-amd64:${version}\""
 
-assembly_payload="$(
+dist_payload="$(
   COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" MILLI_PUBLISH_VERSION="$version" \
-    ./mill --no-server show assemblyPublish.publishArtifacts
+    ./mill --no-server show distPublish.publishArtifacts
 )"
 
-printf '%s\n' "$assembly_payload" | rg -F "\"id\": \"milli-assembly\""
-printf '%s\n' "$assembly_payload" | rg -F "\"milli-assembly-${version}.jar\""
+printf '%s\n' "$dist_payload" | rg -F "\"id\": \"milli-dist\""
+printf '%s\n' "$dist_payload" | rg -F "\"milli-dist-${version}.jar\""
 
 resolved_modules="$(COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" ./mill --no-server resolve _)"
 
-printf '%s\n' "$resolved_modules" | rg -x "assemblyPublish"
+printf '%s\n' "$resolved_modules" | rg -x "distPublish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeLinuxAmd64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeLinuxAarch64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeMacosAmd64Publish"

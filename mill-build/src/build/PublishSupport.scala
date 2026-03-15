@@ -50,7 +50,7 @@ trait PublishSupport extends PublishModule { this: JavaModule & NativeImageModul
     val version = publishVersion()
     Seq(
       s"${publishGroup()}:${publishLibraryArtifact()}:$version",
-      s"${publishGroup()}:${publishAssemblyArtifact()}:$version"
+      s"${publishGroup()}:${publishDistArtifact()}:$version"
     ) ++ publishNativeArtifacts().map { entry =>
       val artifact = entry.split("=", 2)(1)
       s"${publishGroup()}:$artifact:$version"
@@ -69,8 +69,8 @@ trait PublishSupport extends PublishModule { this: JavaModule & NativeImageModul
     }
   }
 
-  object assemblyPublish extends PublishedAssetModule {
-    def publishedArtifactId = "milli-assembly"
+  object distPublish extends PublishedAssetModule {
+    def publishedArtifactId = "milli-dist"
     def publishedExt = "jar"
 
     override def publishArtifacts = Task {
