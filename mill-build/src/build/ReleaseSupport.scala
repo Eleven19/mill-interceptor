@@ -22,17 +22,17 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
     "x86_64-pc-windows-msvc"
   )
 
-  private def isWindowsTarget(target: String): Boolean =
+  protected def isWindowsTarget(target: String): Boolean =
     target.endsWith("windows-msvc")
 
-  private def validatedTarget(target: String): String =
+  protected def validatedTarget(target: String): String =
     if supportedReleaseTargets.contains(target) then target
     else throw new IllegalArgumentException(s"Unsupported release target: $target")
 
-  private def executableNameFor(target: String): String =
+  protected def executableNameFor(target: String): String =
     if isWindowsTarget(target) then s"$toolName.exe" else toolName
 
-  private def archiveExtensionFor(target: String): String =
+  protected def archiveExtensionFor(target: String): String =
     if isWindowsTarget(target) then "zip" else "tar.gz"
 
   private def assetNameFor(version: String, target: String): String =
@@ -49,7 +49,7 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
       case "aarch64-apple-darwin" => "milli-native-macos-aarch64"
       case "x86_64-pc-windows-msvc" => "milli-native-windows-amd64"
 
-  private def writeZip(source: os.Path, entryName: String, destination: os.Path): Unit =
+  protected def writeZip(source: os.Path, entryName: String, destination: os.Path): Unit =
     val output = new ZipOutputStream(new FileOutputStream(destination.toIO))
     try
       val entry = new ZipEntry(entryName)
