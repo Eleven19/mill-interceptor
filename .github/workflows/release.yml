@@ -87,10 +87,10 @@ jobs:
           distribution: temurin
           java-version: "25"
 
-      - name: Compute assembly name
-        id: assembly-name
+      - name: Compute dist name
+        id: dist-name
         shell: bash
-        run: scripts/ci/compute-assembly-name.sh "${{ needs.metadata.outputs.version }}"
+        run: scripts/ci/compute-dist-name.sh "${{ needs.metadata.outputs.version }}"
 
       - name: Compute Unix launcher name
         id: unix-launcher-name
@@ -102,9 +102,9 @@ jobs:
         shell: bash
         run: scripts/ci/compute-launcher-name.sh windows windows_launcher_name
 
-      - name: Build release assembly
+      - name: Build release dist
         shell: bash
-        run: scripts/ci/build-release-assembly.sh "${{ needs.metadata.outputs.version }}" "${{ steps.assembly-name.outputs.assembly_name }}"
+        run: scripts/ci/build-release-dist.sh "${{ needs.metadata.outputs.version }}" "${{ steps.dist-name.outputs.dist_name }}"
 
       - name: Build Unix launcher
         shell: bash
@@ -119,7 +119,7 @@ jobs:
         with:
           name: release-extras
           path: |
-            out/releaseAssembly.dest/${{ steps.assembly-name.outputs.assembly_name }}
+            out/releaseDist.dest/${{ steps.dist-name.outputs.dist_name }}
             out/releaseLauncher.dest/${{ steps.unix-launcher-name.outputs.unix_launcher_name }}
             out/releaseLauncher.dest/${{ steps.windows-launcher-name.outputs.windows_launcher_name }}
           if-no-files-found: error
