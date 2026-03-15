@@ -13,6 +13,7 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
   private val mavenGroup = "io.github.eleven19.mill-interceptor"
   private val libraryArtifact = "milli"
   private val assemblyArtifact = "milli-assembly"
+  private val defaultVersionToken = "@MILLI_DEFAULT_VERSION@"
   private val supportedReleaseTargets = Seq(
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
@@ -56,6 +57,19 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
       output.write(os.read.bytes(source))
       output.closeEntry()
     finally output.close()
+
+  private def validatedLauncherOs(launcherOs: String): String =
+    launcherOs match
+      case "unix" | "windows" => launcherOs
+      case other => throw new IllegalArgumentException(s"Unsupported launcher OS: $other")
+
+  private def launcherFileNameFor(launcherOs: String): String =
+    validatedLauncherOs(launcherOs) match
+      case "unix" => "milli"
+      case "windows" => "milli.bat"
+
+  private def launcherTemplatePath(taskDest: os.Path, launcherOs: String): os.Path =
+    taskDest / os.up / os.up / "launcher" / launcherFileNameFor(launcherOs)
 
   def releaseTargets = Task {
     supportedReleaseTargets
@@ -124,6 +138,24 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
   def releaseAssembly(version: String) = Task.Command {
     val destination = Task.dest / assemblyAssetNameFor(version)
     os.copy.over(assembly().path, destination, createFolders = true)
+    PathRef(destination)
+  }
+
+  def releaseLauncherName(launcherOs: String) = Task.Command {
+    launcherFileNameFor(launcherOs)
+  }
+
+  def releaseLauncher(version: String, launcherOs: String) = Task.Command {
+    val checkedOs = validatedLauncherOs(launcherOs)
+    val destination = Task.dest / launcherFileNameFor(checkedOs)
+    val template = launcherTemplatePath(Task.dest, checkedOs)
+    val contents = os.read(template).replace(defaultVersionToken, version)
+
+    os.write.over(destination, contents, createFolders = true)
+
+    if checkedOs == "unix" then
+      os.perms.set(destination, "rwxr-xr-x")
+
     PathRef(destination)
   }
 }

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+version="${MILLI_VERSION:-@MILLI_DEFAULT_VERSION@}"
+cache_root="${MILLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/milli}"
+jar_name="milli-assembly-${version}.jar"
+jar_path="${cache_root}/${jar_name}"
+artifact_url="https://repo1.maven.org/maven2/io/github/eleven19/mill-interceptor/milli-assembly/${version}/${jar_name}"
+
+mkdir -p "${cache_root}"
+
+if [[ ! -f "${jar_path}" ]]; then
+  curl -fsSL "${artifact_url}" -o "${jar_path}"
+fi
+
+exec java -jar "${jar_path}" "$@"
