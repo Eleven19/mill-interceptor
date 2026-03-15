@@ -21,9 +21,9 @@ object Main extends KyoApp:
                         Gradle.run(forwardedArgs).now
                     case CliResult.ShimGenerate(options) =>
                         val generated = ShimGenerator.generate(options)
-                        val _ = Kyo.foreach(generated)(shim =>
-                            Log.info(s"Generated ${shim.platform} shim: ${shim.path}")
-                        ).now
+                        val _ = Kyo
+                            .foreach(generated)(shim => Log.info(s"Generated ${shim.platform} shim: ${shim.path}"))
+                            .now
                         println(s"Generated ${generated.size} shim script(s)")
                     case CliResult.Help(error) =>
                         error match

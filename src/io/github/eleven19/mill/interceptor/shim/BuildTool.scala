@@ -19,9 +19,9 @@ object BuildTool:
     /** Parse a tool name from a CLI argument. Returns `None` for unrecognised names. */
     def fromString(name: String): Option[BuildTool] =
         name.toLowerCase match
-            case "maven" | "mvn"   => Some(Maven)
-            case "gradle"          => Some(Gradle)
-            case "sbt"             => Some(Sbt)
-            case "all"             => None // handled specially by caller
-            case _                 => None
+            case "maven" | "mvn" => Some(Maven)
+            case "gradle"        => Some(Gradle)
+            case "sbt"           => Some(Sbt)
+            case "all"           => None // handled specially by caller
+            case _               => None
 end BuildTool

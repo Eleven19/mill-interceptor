@@ -16,6 +16,7 @@ final case class ShimGenerateOptions(
 ) derives CanEqual
 
 object ShimGenerateOptions:
+
     val default: ShimGenerateOptions = ShimGenerateOptions(
         tools = BuildTool.all,
         wrapper = false,
@@ -67,7 +68,7 @@ object ShimGenerator:
 
         // Try to set executable permission on Unix platforms
         if platform == "unix" then
-            val _ : Try[Path] = Try {
+            val _: Try[Path] = Try {
                 val perms = Files.getPosixFilePermissions(filePath)
                 perms.add(PosixFilePermission.OWNER_EXECUTE)
                 perms.add(PosixFilePermission.GROUP_EXECUTE)
