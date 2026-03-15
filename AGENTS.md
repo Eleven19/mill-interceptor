@@ -36,6 +36,16 @@ cp -rf source dest          # NOT: cp -r source dest
 - `apt-get` - use `-y` flag
 - `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
+## Shared Release Skills
+
+For changelog and release tasks, use the repo-local skills and supporting docs
+instead of inventing a parallel process:
+
+- `.github/skills/changelog-maintenance/SKILL.md`
+- `.github/skills/release-process/SKILL.md`
+- `docs/contributing/changelog.md`
+- `docs/contributing/releasing.md`
+
 <!-- BEGIN BEADS INTEGRATION -->
 ## Issue Tracking with bd (beads)
 
