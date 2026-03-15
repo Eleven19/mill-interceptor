@@ -6,7 +6,7 @@ mill-build:
   mvnDeps:
     - "com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION"
 
-extends: [mill.contrib.scoverage.ScoverageModule, scalafmt.ScalafmtModule, NativeImageModule, _root_.build.ReleaseSupport]
+extends: [mill.contrib.scoverage.ScoverageModule, scalafmt.ScalafmtModule, NativeImageModule, _root_.build.ReleaseSupport, _root_.build.PublishSupport]
 
 #------------------------------------
 # Scoverage settings
