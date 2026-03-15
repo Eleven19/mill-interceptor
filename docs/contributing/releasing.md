@@ -1,17 +1,28 @@
-# Releasing Native Archives
+# Releasing GitHub Assets and Maven Artifacts
 
-This repository publishes GraalVM native executables through GitHub Releases as platform-specific archives that are compatible with `mise`'s GitHub backend.
+This repository publishes:
+
+- GraalVM native executables through GitHub Releases as platform-specific archives compatible with `mise`
+- an executable assembly jar through GitHub Releases
+- `milli` and `milli.bat` launcher scripts through GitHub Releases
+- the `milli` artifact family through Maven Central
 
 ## Overview
 
-The release pipeline has three goals:
+The release automation has four goals:
 
 1. Build a native executable for each supported target with Mill and GraalVM native-image.
 2. Package each executable into a predictable archive layout that `mise` can install from GitHub Releases.
-3. Publish all archives plus `SHA256SUMS` to a single GitHub release driven by either a pushed tag or a manual workflow dispatch.
+3. Publish an executable assembly jar plus `milli` launcher scripts alongside the native archives in GitHub Releases.
 4. Publish release notes that start with curated changelog content and then append generated `git-cliff` notes.
+5. Publish the `milli`, `milli-assembly`, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
 
-The workflow definition lives in `.github/workflows/release.yml`. The workflow shell logic is intentionally kept in `scripts/ci/` so the YAML stays declarative and the release steps can be tested locally.
+The workflow definitions live in:
+
+- `.github/workflows/release.yml` for GitHub release assets
+- `.github/workflows/publish-central.yml` for Maven Central
+
+The workflow shell logic is intentionally kept in `scripts/ci/` so the YAML stays declarative and the release steps can be tested locally.
 
 ## Release flow diagram
 
@@ -39,6 +50,15 @@ The workflow definition lives in `.github/workflows/release.yml`. The workflow s
              | - build native image |
              | - package archive    |
              | - upload artifact    |
+             +----------+-----------+
+                        |
+                        v
+             +----------------------+
+             | extras job           |
+             | - build assembly jar |
+             | - stage milli        |
+             | - stage milli.bat    |
+             | - upload artifacts   |
              +----------+-----------+
                         |
                         v
@@ -95,7 +115,9 @@ The release metadata action normalizes the version by stripping any leading `v`,
 
 ## Workflow structure
 
-The release workflow has three jobs.
+### GitHub Release workflow
+
+The release workflow has four jobs.
 
 ### 1. `metadata`
 
@@ -154,9 +176,24 @@ The build job delegates shell logic to:
 - `scripts/ci/compute-archive-name.sh`
 - `scripts/ci/build-release-archive.sh`
 
-### 3. `publish`
+### 3. `extras`
 
-This job only runs after all matrix builds succeed. It:
+This job runs once on Linux and produces the non-native release assets:
+
+- executable assembly jar
+- `milli`
+- `milli.bat`
+
+It delegates shell logic to:
+
+- `scripts/ci/compute-assembly-name.sh`
+- `scripts/ci/compute-launcher-name.sh`
+- `scripts/ci/build-release-assembly.sh`
+- `scripts/ci/build-release-launcher.sh`
+
+### 4. `publish`
+
+This job only runs after the native matrix and extras jobs succeed. It:
 
 - Creates the tag for `workflow_dispatch` releases if it does not already exist
 - Installs `git-cliff`
@@ -258,6 +295,9 @@ Examples:
 - `mill-interceptor-v1.2.3-x86_64-unknown-linux-gnu.tar.gz`
 - `mill-interceptor-v1.2.3-aarch64-apple-darwin.tar.gz`
 - `mill-interceptor-v1.2.3-x86_64-pc-windows-msvc.zip`
+- `mill-interceptor-assembly-v1.2.3.jar`
+- `milli`
+- `milli.bat`
 
 Archive contents place the executable at the archive root:
 
@@ -276,6 +316,10 @@ Useful local commands:
 ./mill show releaseTargets
 ./mill show releaseAssetName --version 1.2.3 --target x86_64-unknown-linux-gnu
 ./mill show releaseArchive --version 1.2.3 --target x86_64-unknown-linux-gnu
+./mill show releaseAssemblyAssetName --version 1.2.3
+./mill show releaseAssembly --version 1.2.3
+./mill show releaseLauncher --version 1.2.3 --launcher-os unix
+./mill show publishArtifactSummary
 ```
 
 These commands are what the workflow uses under the hood. If you need to debug packaging behavior, start here rather than editing the workflow first.
@@ -340,10 +384,34 @@ For workflow-script verification, useful spot checks are:
 ```bash
 RUNNER_TEMP=/tmp scripts/ci/compute-archive-name.sh 1.2.3 aarch64-unknown-linux-gnu
 RUNNER_TEMP=/tmp scripts/ci/build-release-archive.sh 1.2.3 aarch64-unknown-linux-gnu mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz
+RUNNER_TEMP=/tmp scripts/ci/compute-assembly-name.sh 1.2.3
+RUNNER_TEMP=/tmp scripts/ci/build-release-assembly.sh 1.2.3 mill-interceptor-assembly-v1.2.3.jar
+RUNNER_TEMP=/tmp scripts/ci/compute-launcher-name.sh unix unix_launcher_name
+RUNNER_TEMP=/tmp scripts/ci/build-release-launcher.sh 1.2.3 unix milli
+scripts/ci/test-publish-metadata.sh 1.2.3
 RUNNER_TEMP=/tmp scripts/ci/install-git-cliff.sh 2.12.0
 scripts/ci/build-release-notes.sh 0.1.0
 bash scripts/ci/test-build-release-notes.sh
 ```
+
+## Maven Central workflow
+
+The Maven Central workflow is intentionally separate from GitHub Releases so publication failures do not block release asset publication.
+
+`publish-central.yml`:
+
+- triggers on `v*` tags
+- normalizes the release version with the same metadata action used by `release.yml`
+- publishes `milli` and `milli-assembly` on Linux
+- publishes each platform-specific `milli-native-*` artifact on its matching runner
+
+The workflow expects Actions secrets for:
+
+- Sonatype credentials
+- GPG private key
+- GPG passphrase
+
+This repository is expected to consume the organization-provided secret set rather than introducing a second credentials scheme.
 
 ## Manual release flow
 
