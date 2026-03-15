@@ -9,6 +9,9 @@ import java.util.zip.ZipOutputStream
 
 trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
   private val toolName = "mill-interceptor"
+  private val mavenGroup = "io.github.eleven19.mill-interceptor"
+  private val libraryArtifact = "milli"
+  private val assemblyArtifact = "milli-assembly"
   private val supportedReleaseTargets = Seq(
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
@@ -33,6 +36,14 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
   private def assetNameFor(version: String, target: String): String =
     s"$toolName-v$version-$target.${archiveExtensionFor(target)}"
 
+  private def nativeArtifactNameFor(target: String): String =
+    validatedTarget(target) match
+      case "x86_64-unknown-linux-gnu" => "milli-native-linux-amd64"
+      case "aarch64-unknown-linux-gnu" => "milli-native-linux-aarch64"
+      case "x86_64-apple-darwin" => "milli-native-macos-amd64"
+      case "aarch64-apple-darwin" => "milli-native-macos-aarch64"
+      case "x86_64-pc-windows-msvc" => "milli-native-windows-amd64"
+
   private def writeZip(source: os.Path, entryName: String, destination: os.Path): Unit =
     val output = new ZipOutputStream(new FileOutputStream(destination.toIO))
     try
@@ -44,6 +55,22 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
 
   def releaseTargets = Task {
     supportedReleaseTargets
+  }
+
+  def publishGroup = Task {
+    mavenGroup
+  }
+
+  def publishLibraryArtifact = Task {
+    libraryArtifact
+  }
+
+  def publishAssemblyArtifact = Task {
+    assemblyArtifact
+  }
+
+  def publishNativeArtifacts = Task {
+    supportedReleaseTargets.map(target => s"$target=${nativeArtifactNameFor(target)}")
   }
 
   def releaseExecutableName(target: String) = Task.Command {
