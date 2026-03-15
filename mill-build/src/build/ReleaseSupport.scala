@@ -2,12 +2,13 @@ package build
 
 import mill.*
 import mill.javalib.NativeImageModule
+import mill.scalalib.JavaModule
 
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
+trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule =>
   private val toolName = "mill-interceptor"
   private val mavenGroup = "io.github.eleven19.mill-interceptor"
   private val libraryArtifact = "milli"
@@ -35,6 +36,9 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
 
   private def assetNameFor(version: String, target: String): String =
     s"$toolName-v$version-$target.${archiveExtensionFor(target)}"
+
+  private def assemblyAssetNameFor(version: String): String =
+    s"$toolName-assembly-v$version.jar"
 
   private def nativeArtifactNameFor(target: String): String =
     validatedTarget(target) match
@@ -111,5 +115,15 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
       ).call(check = true)
 
     PathRef(archivePath)
+  }
+
+  def releaseAssemblyAssetName(version: String) = Task.Command {
+    assemblyAssetNameFor(version)
+  }
+
+  def releaseAssembly(version: String) = Task.Command {
+    val destination = Task.dest / assemblyAssetNameFor(version)
+    os.copy.over(assembly().path, destination, createFolders = true)
+    PathRef(destination)
   }
 }
