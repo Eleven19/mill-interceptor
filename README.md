@@ -1,5 +1,9 @@
 # mill-interceptor
 
+[![CI](https://github.com/Eleven19/mill-interceptor/actions/workflows/ci.yml/badge.svg)](https://github.com/Eleven19/mill-interceptor/actions/workflows/ci.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.eleven19.mill-interceptor/milli_3)](https://central.sonatype.com/artifact/io.github.eleven19.mill-interceptor/milli_3)
+[![GitHub Release](https://img.shields.io/github/v/release/Eleven19/mill-interceptor)](https://github.com/Eleven19/mill-interceptor/releases/latest)
+
 A tool for intercepting other build tools using mill.
 The idea is to use mill to "impersonate" other build tools.
 
