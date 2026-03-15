@@ -3,8 +3,15 @@ mill-jvm-version: "graalvm-java25:25.0.1"
 mill-build:
   jvmVersion: "graalvm-java25:25.0.2"
   jvmIndexVersion: latest.release
-  
-extends: [ScalaModule, scalafmt.ScalafmtModule, NativeImageModule]
+  mvnDeps:
+    - "com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION"
+
+extends: [mill.contrib.scoverage.ScoverageModule, scalafmt.ScalafmtModule, NativeImageModule]
+
+#------------------------------------
+# Scoverage settings
+#------------------------------------
+scoverageVersion: "2.5.2"
 
 #------------------------------------
 # JVM settings

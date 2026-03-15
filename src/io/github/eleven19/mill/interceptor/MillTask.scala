@@ -4,7 +4,7 @@ package io.github.eleven19.mill.interceptor
   *
   * Shared across all build-tool interceptors (Maven, Gradle, Sbt).
   */
-final case class MillTask(name: String, args: List[String] = Nil):
+final case class MillTask(name: String, args: List[String] = Nil) derives CanEqual:
 
     /** Render this task as the CLI tokens Mill expects. */
     def toArgs: List[String] =
