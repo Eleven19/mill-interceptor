@@ -75,10 +75,60 @@ jobs:
           path: out/releaseArchive.dest/${{ steps.archive-name.outputs.archive_name }}
           if-no-files-found: error
 
+  extras:
+    needs: metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Compute assembly name
+        id: assembly-name
+        shell: bash
+        run: scripts/ci/compute-assembly-name.sh "${{ needs.metadata.outputs.version }}"
+
+      - name: Compute Unix launcher name
+        id: unix-launcher-name
+        shell: bash
+        run: scripts/ci/compute-launcher-name.sh unix unix_launcher_name
+
+      - name: Compute Windows launcher name
+        id: windows-launcher-name
+        shell: bash
+        run: scripts/ci/compute-launcher-name.sh windows windows_launcher_name
+
+      - name: Build release assembly
+        shell: bash
+        run: scripts/ci/build-release-assembly.sh "${{ needs.metadata.outputs.version }}" "${{ steps.assembly-name.outputs.assembly_name }}"
+
+      - name: Build Unix launcher
+        shell: bash
+        run: scripts/ci/build-release-launcher.sh "${{ needs.metadata.outputs.version }}" unix "${{ steps.unix-launcher-name.outputs.unix_launcher_name }}"
+
+      - name: Build Windows launcher
+        shell: bash
+        run: scripts/ci/build-release-launcher.sh "${{ needs.metadata.outputs.version }}" windows "${{ steps.windows-launcher-name.outputs.windows_launcher_name }}"
+
+      - name: Upload release extras
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-extras
+          path: |
+            out/releaseAssembly.dest/${{ steps.assembly-name.outputs.assembly_name }}
+            out/releaseLauncher.dest/${{ steps.unix-launcher-name.outputs.unix_launcher_name }}
+            out/releaseLauncher.dest/${{ steps.windows-launcher-name.outputs.windows_launcher_name }}
+          if-no-files-found: error
+
   publish:
     needs:
       - metadata
       - build
+      - extras
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}

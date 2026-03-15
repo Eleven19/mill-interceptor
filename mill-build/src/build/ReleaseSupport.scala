@@ -2,13 +2,18 @@ package build
 
 import mill.*
 import mill.javalib.NativeImageModule
+import mill.scalalib.JavaModule
 
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
+trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule =>
   private val toolName = "mill-interceptor"
+  private val mavenGroup = "io.github.eleven19.mill-interceptor"
+  private val libraryArtifact = "milli"
+  private val assemblyArtifact = "milli-assembly"
+  private val defaultVersionToken = "@MILLI_DEFAULT_VERSION@"
   private val supportedReleaseTargets = Seq(
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
@@ -17,23 +22,34 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
     "x86_64-pc-windows-msvc"
   )
 
-  private def isWindowsTarget(target: String): Boolean =
+  protected def isWindowsTarget(target: String): Boolean =
     target.endsWith("windows-msvc")
 
-  private def validatedTarget(target: String): String =
+  protected def validatedTarget(target: String): String =
     if supportedReleaseTargets.contains(target) then target
     else throw new IllegalArgumentException(s"Unsupported release target: $target")
 
-  private def executableNameFor(target: String): String =
+  protected def executableNameFor(target: String): String =
     if isWindowsTarget(target) then s"$toolName.exe" else toolName
 
-  private def archiveExtensionFor(target: String): String =
+  protected def archiveExtensionFor(target: String): String =
     if isWindowsTarget(target) then "zip" else "tar.gz"
 
   private def assetNameFor(version: String, target: String): String =
     s"$toolName-v$version-$target.${archiveExtensionFor(target)}"
 
-  private def writeZip(source: os.Path, entryName: String, destination: os.Path): Unit =
+  private def assemblyAssetNameFor(version: String): String =
+    s"$toolName-assembly-v$version.jar"
+
+  private def nativeArtifactNameFor(target: String): String =
+    validatedTarget(target) match
+      case "x86_64-unknown-linux-gnu" => "milli-native-linux-amd64"
+      case "aarch64-unknown-linux-gnu" => "milli-native-linux-aarch64"
+      case "x86_64-apple-darwin" => "milli-native-macos-amd64"
+      case "aarch64-apple-darwin" => "milli-native-macos-aarch64"
+      case "x86_64-pc-windows-msvc" => "milli-native-windows-amd64"
+
+  protected def writeZip(source: os.Path, entryName: String, destination: os.Path): Unit =
     val output = new ZipOutputStream(new FileOutputStream(destination.toIO))
     try
       val entry = new ZipEntry(entryName)
@@ -42,8 +58,37 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
       output.closeEntry()
     finally output.close()
 
+  private def validatedLauncherOs(launcherOs: String): String =
+    launcherOs match
+      case "unix" | "windows" => launcherOs
+      case other => throw new IllegalArgumentException(s"Unsupported launcher OS: $other")
+
+  private def launcherFileNameFor(launcherOs: String): String =
+    validatedLauncherOs(launcherOs) match
+      case "unix" => "milli"
+      case "windows" => "milli.bat"
+
+  private def launcherTemplatePath(taskDest: os.Path, launcherOs: String): os.Path =
+    taskDest / os.up / os.up / "launcher" / launcherFileNameFor(launcherOs)
+
   def releaseTargets = Task {
     supportedReleaseTargets
+  }
+
+  def publishGroup = Task {
+    mavenGroup
+  }
+
+  def publishLibraryArtifact = Task {
+    libraryArtifact
+  }
+
+  def publishAssemblyArtifact = Task {
+    assemblyArtifact
+  }
+
+  def publishNativeArtifacts = Task {
+    supportedReleaseTargets.map(target => s"$target=${nativeArtifactNameFor(target)}")
   }
 
   def releaseExecutableName(target: String) = Task.Command {
@@ -84,5 +129,33 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule =>
       ).call(check = true)
 
     PathRef(archivePath)
+  }
+
+  def releaseAssemblyAssetName(version: String) = Task.Command {
+    assemblyAssetNameFor(version)
+  }
+
+  def releaseAssembly(version: String) = Task.Command {
+    val destination = Task.dest / assemblyAssetNameFor(version)
+    os.copy.over(assembly().path, destination, createFolders = true)
+    PathRef(destination)
+  }
+
+  def releaseLauncherName(launcherOs: String) = Task.Command {
+    launcherFileNameFor(launcherOs)
+  }
+
+  def releaseLauncher(version: String, launcherOs: String) = Task.Command {
+    val checkedOs = validatedLauncherOs(launcherOs)
+    val destination = Task.dest / launcherFileNameFor(checkedOs)
+    val template = launcherTemplatePath(Task.dest, checkedOs)
+    val contents = os.read(template).replace(defaultVersionToken, version)
+
+    os.write.over(destination, contents, createFolders = true)
+
+    if checkedOs == "unix" then
+      os.perms.set(destination, "rwxr-xr-x")
+
+    PathRef(destination)
   }
 }
