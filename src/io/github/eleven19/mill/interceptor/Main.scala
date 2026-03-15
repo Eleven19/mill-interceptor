@@ -1,6 +1,5 @@
 package io.github.eleven19.mill.interceptor
 
-import caseapp.*
 import kyo.*
 import maven.Mvn
 import sbt.Sbt
@@ -12,27 +11,31 @@ object Main extends KyoApp:
     run {
         Log.let(scribeLog) {
             direct {
-                val interceptedBuildToolFromEnv =
-                    System.env[String]("INTERCEPTED_BUILD_TOOL").now
+                process(args) match
+                    case CliResult.Run(InterceptTool.Maven, forwardedArgs) =>
+                        Mvn.run(forwardedArgs).now
+                    case CliResult.Run(InterceptTool.Sbt, forwardedArgs) =>
+                        Sbt.run(forwardedArgs).now
+                    case CliResult.Run(InterceptTool.Gradle, forwardedArgs) =>
+                        Gradle.run(forwardedArgs).now
+                    case CliResult.Help(error) =>
+                        error match
+                            case Some(message) =>
+                                Log.error(message).now
+                            case None =>
+                                ()
 
-                process(args, interceptedBuildToolFromEnv).now
+                        println(Cli.usage)
+
+                        error match
+                            case Some(message) =>
+                                Abort.fail(new IllegalArgumentException(message)).now
+                            case None =>
+                                ()
             }
         }
     }
 
-    def process(args: Chunk[String], interceptedBuildTool: Maybe[String]) = direct {
-        interceptedBuildTool match
-            case Absent =>
-                Log.error("No intercepted build tool found").now
-                Abort.fail(new IllegalStateException("No intercepted build tool found")).now
-            case Present("maven") | Present("mvn") =>
-                Mvn.run(args).now
-            case Present("sbt") =>
-                Sbt.run(args).now
-            case Present("gradle") =>
-                Gradle.run(args).now
-            case Present(buildTool) =>
-                Log.error(s"Unsupported build tool: $buildTool").now
-                Abort.fail(new UnsupportedOperationException(s"Unsupported build tool: $buildTool")).now
-    }
+    def process(args: Chunk[String]): CliResult =
+        Cli.parse(args)
 end Main
