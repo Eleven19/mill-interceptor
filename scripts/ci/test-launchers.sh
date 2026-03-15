@@ -46,8 +46,13 @@ rg -F 'MILLI_LAUNCHER_MODE' launcher/milli.bat
 rg -F 'MILLI_LAUNCHER_SOURCE' launcher/milli.bat
 rg -F 'MILLI_LAUNCHER_USE_NETRC' launcher/milli.bat
 rg -F 'MILLI_LAUNCHER_DRY_RUN' launcher/milli.bat
+rg -F 'mode_order=' launcher/milli.bat
+rg -F 'source_order=' launcher/milli.bat
+rg -F 'set "NATIVE_ARTIFACT=milli-native-windows-amd64"' launcher/milli.bat
+rg -F 'curl_netrc_flag=' launcher/milli.bat
 rg -F 'milli-dist' launcher/milli.bat
 rg -F 'github.com/Eleven19/mill-interceptor/releases/download' launcher/milli.bat
+rg -F 'mill-interceptor-v%MILLI_VERSION_VALUE%-x86_64-pc-windows-msvc.zip' launcher/milli.bat
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
