@@ -59,34 +59,11 @@ jobs:
       - name: Compute archive name
         id: archive-name
         shell: bash
-        run: |
-          set -euo pipefail
-
-          archive_name="$(
-            COURSIER_CACHE="$RUNNER_TEMP/coursier" ./mill show releaseAssetName \
-              --version "${{ needs.metadata.outputs.version }}" \
-              --target "${{ matrix.target }}" \
-            | sed -n 's/^"//; s/"$//; p' \
-            | tail -n 1
-          )"
-
-          if [[ -z "$archive_name" ]]; then
-            echo "Unable to determine archive name" >&2
-            exit 1
-          fi
-
-          echo "archive_name=$archive_name" >>"$GITHUB_OUTPUT"
+        run: scripts/ci/compute-archive-name.sh "${{ needs.metadata.outputs.version }}" "${{ matrix.target }}"
 
       - name: Build release archive
         shell: bash
-        run: |
-          set -euo pipefail
-
-          COURSIER_CACHE="$RUNNER_TEMP/coursier" ./mill show releaseArchive \
-            --version "${{ needs.metadata.outputs.version }}" \
-            --target "${{ matrix.target }}"
-
-          test -f "out/releaseArchive.dest/${{ steps.archive-name.outputs.archive_name }}"
+        run: scripts/ci/build-release-archive.sh "${{ needs.metadata.outputs.version }}" "${{ matrix.target }}" "${{ steps.archive-name.outputs.archive_name }}"
 
       - name: Upload release archive
         uses: actions/upload-artifact@v4
@@ -113,17 +90,7 @@ jobs:
       - name: Create tag for manual release
         if: github.event_name == 'workflow_dispatch'
         shell: bash
-        run: |
-          set -euo pipefail
-
-          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "$RELEASE_TAG" "$GITHUB_SHA"
-          git push origin "$RELEASE_TAG"
+        run: scripts/ci/create-release-tag.sh
 
       - name: Download release archives
         uses: actions/download-artifact@v4
@@ -134,39 +101,12 @@ jobs:
 
       - name: Generate checksums
         shell: bash
-        run: |
-          set -euo pipefail
-          cd release-artifacts
-          sha256sum * > SHA256SUMS
+        run: scripts/ci/generate-checksums.sh release-artifacts
 
       - name: Create or update GitHub release
         shell: bash
-        run: |
-          set -euo pipefail
-
-          prerelease_flag="$RELEASE_PRERELEASE"
-
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            release_id="$(gh release view "$RELEASE_TAG" --json databaseId -q .databaseId)"
-
-            gh api \
-              --method PATCH \
-              "repos/$GITHUB_REPOSITORY/releases/$release_id" \
-              --field tag_name="$RELEASE_TAG" \
-              --field name="$RELEASE_NAME" \
-              --field prerelease="$prerelease_flag"
-          else
-            gh api \
-              --method POST \
-              "repos/$GITHUB_REPOSITORY/releases" \
-              --field tag_name="$RELEASE_TAG" \
-              --field name="$RELEASE_NAME" \
-              --field prerelease="$prerelease_flag" \
-              --field generate_release_notes=true
-          fi
+        run: scripts/ci/create-or-update-github-release.sh
 
       - name: Upload release assets
         shell: bash
-        run: |
-          set -euo pipefail
-          gh release upload "$RELEASE_TAG" release-artifacts/* --clobber
+        run: scripts/ci/upload-release-assets.sh release-artifacts
