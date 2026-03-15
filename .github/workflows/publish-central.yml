@@ -50,7 +50,7 @@ jobs:
 
       - name: Publish assembly jar artifact
         shell: bash
-        run: scripts/ci/publish-central.sh distPublish.publish "${{ needs.metadata.outputs.version }}"
+        run: scripts/ci/publish-central.sh assemblyPublish.publish "${{ needs.metadata.outputs.version }}"
 
   publish-native:
     needs: metadata

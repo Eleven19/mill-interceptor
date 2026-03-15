@@ -18,7 +18,7 @@ printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-na
 
 dist_payload="$(
   COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" MILLI_PUBLISH_VERSION="$version" \
-    ./mill --no-server show distPublish.publishArtifacts
+    ./mill --no-server show assemblyPublish.publishArtifacts
 )"
 
 printf '%s\n' "$dist_payload" | rg -F "\"id\": \"milli-dist\""
@@ -26,7 +26,7 @@ printf '%s\n' "$dist_payload" | rg -F "\"milli-dist-${version}.jar\""
 
 resolved_modules="$(COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" ./mill --no-server resolve _)"
 
-printf '%s\n' "$resolved_modules" | rg -x "distPublish"
+printf '%s\n' "$resolved_modules" | rg -x "assemblyPublish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeLinuxAmd64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeLinuxAarch64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeMacosAmd64Publish"

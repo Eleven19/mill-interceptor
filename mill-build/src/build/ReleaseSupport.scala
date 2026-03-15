@@ -83,7 +83,7 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
     libraryArtifact
   }
 
-  def publishDistArtifact = Task {
+  def publishAssemblyArtifact = Task {
     distArtifact
   }
 
@@ -131,11 +131,11 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
     PathRef(archivePath)
   }
 
-  def releaseDistAssetName(version: String) = Task.Command {
+  def releaseAssemblyAssetName(version: String) = Task.Command {
     distAssetNameFor(version)
   }
 
-  def releaseDist(version: String) = Task.Command {
+  def releaseAssembly(version: String) = Task.Command {
     val destination = Task.dest / distAssetNameFor(version)
     os.copy.over(assembly().path, destination, createFolders = true)
     PathRef(destination)

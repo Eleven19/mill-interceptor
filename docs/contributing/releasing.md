@@ -186,9 +186,9 @@ This job runs once on Linux and produces the non-native release assets:
 
 It delegates shell logic to:
 
-- `scripts/ci/compute-dist-name.sh`
+- `scripts/ci/compute-assembly-name.sh`
 - `scripts/ci/compute-launcher-name.sh`
-- `scripts/ci/build-release-dist.sh`
+- `scripts/ci/build-release-assembly.sh`
 - `scripts/ci/build-release-launcher.sh`
 
 ### 4. `publish`
@@ -316,8 +316,8 @@ Useful local commands:
 ./mill show releaseTargets
 ./mill show releaseAssetName --version 1.2.3 --target x86_64-unknown-linux-gnu
 ./mill show releaseArchive --version 1.2.3 --target x86_64-unknown-linux-gnu
-./mill show releaseDistAssetName --version 1.2.3
-./mill show releaseDist --version 1.2.3
+./mill show releaseAssemblyAssetName --version 1.2.3
+./mill show releaseAssembly --version 1.2.3
 ./mill show releaseLauncher --version 1.2.3 --launcher-os unix
 ./mill show publishArtifactSummary
 ```
@@ -384,8 +384,8 @@ For workflow-script verification, useful spot checks are:
 ```bash
 RUNNER_TEMP=/tmp scripts/ci/compute-archive-name.sh 1.2.3 aarch64-unknown-linux-gnu
 RUNNER_TEMP=/tmp scripts/ci/build-release-archive.sh 1.2.3 aarch64-unknown-linux-gnu mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz
-RUNNER_TEMP=/tmp scripts/ci/compute-dist-name.sh 1.2.3
-RUNNER_TEMP=/tmp scripts/ci/build-release-dist.sh 1.2.3 mill-interceptor-dist-v1.2.3.jar
+RUNNER_TEMP=/tmp scripts/ci/compute-assembly-name.sh 1.2.3
+RUNNER_TEMP=/tmp scripts/ci/build-release-assembly.sh 1.2.3 mill-interceptor-dist-v1.2.3.jar
 RUNNER_TEMP=/tmp scripts/ci/compute-launcher-name.sh unix unix_launcher_name
 RUNNER_TEMP=/tmp scripts/ci/build-release-launcher.sh 1.2.3 unix milli
 scripts/ci/test-publish-metadata.sh 1.2.3
