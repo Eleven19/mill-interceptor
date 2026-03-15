@@ -12,6 +12,47 @@ The release pipeline has three goals:
 
 The workflow definition lives in `.github/workflows/release.yml`. The workflow shell logic is intentionally kept in `scripts/ci/` so the YAML stays declarative and the release steps can be tested locally.
 
+## Release flow diagram
+
+```text
+             +----------------------+
+             |  tag push: v1.2.3    |
+             |         or           |
+             | workflow_dispatch    |
+             | version=1.2.3-rc.1   |
+             +----------+-----------+
+                        |
+                        v
+             +----------------------+
+             | metadata job         |
+             | - normalize version  |
+             | - compute tag        |
+             | - mark prerelease    |
+             +----------+-----------+
+                        |
+                        v
+             +----------------------+
+             | build matrix job     |
+             | per target:          |
+             | - resolve asset name |
+             | - build native image |
+             | - package archive    |
+             | - upload artifact    |
+             +----------+-----------+
+                        |
+                        v
+             +----------------------+
+             | publish job          |
+             | - create tag if      |
+             |   workflow_dispatch  |
+             | - download artifacts |
+             | - generate checksums |
+             | - create/update      |
+             |   GitHub release     |
+             | - upload assets      |
+             +----------------------+
+```
+
 ## Supported targets
 
 The release workflow currently targets:
@@ -67,6 +108,36 @@ This job:
 
 The normalization logic lives in `.github/actions/release-metadata/`.
 
+```text
+input version/tag
+      |
+      v
++--------------------+
+| strip leading `v`  |
++--------------------+
+      |
+      v
++--------------------+
+| validate semver    |
++--------------------+
+      |
+      v
++--------------------+      +----------------------+
+| prerelease suffix? |----->| prerelease=true      |
++--------------------+ yes  +----------------------+
+      |
+      no
+      v
++----------------------+
+| prerelease=false     |
++----------------------+
+      |
+      v
++----------------------+
+| emit version/tag     |
++----------------------+
+```
+
 ### 2. `build`
 
 This job runs as a matrix over the supported targets. For each target it:
@@ -96,6 +167,25 @@ The publish job delegates shell logic to:
 - `scripts/ci/generate-checksums.sh`
 - `scripts/ci/create-or-update-github-release.sh`
 - `scripts/ci/upload-release-assets.sh`
+
+```text
+workflow_dispatch? ---- yes ----> create missing tag v<version>
+        | no
+        v
+download build artifacts
+        |
+        v
+generate SHA256SUMS
+        |
+        v
+release exists? ---- yes ----> update release metadata
+        | no
+        v
+create release
+        |
+        v
+upload archives + SHA256SUMS
+```
 
 ## Artifact contract
 
@@ -130,6 +220,47 @@ Useful local commands:
 ```
 
 These commands are what the workflow uses under the hood. If you need to debug packaging behavior, start here rather than editing the workflow first.
+
+## Packaging flow diagram
+
+```text
+releaseArchive(version, target)
+          |
+          v
++---------------------------+
+| validate target triple    |
++---------------------------+
+          |
+          v
++---------------------------+
+| run Mill nativeImage      |
++---------------------------+
+          |
+          v
++---------------------------+
+| stage executable as       |
+| mill-interceptor(.exe)    |
++---------------------------+
+          |
+          v
+   +------+------+
+   | target OS?  |
+   +------+------+
+          |
+   +------+------+
+   |             |
+ unix          windows
+   |             |
+   v             v
+tar.gz         zip
+   |             |
+   +------+------+
+          |
+          v
++---------------------------+
+| emit final release asset  |
++---------------------------+
+```
 
 ## Local verification
 
