@@ -18,14 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Mill
-        uses: mill-build/mill-setup-action@v1
-
       - name: Compile all modules
-        run: mill __.compile
+        run: ./mill __.compile
 
       - name: Run unit tests
-        run: mill test
+        run: ./mill test
 
       - name: Run integration tests
-        run: mill itest
+        run: ./mill itest
