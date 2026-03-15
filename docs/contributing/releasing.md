@@ -9,6 +9,7 @@ The release pipeline has three goals:
 1. Build a native executable for each supported target with Mill and GraalVM native-image.
 2. Package each executable into a predictable archive layout that `mise` can install from GitHub Releases.
 3. Publish all archives plus `SHA256SUMS` to a single GitHub release driven by either a pushed tag or a manual workflow dispatch.
+4. Publish release notes that start with curated changelog content and then append generated `git-cliff` notes.
 
 The workflow definition lives in `.github/workflows/release.yml`. The workflow shell logic is intentionally kept in `scripts/ci/` so the YAML stays declarative and the release steps can be tested locally.
 
@@ -45,6 +46,8 @@ The workflow definition lives in `.github/workflows/release.yml`. The workflow s
              | publish job          |
              | - create tag if      |
              |   workflow_dispatch  |
+             | - validate changelog |
+             | - build release body |
              | - download artifacts |
              | - generate checksums |
              | - create/update      |
@@ -156,6 +159,9 @@ The build job delegates shell logic to:
 This job only runs after all matrix builds succeed. It:
 
 - Creates the tag for `workflow_dispatch` releases if it does not already exist
+- Installs `git-cliff`
+- Validates that `CHANGELOG.md` contains the exact version section
+- Builds a release body with curated changelog content first and generated notes second
 - Downloads the matrix artifacts
 - Generates `SHA256SUMS`
 - Creates or updates the GitHub release
@@ -164,6 +170,8 @@ This job only runs after all matrix builds succeed. It:
 The publish job delegates shell logic to:
 
 - `scripts/ci/create-release-tag.sh`
+- `scripts/ci/install-git-cliff.sh`
+- `scripts/ci/build-release-notes.sh`
 - `scripts/ci/generate-checksums.sh`
 - `scripts/ci/create-or-update-github-release.sh`
 - `scripts/ci/upload-release-assets.sh`
@@ -171,6 +179,12 @@ The publish job delegates shell logic to:
 ```text
 workflow_dispatch? ---- yes ----> create missing tag v<version>
         | no
+        v
+validate exact CHANGELOG section
+        |
+        v
+build hybrid release body
+        |
         v
 download build artifacts
         |
@@ -185,6 +199,51 @@ create release
         |
         v
 upload archives + SHA256SUMS
+```
+
+## Changelog and release notes contract
+
+The checked-in `CHANGELOG.md` is the curated source of truth for release
+summaries.
+
+For a release like `v1.2.3`, the workflow requires an exact changelog section:
+
+```markdown
+## [1.2.3] - 2026-03-14
+```
+
+If that section does not exist, the publish job fails before it creates or
+updates the GitHub Release.
+
+The final GitHub Release body is assembled as:
+
+1. Curated changelog section for the exact version
+2. Divider
+3. Generated `git-cliff` notes for the same repository state
+
+```text
+         +----------------------------+
+         | CHANGELOG.md exact        |
+         | version section           |
+         +-------------+--------------+
+                       |
+                       v
+         +----------------------------+
+         | scripts/ci/build-         |
+         | release-notes.sh          |
+         +------+------+-------------+
+                |      |
+                |      v
+                |  +------------------+
+                |  | git-cliff notes  |
+                |  +------------------+
+                |      |
+                +------+
+                       |
+                       v
+         +----------------------------+
+         | final GitHub Release body  |
+         +----------------------------+
 ```
 
 ## Artifact contract
@@ -281,6 +340,9 @@ For workflow-script verification, useful spot checks are:
 ```bash
 RUNNER_TEMP=/tmp scripts/ci/compute-archive-name.sh 1.2.3 aarch64-unknown-linux-gnu
 RUNNER_TEMP=/tmp scripts/ci/build-release-archive.sh 1.2.3 aarch64-unknown-linux-gnu mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz
+RUNNER_TEMP=/tmp scripts/ci/install-git-cliff.sh 2.12.0
+scripts/ci/build-release-notes.sh 0.1.0
+bash scripts/ci/test-build-release-notes.sh
 ```
 
 ## Manual release flow
@@ -300,10 +362,12 @@ The workflow will:
 
 1. Normalize the version and prerelease state.
 2. Ensure the corresponding tag is `v<version>`.
-3. Build all supported platform archives.
-4. Generate `SHA256SUMS`.
-5. Create or update the GitHub release.
-6. Upload the archives and checksums.
+3. Validate the exact changelog section for that version.
+4. Build all supported platform archives.
+5. Generate `SHA256SUMS`.
+6. Build the hybrid release notes body.
+7. Create or update the GitHub release.
+8. Upload the archives and checksums.
 
 ## Tag-driven stable release flow
 
@@ -315,6 +379,12 @@ git push origin v1.2.3
 ```
 
 That path skips manual tag creation because the pushed tag is already the source of truth for the release.
+
+## Missing changelog section
+
+If a release fails with a missing-version changelog error, fix `CHANGELOG.md`
+before retrying. The workflow intentionally refuses to fall back to generated
+notes only.
 
 ## Checksums
 
