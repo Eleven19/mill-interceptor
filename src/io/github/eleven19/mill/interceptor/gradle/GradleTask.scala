@@ -10,7 +10,7 @@ import io.github.eleven19.mill.interceptor.MillTask
   * Unlike Maven's strict lifecycle phases, Gradle tasks are more ad-hoc. The mapping here covers the standard Gradle
   * lifecycle tasks from the `base`, `java`, and `maven-publish` plugins.
   */
-enum GradleTask(val millTasks: List[MillTask]):
+enum GradleTask(val millTasks: List[MillTask]) derives CanEqual:
     case Clean       extends GradleTask(List(MillTask("clean")))
     case Classes     extends GradleTask(List(MillTask("compile")))
     case Compile     extends GradleTask(List(MillTask("compile")))

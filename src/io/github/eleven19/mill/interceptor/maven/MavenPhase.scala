@@ -5,7 +5,7 @@ package io.github.eleven19.mill.interceptor.maven
   * Each phase maps to one or more [[MillTask]]s that together reproduce the effect of that Maven phase. The tasks are
   * ordered so that earlier prerequisites come first (mirroring the Maven lifecycle).
   */
-enum MavenPhase(val millTasks: List[MillTask]):
+enum MavenPhase(val millTasks: List[MillTask]) derives CanEqual:
     case Clean    extends MavenPhase(List(MillTask("clean")))
     case Validate extends MavenPhase(Nil)
     case Compile  extends MavenPhase(List(MillTask("compile")))
