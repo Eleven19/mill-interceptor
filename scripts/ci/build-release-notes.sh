@@ -58,4 +58,8 @@ $curated_section
 ${generated_notes:-No additional generated notes.}
 EOF
 
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    printf 'release_notes_file=%s\n' "$release_notes_file" >>"$GITHUB_OUTPUT"
+fi
+
 printf '%s\n' "$release_notes_file"
