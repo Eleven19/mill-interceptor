@@ -7,22 +7,22 @@ import zio.test.*
 object MainSpec extends KyoSpecDefault:
 
     def spec: Spec[Any, Any] = suite("Main")(
-        suite("process")(
+        suite("CLI routing")(
             test("routes intercept gradle without environment variables") {
-                val parsed = Main.process(Chunk("intercept", "gradle", "build"))
-                Sync.defer(
-                    assertTrue(parsed match
-                        case CliResult.Run(InterceptTool.Gradle, args) => args.toList == List("build")
-                        case _                                         => false
-                    )
-                )
+                Abort.run[IllegalArgumentException](Cli.parse(Chunk("intercept", "gradle", "build"))).map {
+                    case kyo.Result.Success(CliResult.Run(InterceptTool.Gradle, args)) =>
+                        assertTrue(args.toList == List("build"))
+                    case other =>
+                        assertTrue(false)
+                }
             },
             test("keeps direct top-level tool commands invalid") {
-                val parsed = Main.process(Chunk("maven", "clean"))
-                Sync.defer(assertTrue(parsed match
-                    case CliResult.Help(Some("Unsupported command: maven")) => true
-                    case _                                                   => false
-                ))
+                Abort.run[IllegalArgumentException](Cli.parse(Chunk("maven", "clean"))).map {
+                    case kyo.Result.Error(ex) =>
+                        assertTrue(ex.getMessage == "Unsupported command: maven")
+                    case other =>
+                        assertTrue(false)
+                }
             }
         )
     )
