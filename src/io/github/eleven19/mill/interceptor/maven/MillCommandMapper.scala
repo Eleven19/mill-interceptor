@@ -25,8 +25,7 @@ object MillCommandMapper:
     private def dedup(tasks: List[MillTask]): List[MillTask] =
         val seen  = scala.collection.mutable.LinkedHashSet.empty[String]
         val build = List.newBuilder[MillTask]
-        for t <- tasks do
-            if seen.add(t.name) then build += t
+        for t <- tasks do if seen.add(t.name) then build += t
         build.result()
 
     /** Normalize a Maven module path (e.g. `:sub-module` or `groupId:artifactId`) to a Mill module selector. */

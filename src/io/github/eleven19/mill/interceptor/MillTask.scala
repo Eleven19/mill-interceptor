@@ -5,6 +5,7 @@ package io.github.eleven19.mill.interceptor
   * Shared across all build-tool interceptors (Maven, Gradle, Sbt).
   */
 final case class MillTask(name: String, args: List[String] = Nil):
+
     /** Render this task as the CLI tokens Mill expects. */
     def toArgs: List[String] =
         if args.isEmpty then List(name)

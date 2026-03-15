@@ -10,10 +10,11 @@ final case class SbtCommand(
 )
 
 object SbtCommand:
+
     val empty: SbtCommand = SbtCommand(
-      tasks = Nil,
-      projects = Nil,
-      batch = false,
-      offline = false,
-      noColor = false
+        tasks = Nil,
+        projects = Nil,
+        batch = false,
+        offline = false,
+        noColor = false
     )

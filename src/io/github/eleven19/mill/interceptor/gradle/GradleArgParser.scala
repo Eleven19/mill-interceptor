@@ -4,12 +4,10 @@ import caseapp.*
 
 /** Parses raw Gradle CLI arguments into a [[GradleCommand]].
   *
-  * Named flags are handled by case-app via [[GradleArgParser.Options]].
-  * `-D` system properties and `-P` project properties use prefix patterns
-  * that case-app cannot express, so they are extracted beforehand.
-  * `-x`/`--exclude-task` pairs are also extracted before case-app parsing.
-  * Remaining positional arguments are classified as Gradle lifecycle tasks
-  * or unknown task names.
+  * Named flags are handled by case-app via [[GradleArgParser.Options]]. `-D` system properties and `-P` project
+  * properties use prefix patterns that case-app cannot express, so they are extracted beforehand. `-x`/`--exclude-task`
+  * pairs are also extracted before case-app parsing. Remaining positional arguments are classified as Gradle lifecycle
+  * tasks or unknown task names.
   */
 object GradleArgParser:
 
@@ -18,67 +16,49 @@ object GradleArgParser:
     final case class Options(
         @Name("p") @HelpMessage("Specifies the project directory")
         projectDir: Option[String] = None,
-
         @HelpMessage("Work offline")
         offline: Boolean = false,
-
         @Name("d") @HelpMessage("Log in debug mode")
         debug: Boolean = false,
-
         @Name("q") @HelpMessage("Log errors only")
         quiet: Boolean = false,
-
         @Name("i") @HelpMessage("Set log level to info")
         info: Boolean = false,
-
         @Name("s") @HelpMessage("Print out the stacktrace for all exceptions")
         stacktrace: Boolean = false,
-
         @Name("S") @HelpMessage("Print out the full stacktrace for all exceptions")
         fullStacktrace: Boolean = false,
-
         @HelpMessage("Enable the Gradle build cache")
         buildCache: Boolean = false,
-
         @HelpMessage("Disable the Gradle build cache")
         noBuildCache: Boolean = false,
-
         @HelpMessage("Build projects in parallel")
         parallel: Boolean = false,
-
         @HelpMessage("Disable parallel project execution")
         noParallel: Boolean = false,
-
         @Name("c") @Name("continue") @HelpMessage("Continue task execution after a task failure")
         continueOnFailure: Boolean = false,
-
         @Name("m") @HelpMessage("Run the builds with all task actions disabled")
         dryRun: Boolean = false,
-
         @HelpMessage("Specifies the Gradle build file to use")
         buildFile: Option[String] = None,
-
         @HelpMessage("Specifies the settings file to use")
         settingsFile: Option[String] = None,
-
         @HelpMessage("Specifies an initialization script")
         initScript: Option[String] = None,
-
         @HelpMessage("Sets the warning mode")
         warningMode: Option[String] = None,
-
         @HelpMessage("Disables the Gradle daemon")
         noDaemon: Boolean = false,
-
         @HelpMessage("Uses the Gradle daemon")
         daemon: Boolean = false
     )
 
     /** Parse a list of Gradle CLI arguments into a structured [[GradleCommand]]. */
     def parse(args: List[String]): GradleCommand =
-        val (sysProps, afterSysProps)     = extractPrefixedProperties(args, "-D")
-        val (projProps, afterProjProps)   = extractPrefixedProperties(afterSysProps, "-P")
-        val (excluded, cleanedArgs)      = extractExcludedTasks(afterProjProps)
+        val (sysProps, afterSysProps)   = extractPrefixedProperties(args, "-D")
+        val (projProps, afterProjProps) = extractPrefixedProperties(afterSysProps, "-P")
+        val (excluded, cleanedArgs)     = extractExcludedTasks(afterProjProps)
 
         CaseApp.detailedParseWithHelp[Options](cleanedArgs) match
             case Left(_) =>
@@ -99,21 +79,21 @@ object GradleArgParser:
                     case _         => None
 
                 GradleCommand(
-                  tasks = tasks,
-                  excludedTasks = excluded,
-                  projectDir = options.projectDir,
-                  offline = options.offline,
-                  debug = options.debug,
-                  quiet = options.quiet,
-                  info = options.info,
-                  stacktrace = options.stacktrace || options.fullStacktrace,
-                  buildCache = buildCache,
-                  parallel = parallel,
-                  continueOnFailure = options.continueOnFailure,
-                  dryRun = options.dryRun,
-                  systemProperties = sysProps,
-                  projectProperties = projProps,
-                  unknownTasks = unknownTasks
+                    tasks = tasks,
+                    excludedTasks = excluded,
+                    projectDir = options.projectDir,
+                    offline = options.offline,
+                    debug = options.debug,
+                    quiet = options.quiet,
+                    info = options.info,
+                    stacktrace = options.stacktrace || options.fullStacktrace,
+                    buildCache = buildCache,
+                    parallel = parallel,
+                    continueOnFailure = options.continueOnFailure,
+                    dryRun = options.dryRun,
+                    systemProperties = sysProps,
+                    projectProperties = projProps,
+                    unknownTasks = unknownTasks
                 )
 
     /** Extract `-<prefix>key=value` and `-<prefix>key` arguments. */
@@ -127,10 +107,9 @@ object GradleArgParser:
             if arg.startsWith(prefix) && arg.length > prefix.length then
                 val prop = arg.substring(prefix.length)
                 prop.indexOf('=') match
-                    case -1  => props += (prop -> "true")
+                    case -1  => props += (prop                   -> "true")
                     case idx => props += (prop.substring(0, idx) -> prop.substring(idx + 1))
-            else
-                rest += arg
+            else rest += arg
         (props.result(), rest.result())
 
     /** Extract `-x <task>` and `--exclude-task <task>` pairs from the arg list. */
@@ -143,8 +122,7 @@ object GradleArgParser:
             else if (arg == "-x" || arg == "--exclude-task") && idx + 1 < args.length then
                 excluded += args(idx + 1)
                 skipNext = true
-            else
-                rest += arg
+            else rest += arg
         (excluded.result(), rest.result())
 
     /** Classify positional arguments as Gradle lifecycle tasks or unknown task names. */
