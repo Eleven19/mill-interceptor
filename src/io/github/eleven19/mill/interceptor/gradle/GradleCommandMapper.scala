@@ -7,9 +7,8 @@ object GradleCommandMapper:
 
     /** Convert a [[GradleCommand]] into an ordered, deduplicated sequence of [[MillTask]]s.
       *
-      * Tasks from excluded Gradle tasks (via `-x`) are filtered out.
-      * If a project directory is specified, tasks are prefixed with it
-      * as a Mill module selector.
+      * Tasks from excluded Gradle tasks (via `-x`) are filtered out. If a project directory is specified, tasks are
+      * prefixed with it as a Mill module selector.
       */
     def toMillTasks(cmd: GradleCommand): List[MillTask] =
         val taskList = dedup(cmd.tasks.flatMap(_.millTasks))
@@ -33,8 +32,7 @@ object GradleCommandMapper:
     private def dedup(tasks: List[MillTask]): List[MillTask] =
         val seen  = scala.collection.mutable.LinkedHashSet.empty[String]
         val build = List.newBuilder[MillTask]
-        for t <- tasks do
-            if seen.add(t.name) then build += t
+        for t <- tasks do if seen.add(t.name) then build += t
         build.result()
 
     /** Normalize a Gradle project path (e.g. `:sub:module`) to a Mill module selector. */

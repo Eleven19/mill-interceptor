@@ -18,18 +18,19 @@ final case class MvnCommand(
 )
 
 object MvnCommand:
+
     val empty: MvnCommand = MvnCommand(
-      phases = Nil,
-      projects = Nil,
-      alsoMake = false,
-      alsoMakeDependents = false,
-      skipTests = false,
-      profiles = Nil,
-      offline = false,
-      debug = false,
-      quiet = false,
-      nonRecursive = false,
-      threads = None,
-      properties = Map.empty,
-      goals = Nil
+        phases = Nil,
+        projects = Nil,
+        alsoMake = false,
+        alsoMakeDependents = false,
+        skipTests = false,
+        profiles = Nil,
+        offline = false,
+        debug = false,
+        quiet = false,
+        nonRecursive = false,
+        threads = None,
+        properties = Map.empty,
+        goals = Nil
     )

@@ -20,20 +20,21 @@ final case class GradleCommand(
 )
 
 object GradleCommand:
+
     val empty: GradleCommand = GradleCommand(
-      tasks = Nil,
-      excludedTasks = Nil,
-      projectDir = None,
-      offline = false,
-      debug = false,
-      quiet = false,
-      info = false,
-      stacktrace = false,
-      buildCache = None,
-      parallel = None,
-      continueOnFailure = false,
-      dryRun = false,
-      systemProperties = Map.empty,
-      projectProperties = Map.empty,
-      unknownTasks = Nil
+        tasks = Nil,
+        excludedTasks = Nil,
+        projectDir = None,
+        offline = false,
+        debug = false,
+        quiet = false,
+        info = false,
+        stacktrace = false,
+        buildCache = None,
+        parallel = None,
+        continueOnFailure = false,
+        dryRun = false,
+        systemProperties = Map.empty,
+        projectProperties = Map.empty,
+        unknownTasks = Nil
     )

@@ -1,6 +1,7 @@
 package io.github.eleven19.mill.interceptor
+
 import caseapp.*
-import kyo.* 
+import kyo.*
 import maven.Mvn
 import sbt.Sbt
 import gradle.Gradle
@@ -35,4 +36,3 @@ object Main extends KyoApp:
                 Abort.fail(new UnsupportedOperationException(s"Unsupported build tool: $buildTool")).now
     }
 end Main
-

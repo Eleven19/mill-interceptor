@@ -4,9 +4,8 @@ import caseapp.*
 
 /** Parses raw sbt CLI arguments into a [[SbtCommand]].
   *
-  * sbt batch usage: sbt [options] [command+] e.g. sbt -batch clean compile test
-  * Named flags are handled by case-app; remaining positional arguments
-  * are treated as sbt task names.
+  * sbt batch usage: sbt [options] [command+] e.g. sbt -batch clean compile test Named flags are handled by case-app;
+  * remaining positional arguments are treated as sbt task names.
   */
 object SbtArgParser:
 
@@ -14,10 +13,8 @@ object SbtArgParser:
     final case class Options(
         @Name("batch") @HelpMessage("Run in batch mode (no interactive prompt)")
         batch: Boolean = false,
-
         @Name("no-colors") @HelpMessage("Disable colored output")
         noColor: Boolean = false,
-
         @Name("offline") @HelpMessage("Use offline mode")
         offline: Boolean = false
     )
@@ -38,11 +35,11 @@ object SbtArgParser:
             case Right((Right(options), _, _, remaining)) =>
                 val (projects, tasks) = classifyPositional(remaining.all)
                 SbtCommand(
-                  tasks = tasks,
-                  projects = projects,
-                  batch = options.batch,
-                  offline = options.offline,
-                  noColor = options.noColor
+                    tasks = tasks,
+                    projects = projects,
+                    batch = options.batch,
+                    offline = options.offline,
+                    noColor = options.noColor
                 )
 
     /** Split positional args into "project X" selections and task names. */

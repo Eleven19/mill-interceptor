@@ -4,7 +4,7 @@ mill-build:
   jvmVersion: "graalvm-java25:25.0.2"
   jvmIndexVersion: latest.release
   
-extends: [ScalaModule, NativeImageModule]
+extends: [ScalaModule, scalafmt.ScalafmtModule, NativeImageModule]
 
 #------------------------------------
 # JVM settings
