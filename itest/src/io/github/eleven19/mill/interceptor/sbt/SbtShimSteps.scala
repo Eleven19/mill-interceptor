@@ -26,7 +26,7 @@ class SbtShimSteps extends ScalaDsl with EN:
         millTasks = SbtCommandMapper.toMillTasks(parsedCmd)
     }
 
-    Then("the mapped Mill tasks should be {string}") { (expected: String) =>
+    Then("the sbt mapped Mill tasks should be {string}") { (expected: String) =>
         val expectedNames = expected.trim.split("\\s+").toList
         val actualNames   = millTasks.map(_.name)
         assertEquals(actualNames, expectedNames)
