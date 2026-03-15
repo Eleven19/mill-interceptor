@@ -15,7 +15,7 @@
 **Files:**
 - Create: `src/io/github/eleven19/mill/interceptor/Cli.scala`
 - Create: `test/src/io/github/eleven19/mill/interceptor/CliSpec.scala`
-- Test: `./mill test.test`
+- Test: `./mill test`
 
 **Step 1: Write the failing parser tests**
 
@@ -48,7 +48,7 @@ test("parse intercept without a tool returns usage error") {
 Run:
 
 ```bash
-./mill test.test
+./mill test
 ```
 
 Expected: FAIL because `Cli`, `CliResult`, and `InterceptTool` do not exist yet.
@@ -98,7 +98,7 @@ here.
 Run:
 
 ```bash
-./mill test.test
+./mill test
 ```
 
 Expected: PASS for the new parser tests and no regressions in the existing suite.
@@ -114,7 +114,7 @@ git commit -m "feat: add top-level interceptor cli parser"
 
 **Files:**
 - Modify: `src/io/github/eleven19/mill/interceptor/Main.scala`
-- Test: `./mill test.test`
+- Test: `./mill test`
 
 **Step 1: Add a failing regression for the new dispatch contract**
 
@@ -180,7 +180,7 @@ Important details:
 Run:
 
 ```bash
-./mill test.test
+./mill test
 ```
 
 Expected: PASS, with the parser tests covering the new contract and existing tool
@@ -245,7 +245,7 @@ Expected:
 Run:
 
 ```bash
-./mill test.test
+./mill test
 ```
 
 Expected: PASS.

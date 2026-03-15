@@ -12,9 +12,14 @@ leading `v`.
 
 ### Changed
 
+- Changed interceptor selection to use `mill-interceptor intercept <tool> ...`
+  instead of `INTERCEPTED_BUILD_TOOL`.
+
 ### Fixed
 
 ### Documentation
+
+- Documented the `intercept` subcommand and `mvn` alias behavior.
 
 ### CI
 

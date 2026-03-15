@@ -11,6 +11,17 @@ This tool serves as a replacement* for:
 - gradle
 - sbt 
 
+## Usage
+
+Invoke the interceptor through the explicit parent command:
+
+- `mill-interceptor intercept mvn test`
+- `mill-interceptor intercept maven clean install`
+- `mill-interceptor intercept sbt compile`
+- `mill-interceptor intercept gradle build`
+
+`mvn` is accepted as an alias for `maven`.
+
 ## Should I use this?
 
 Sure, if you find it useful.
