@@ -17,3 +17,6 @@ Sure, if you find it useful.
 I had a very particular use-case involving integration with certain build pipelines that were
 setup to work with common tools like maven, gradle, and sbt, but with no native support for mill.
 
+## Native releases
+
+Native executables are published through GitHub Releases as platform-specific archives named for `mise`'s GitHub backend. Stable releases use tags like `v1.2.3`; prereleases use semantic prerelease tags like `v1.2.3-rc.1`.
