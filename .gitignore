@@ -6,3 +6,9 @@ out/
 .vscode/
 .scala-build/
 dist/
+.claude/worktrees/
+.worktrees/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
