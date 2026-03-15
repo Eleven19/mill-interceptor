@@ -30,11 +30,17 @@ object Cli:
           |  --version <version>       mill-interceptor version for the shim (default: latest)
           |""".stripMargin
 
-    def parse(args: Chunk[String]): CliResult =
+    /** Parse CLI arguments into a [[CliResult]].
+      *
+      * Returns a pure [[CliResult]] suspended in `Abort[IllegalArgumentException]` for invalid input, keeping the
+      * parsing itself testable and composable.
+      */
+    def parse(args: Chunk[String]): CliResult < Abort[IllegalArgumentException] =
         args.toList match
             case Nil                       => CliResult.Help(None)
             case "-h" :: _ | "--help" :: _ => CliResult.Help(None)
-            case "intercept" :: Nil        => CliResult.Help(Some("Missing intercept tool"))
+            case "intercept" :: Nil =>
+                Abort.fail(new IllegalArgumentException("Missing intercept tool"))
             case "intercept" :: tool :: rest =>
                 tool match
                     case "maven" | "mvn" =>
@@ -44,19 +50,23 @@ object Cli:
                     case "gradle" =>
                         CliResult.Run(InterceptTool.Gradle, Chunk.from(rest))
                     case other =>
-                        CliResult.Help(Some(s"Unsupported intercept tool: $other"))
+                        Abort.fail(new IllegalArgumentException(s"Unsupported intercept tool: $other"))
             case "shim" :: "generate" :: rest =>
                 parseShimGenerate(rest)
             case "shim" :: Nil =>
-                CliResult.Help(Some("Missing shim subcommand. Use: shim generate"))
+                Abort.fail(new IllegalArgumentException("Missing shim subcommand. Use: shim generate"))
             case "shim" :: sub :: _ =>
-                CliResult.Help(Some(s"Unknown shim subcommand: $sub"))
-            case command :: _ => CliResult.Help(Some(s"Unsupported command: $command"))
+                Abort.fail(new IllegalArgumentException(s"Unknown shim subcommand: $sub"))
+            case command :: _ =>
+                Abort.fail(new IllegalArgumentException(s"Unsupported command: $command"))
 
-    private def parseShimGenerate(args: List[String]): CliResult =
+    private def parseShimGenerate(args: List[String]): CliResult < Abort[IllegalArgumentException] =
         parseShimOpts(args, ShimGenerateOptions.default)
 
-    private def parseShimOpts(args: List[String], opts: ShimGenerateOptions): CliResult =
+    private def parseShimOpts(
+        args: List[String],
+        opts: ShimGenerateOptions
+    ): CliResult < Abort[IllegalArgumentException] =
         args match
             case Nil =>
                 CliResult.ShimGenerate(opts)
@@ -71,18 +81,22 @@ object Cli:
                             case Some(tool) =>
                                 parseShimOpts(rest, opts.copy(tools = List(tool)))
                             case None =>
-                                CliResult.Help(Some(s"Unsupported tool: $other. Use maven, gradle, sbt, or all"))
+                                Abort.fail(
+                                    new IllegalArgumentException(
+                                        s"Unsupported tool: $other. Use maven, gradle, sbt, or all"
+                                    )
+                                )
             case ("-t" | "--tool") :: Nil =>
-                CliResult.Help(Some("Missing value for --tool"))
+                Abort.fail(new IllegalArgumentException("Missing value for --tool"))
             case ("-w" | "--wrapper") :: rest =>
                 parseShimOpts(rest, opts.copy(wrapper = true))
             case ("-o" | "--output-dir") :: dir :: rest =>
                 parseShimOpts(rest, opts.copy(outputDir = Paths.get(dir)))
             case ("-o" | "--output-dir") :: Nil =>
-                CliResult.Help(Some("Missing value for --output-dir"))
+                Abort.fail(new IllegalArgumentException("Missing value for --output-dir"))
             case "--version" :: v :: rest =>
                 parseShimOpts(rest, opts.copy(version = v))
             case "--version" :: Nil =>
-                CliResult.Help(Some("Missing value for --version"))
+                Abort.fail(new IllegalArgumentException("Missing value for --version"))
             case unknown :: _ =>
-                CliResult.Help(Some(s"Unknown shim generate option: $unknown"))
+                Abort.fail(new IllegalArgumentException(s"Unknown shim generate option: $unknown"))
