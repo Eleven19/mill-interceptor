@@ -27,3 +27,6 @@ rg -F 'secrets.SONATYPE_USERNAME || secrets.CENTRAL_PORTAL_USERNAME' .github/wor
 rg -F 'secrets.SONATYPE_PASSWORD || secrets.CENTRAL_PORTAL_PASSWORD' .github/workflows/publish-central.yml
 rg -F 'secrets.SONATYPE_GPG_PRIVATE_KEY || secrets.CENTRAL_SIGNING_KEY' .github/workflows/publish-central.yml
 rg -F 'secrets.SONATYPE_GPG_PASSPHRASE || secrets.CENTRAL_SIGNING_PASSWORD' .github/workflows/publish-central.yml
+
+rg -F 'mill-jvm-version: "graalvm-java25:25.0.1"' build.mill.yaml
+test "$(rg -c 'jvmVersion: "graalvm-java25:25.0.1"' build.mill.yaml)" = "2"
