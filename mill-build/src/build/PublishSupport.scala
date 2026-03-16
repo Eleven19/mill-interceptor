@@ -70,7 +70,7 @@ trait PublishSupport extends PublishModule { this: JavaModule & NativeImageModul
   }
 
   object assemblyPublish extends PublishedAssetModule {
-    def publishedArtifactId = "milli-assembly"
+    def publishedArtifactId = "milli-dist"
     def publishedExt = "jar"
 
     override def publishArtifacts = Task {

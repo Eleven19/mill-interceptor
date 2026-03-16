@@ -15,7 +15,7 @@ The release automation has four goals:
 2. Package each executable into a predictable archive layout that `mise` can install from GitHub Releases.
 3. Publish an executable assembly jar plus `milli` launcher scripts alongside the native archives in GitHub Releases.
 4. Publish release notes that start with curated changelog content and then append generated `git-cliff` notes.
-5. Publish the `milli`, `milli-assembly`, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
+5. Publish the `milli`, the `milli-dist` assembly jar artifact, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
 
 The workflow definitions live in:
 
@@ -295,7 +295,7 @@ Examples:
 - `mill-interceptor-v1.2.3-x86_64-unknown-linux-gnu.tar.gz`
 - `mill-interceptor-v1.2.3-aarch64-apple-darwin.tar.gz`
 - `mill-interceptor-v1.2.3-x86_64-pc-windows-msvc.zip`
-- `mill-interceptor-assembly-v1.2.3.jar`
+- `mill-interceptor-dist-v1.2.3.jar`
 - `milli`
 - `milli.bat`
 
@@ -385,7 +385,7 @@ For workflow-script verification, useful spot checks are:
 RUNNER_TEMP=/tmp scripts/ci/compute-archive-name.sh 1.2.3 aarch64-unknown-linux-gnu
 RUNNER_TEMP=/tmp scripts/ci/build-release-archive.sh 1.2.3 aarch64-unknown-linux-gnu mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz
 RUNNER_TEMP=/tmp scripts/ci/compute-assembly-name.sh 1.2.3
-RUNNER_TEMP=/tmp scripts/ci/build-release-assembly.sh 1.2.3 mill-interceptor-assembly-v1.2.3.jar
+RUNNER_TEMP=/tmp scripts/ci/build-release-assembly.sh 1.2.3 mill-interceptor-dist-v1.2.3.jar
 RUNNER_TEMP=/tmp scripts/ci/compute-launcher-name.sh unix unix_launcher_name
 RUNNER_TEMP=/tmp scripts/ci/build-release-launcher.sh 1.2.3 unix milli
 scripts/ci/test-publish-metadata.sh 1.2.3
@@ -402,7 +402,7 @@ The Maven Central workflow is intentionally separate from GitHub Releases so pub
 
 - triggers on `v*` tags
 - normalizes the release version with the same metadata action used by `release.yml`
-- publishes `milli` and `milli-assembly` on Linux
+- publishes `milli` and the `milli-dist` assembly jar artifact on Linux
 - publishes each platform-specific `milli-native-*` artifact on its matching runner
 
 The workflow expects Actions secrets for:

@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: scripts/ci/publish-central.sh publish "${{ needs.metadata.outputs.version }}"
 
-      - name: Publish assembly artifact
+      - name: Publish assembly jar artifact
         shell: bash
         run: scripts/ci/publish-central.sh assemblyPublish.publish "${{ needs.metadata.outputs.version }}"
 

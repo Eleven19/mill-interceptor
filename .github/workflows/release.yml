@@ -87,7 +87,7 @@ jobs:
           distribution: temurin
           java-version: "25"
 
-      - name: Compute assembly name
+      - name: Compute assembly jar name
         id: assembly-name
         shell: bash
         run: scripts/ci/compute-assembly-name.sh "${{ needs.metadata.outputs.version }}"
@@ -102,7 +102,7 @@ jobs:
         shell: bash
         run: scripts/ci/compute-launcher-name.sh windows windows_launcher_name
 
-      - name: Build release assembly
+      - name: Build release assembly jar
         shell: bash
         run: scripts/ci/build-release-assembly.sh "${{ needs.metadata.outputs.version }}" "${{ steps.assembly-name.outputs.assembly_name }}"
 
