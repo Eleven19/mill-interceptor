@@ -33,5 +33,8 @@ jobs:
       - name: Run unit tests
         run: ./mill __.test
 
-      - name: Run integration tests
-        run: ./mill modules.mill-interceptor.itest.testLocal modules.mill-interceptor-maven-plugin.itest.testForked
+      - name: Run interceptor integration tests
+        run: ./mill modules.mill-interceptor.itest.testLocal
+
+      - name: Run Maven plugin integration tests
+        run: ./mill modules.mill-interceptor-maven-plugin.itest.testForked
