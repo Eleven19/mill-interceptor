@@ -1,6 +1,12 @@
 name: Publish Maven Central
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 1.0.0) - omit the leading v"
+        required: true
+        type: string
   push:
     tags:
       - "v*"
@@ -21,6 +27,8 @@ jobs:
 
       - id: metadata
         uses: ./.github/actions/release-metadata
+        with:
+          version: ${{ inputs.version || '' }}
 
   publish-core:
     needs: metadata

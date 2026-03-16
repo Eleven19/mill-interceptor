@@ -22,6 +22,11 @@ done
 
 rg -F 'runner: macos-15-intel' .github/workflows/release.yml
 rg -F 'runner: macos-15-intel' .github/workflows/publish-central.yml
+rg -F 'workflow_dispatch:' .github/workflows/publish-central.yml
+rg -F 'version:' .github/workflows/publish-central.yml
+rg -F 'description: "Release version (e.g. 1.0.0) - omit the leading v"' .github/workflows/publish-central.yml
+rg -F 'required: true' .github/workflows/publish-central.yml
+rg -F "version: \${{ inputs.version || '' }}" .github/workflows/publish-central.yml
 rg -F 'name: release-extras' .github/workflows/release.yml
 rg -F 'path: |' .github/workflows/release.yml
 rg -x '            out/releaseAssembly.dest' .github/workflows/release.yml

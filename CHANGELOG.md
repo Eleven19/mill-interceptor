@@ -20,6 +20,7 @@ leading `v`.
 
 - Aligned Maven Central publishing with Eleven19 org secrets by using the `ELEVEN19_*` Sonatype and base64 PGP credentials path.
 - Fixed release extras packaging so the Unix `milli` launcher is retained in GitHub release assets alongside `milli.bat`.
+- Added manual `workflow_dispatch` support for the Maven Central publish workflow so release publishing can be retried without a new tag.
 
 ## [0.2.0] - 2026-03-16
 
