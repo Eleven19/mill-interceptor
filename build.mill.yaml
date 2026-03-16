@@ -43,7 +43,7 @@ mvnDeps:
 #------------------------------------
 # Application options
 #------------------------------------
-mainClass: io.github.eleven19.mill.interceptor.Main
+mainClass: io.eleven19.mill.interceptor.Main
 
 #------------------------------------
 # Native image options

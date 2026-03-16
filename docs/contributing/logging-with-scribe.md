@@ -45,7 +45,7 @@ No extra module is required.
 
 ### 2. Implementing `Log.Unsafe` with Scribe
 
-We introduced **`ScribeLog`** in `src/io/github/eleven19/mill/interceptor/ScribeLog.scala`.
+We introduced **`ScribeLog`** in `src/io/eleven19/mill/interceptor/ScribeLog.scala`.
 
 Conceptually:
 
@@ -81,7 +81,7 @@ In `Main.scala`:
 
 ```scala
 object Main extends KyoApp:
-    private val scribeLog = ScribeLog("io.github.eleven19.mill.interceptor")
+    private val scribeLog = ScribeLog("io.eleven19.mill.interceptor")
 
     run {
         Log.let(scribeLog) {
