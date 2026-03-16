@@ -10,7 +10,7 @@ import java.util.zip.ZipOutputStream
 
 trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule =>
   private val toolName = "mill-interceptor"
-  private val mavenGroup = "io.github.eleven19.mill-interceptor"
+  private val mavenGroup = "io.eleven19.mill-interceptor"
   private val libraryArtifact = "milli"
   private val distArtifact = "milli-dist"
   private val defaultVersionToken = "@MILLI_DEFAULT_VERSION@"

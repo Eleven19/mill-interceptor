@@ -7,7 +7,7 @@ import gradle.Gradle
 import shim.ShimGenerator
 
 object Main extends KyoApp:
-    private val scribeLog = ScribeLog("io.github.eleven19.mill.interceptor")
+    private val scribeLog = ScribeLog("io.eleven19.mill.interceptor")
 
     run {
         Log.let(scribeLog) {
