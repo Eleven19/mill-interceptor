@@ -6,7 +6,7 @@ output_name="${2:?output name is required}"
 output_file="${GITHUB_OUTPUT:-}"
 
 launcher_name="$(
-  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh show releaseLauncherName \
+  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh show modules.mill-interceptor.releaseLauncherName \
     --launcher-os "$launcher_os" \
   | sed -n 's/^"//; s/"$//; p' \
   | tail -n 1

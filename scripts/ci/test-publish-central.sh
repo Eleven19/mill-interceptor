@@ -27,7 +27,7 @@ output="$(
   SONATYPE_PASSWORD="pass" \
   PGP_PASSPHRASE="phrase" \
   PGP_SECRET=$'line-one\nline-two\n' \
-  scripts/ci/publish-central.sh assemblyPublish.publishSonatypeCentral 1.2.3
+  scripts/ci/publish-central.sh modules.mill-interceptor.assemblyPublish.publishSonatypeCentral 1.2.3
 )"
 
 printf '%s\n' "$output" | rg -x 'MILL_SONATYPE_USERNAME=user'
@@ -35,4 +35,15 @@ printf '%s\n' "$output" | rg -x 'MILL_SONATYPE_PASSWORD=pass'
 printf '%s\n' "$output" | rg -x 'MILL_PGP_PASSPHRASE=phrase'
 printf '%s\n' "$output" | rg -x 'MILL_PGP_SECRET_BASE64=line-oneline-two'
 printf '%s\n' "$output" | rg -x 'MILLI_PUBLISH_VERSION=1.2.3'
-printf '%s\n' "$output" | rg -x 'ARGS=--no-server assemblyPublish.publishSonatypeCentral'
+printf '%s\n' "$output" | rg -x 'ARGS=--no-server modules.mill-interceptor.assemblyPublish.publishSonatypeCentral'
+
+plugin_output="$(
+  cd "$tmpdir"
+  SONATYPE_USERNAME="user" \
+  SONATYPE_PASSWORD="pass" \
+  PGP_PASSPHRASE="phrase" \
+  PGP_SECRET=$'line-one\nline-two\n' \
+  scripts/ci/publish-central.sh modules.mill-interceptor-maven-plugin.publishSonatypeCentral 1.2.3
+)"
+
+printf '%s\n' "$plugin_output" | rg -x 'ARGS=--no-server modules.mill-interceptor-maven-plugin.publishSonatypeCentral'

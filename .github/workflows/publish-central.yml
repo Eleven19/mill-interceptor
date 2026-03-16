@@ -48,11 +48,15 @@ jobs:
 
       - name: Publish library artifact
         shell: bash
-        run: scripts/ci/publish-central.sh publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
+        run: scripts/ci/publish-central.sh modules.mill-interceptor.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
 
       - name: Publish assembly jar artifact
         shell: bash
-        run: scripts/ci/publish-central.sh assemblyPublish.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
+        run: scripts/ci/publish-central.sh modules.mill-interceptor.assemblyPublish.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
+
+      - name: Publish Maven plugin artifact
+        shell: bash
+        run: scripts/ci/publish-central.sh modules.mill-interceptor-maven-plugin.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
 
   publish-native:
     needs: metadata
@@ -60,15 +64,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - module: nativeLinuxAmd64Publish.publishSonatypeCentral
+          - module: modules.mill-interceptor.nativeLinuxAmd64Publish.publishSonatypeCentral
             runner: ubuntu-latest
-          - module: nativeLinuxAarch64Publish.publishSonatypeCentral
+          - module: modules.mill-interceptor.nativeLinuxAarch64Publish.publishSonatypeCentral
             runner: ubuntu-24.04-arm
-          - module: nativeMacosAmd64Publish.publishSonatypeCentral
+          - module: modules.mill-interceptor.nativeMacosAmd64Publish.publishSonatypeCentral
             runner: macos-15-intel
-          - module: nativeMacosAarch64Publish.publishSonatypeCentral
+          - module: modules.mill-interceptor.nativeMacosAarch64Publish.publishSonatypeCentral
             runner: macos-14
-          - module: nativeWindowsAmd64Publish.publishSonatypeCentral
+          - module: modules.mill-interceptor.nativeWindowsAmd64Publish.publishSonatypeCentral
             runner: windows-latest
     runs-on: ${{ matrix.runner }}
     env:

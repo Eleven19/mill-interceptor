@@ -1,0 +1,35 @@
+extends:
+  - _root_.build.InterceptorModule
+
+mainClass: io.eleven19.mill.interceptor.Main
+
+mvnDeps:
+  - com.github.alexarchambault::case-app::2.1.0
+  - com.outr::scribe::3.18.0
+  - io.getkyo::kyo-core::1.0-RC1
+  - io.getkyo::kyo-direct:1.0-RC1
+  - io.getkyo::kyo-prelude:1.0-RC1
+
+nativeImageOptions:
+  - "--no-fallback"
+
+object test:
+  extends:
+    - ScoverageTests
+    - TestModule.ZioTest
+  mvnDeps:
+    - dev.zio::zio-test::2.1.24
+    - dev.zio::zio-test-sbt::2.1.24
+    - io.getkyo::kyo-zio-test::1.0-RC1
+
+object itest:
+  extends:
+    - ScalaTests
+    - TestModule.Junit5
+  mvnDeps:
+    - org.scalameta::munit::1.0.4
+    - io.cucumber::cucumber-scala:8.25.1
+    - io.cucumber:cucumber-junit-platform-engine:7.20.1
+    - org.junit.platform:junit-platform-suite:1.11.4
+    - org.junit.platform:junit-platform-suite-engine:1.11.4
+    - org.junit.jupiter:junit-jupiter-engine:5.11.4

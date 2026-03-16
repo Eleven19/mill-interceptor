@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check formatting
-        run: ./mill checkFormat
+        run: ./mill __.checkFormat
 
   build:
     name: Build & Test
@@ -31,7 +31,10 @@ jobs:
         run: ./mill __.compile
 
       - name: Run unit tests
-        run: ./mill test
+        run: ./mill __.test
 
-      - name: Run integration tests
-        run: ./mill itest
+      - name: Run interceptor integration tests
+        run: ./mill modules.mill-interceptor.itest.testLocal
+
+      - name: Run Maven plugin integration tests
+        run: ./mill modules.mill-interceptor-maven-plugin.itest.testForked

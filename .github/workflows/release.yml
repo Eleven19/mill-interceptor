@@ -72,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}
-          path: out/releaseArchive.dest/${{ steps.archive-name.outputs.archive_name }}
+          path: out/modules/mill-interceptor/releaseArchive.dest/${{ steps.archive-name.outputs.archive_name }}
           if-no-files-found: error
 
   extras:
@@ -119,8 +119,8 @@ jobs:
         with:
           name: release-extras
           path: |
-            out/releaseAssembly.dest
-            out/releaseLauncher.dest
+            out/modules/mill-interceptor/releaseAssembly.dest
+            out/modules/mill-interceptor/releaseLauncher.dest
           if-no-files-found: error
 
   publish:

@@ -1,0 +1,44 @@
+extends:
+  - _root_.build.CommonScalaModule
+  - PublishModule
+  - SonatypeCentralPublishModule
+  - _root_.build.MavenPluginSupport
+
+artifactId: mill-interceptor-maven-plugin
+
+mvnDeps:
+  - com.outr::scribe::3.18.0
+  - io.getkyo::kyo-core::1.0-RC1
+  - io.getkyo::kyo-direct:1.0-RC1
+  - io.getkyo::kyo-prelude:1.0-RC1
+  - org.apache.maven:maven-plugin-api:3.9.9
+  - org.apache.maven.plugin-tools:maven-plugin-annotations:3.15.2
+
+pomSettings:
+  description: A Maven plugin for bridging Maven lifecycle executions into Mill interceptor workflows.
+  organization: io.eleven19.mill-interceptor
+  url: https://github.com/Eleven19/mill-interceptor
+  licenses:
+    - Apache-2.0
+  versionControl: https://github.com/Eleven19/mill-interceptor
+  developers:
+    - id: DamianReeves
+      name: Damian Reeves
+      url: https://github.com/DamianReeves
+
+object test:
+  extends:
+    - ScalaTests
+    - TestModule.ZioTest
+  mvnDeps:
+    - dev.zio::zio-test::2.1.24
+    - dev.zio::zio-test-sbt::2.1.24
+    - io.getkyo::kyo-zio-test::1.0-RC1
+
+object itest:
+  extends:
+    - MavenPluginItestModule
+  mvnDeps:
+    - dev.zio::zio-test::2.1.24
+    - dev.zio::zio-test-sbt::2.1.24
+    - io.getkyo::kyo-zio-test::1.0-RC1

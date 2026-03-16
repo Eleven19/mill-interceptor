@@ -29,20 +29,21 @@ rg -F 'required: true' .github/workflows/publish-central.yml
 rg -F "version: \${{ inputs.version || '' }}" .github/workflows/publish-central.yml
 rg -F 'name: release-extras' .github/workflows/release.yml
 rg -F 'path: |' .github/workflows/release.yml
-rg -x '            out/releaseAssembly.dest' .github/workflows/release.yml
-rg -x '            out/releaseLauncher.dest' .github/workflows/release.yml
+rg -x '            out/modules/mill-interceptor/releaseAssembly.dest' .github/workflows/release.yml
+rg -x '            out/modules/mill-interceptor/releaseLauncher.dest' .github/workflows/release.yml
 
 rg -F 'secrets.ELEVEN19_SONATYPE_USERNAME' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_SONATYPE_PASSWORD' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_IO_PGP_SECRET_BASE64' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_IO_PGP_PASSPHRASE' .github/workflows/publish-central.yml
-rg -F 'scripts/ci/publish-central.sh publishSonatypeCentral' .github/workflows/publish-central.yml
-rg -F 'assemblyPublish.publishSonatypeCentral' .github/workflows/publish-central.yml
-rg -F 'nativeLinuxAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
-rg -F 'nativeLinuxAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
-rg -F 'nativeMacosAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
-rg -F 'nativeMacosAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
-rg -F 'nativeWindowsAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'scripts/ci/publish-central.sh modules.mill-interceptor.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor.assemblyPublish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor-maven-plugin.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor.nativeLinuxAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor.nativeLinuxAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor.nativeMacosAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor.nativeMacosAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor.nativeWindowsAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
 
 if rg -F 'ghaction-import-gpg' .github/workflows/publish-central.yml >/dev/null; then
   echo ".github/workflows/publish-central.yml should not import a GPG key directly" >&2
@@ -50,9 +51,11 @@ if rg -F 'ghaction-import-gpg' .github/workflows/publish-central.yml >/dev/null;
 fi
 
 rg -F 'mill-jvm-version: "graalvm-java25:25.0.1"' build.mill.yaml
-test "$(rg -c 'jvmVersion: "graalvm-java25:25.0.1"' build.mill.yaml)" = "2"
+rg -F '_root_.build.InterceptorModule' modules/mill-interceptor/package.mill.yaml
+rg -F '_root_.build.MavenPluginSupport' modules/mill-interceptor-maven-plugin/package.mill.yaml
 
 test -f scripts/ci/test-namespace-rename.sh
 test -f scripts/ci/test-publish-central.sh
 test -f scripts/ci/recommend-prerelease.sh
 test -f scripts/ci/test-recommend-prerelease.sh
+test -f scripts/ci/test-multi-module-layout.sh
