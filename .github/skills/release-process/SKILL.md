@@ -23,6 +23,33 @@ Use this skill for release workflow work, release docs, changelog promotion from
 - `CHANGELOG.md`
 - `cliff.toml`
 - `scripts/ci/build-release-notes.sh`
+- `scripts/ci/recommend-prerelease.sh`
+
+## Publish Next Prerelease
+
+Use this when the user wants to cut the next prerelease but does not want to
+manually derive the version.
+
+1. Run `scripts/ci/recommend-prerelease.sh`.
+2. Review the recommendation and alternatives:
+   - recommended `rc`
+   - `beta`
+   - `alpha`
+   - branch-based prerelease from the current branch name
+   - patch/minor/major `rc` alternatives
+3. Ask the user which channel or exact version to use.
+4. Dispatch the existing release workflow with the chosen version:
+
+```bash
+gh workflow run release.yml --ref <branch> -f version=<chosen-version>
+```
+
+The recommendation logic uses the latest stable `vX.Y.Z` tag plus conventional
+commit signals since that tag:
+
+- breaking change -> next major prerelease
+- `feat` -> next minor prerelease
+- otherwise -> next patch prerelease
 
 ## Verification
 
