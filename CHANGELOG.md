@@ -12,16 +12,31 @@ leading `v`.
 
 ### Changed
 
-- Changed interceptor selection to use `mill-interceptor intercept <tool> ...`
-  instead of `INTERCEPTED_BUILD_TOOL`.
+### Fixed
+
+### Documentation
+
+### CI
+
+## [0.2.0] - 2026-03-16
+
+### Added
+
+- Added a prerelease recommendation helper for maintainers to derive the next semantic prerelease version and channel.
+
+### Changed
+
+- Renamed the runtime package namespace and published Maven coordinates to `io.eleven19.mill-interceptor`.
 
 ### Fixed
 
 ### Documentation
 
-- Documented the `intercept` subcommand and `mvn` alias behavior.
+- Documented the prerelease recommendation and dispatch flow for maintainers cutting releases.
 
 ### CI
+
+- Added release workflow coverage for namespace publishing metadata and prerelease recommendation helpers.
 
 ## [0.1.0] - 2026-03-14
 
