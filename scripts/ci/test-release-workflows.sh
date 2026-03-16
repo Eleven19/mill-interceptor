@@ -51,8 +51,8 @@ if rg -F 'ghaction-import-gpg' .github/workflows/publish-central.yml >/dev/null;
 fi
 
 rg -F 'mill-jvm-version: "graalvm-java25:25.0.1"' build.mill.yaml
-rg -F 'extends: _root_.build.InterceptorModule' modules/mill-interceptor/package.mill.yaml
-rg -F 'extends: _root_.build.MavenPluginModule' modules/mill-interceptor-maven-plugin/package.mill.yaml
+rg -F '_root_.build.InterceptorModule' modules/mill-interceptor/package.mill.yaml
+rg -F '_root_.build.MavenPluginSupport' modules/mill-interceptor-maven-plugin/package.mill.yaml
 
 test -f scripts/ci/test-namespace-rename.sh
 test -f scripts/ci/test-publish-central.sh
