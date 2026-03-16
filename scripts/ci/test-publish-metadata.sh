@@ -25,6 +25,9 @@ printf '%s\n' "$dist_payload" | rg -F "\"id\": \"milli-dist\""
 printf '%s\n' "$dist_payload" | rg -F "\"milli-dist-${version}.jar\""
 
 resolved_modules="$(COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh --no-server resolve _)"
+resolved_publish_tasks="$(
+  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh --no-server resolve __.publishSonatypeCentral
+)"
 
 printf '%s\n' "$resolved_modules" | rg -x "assemblyPublish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeLinuxAmd64Publish"
@@ -32,3 +35,11 @@ printf '%s\n' "$resolved_modules" | rg -x "nativeLinuxAarch64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeMacosAmd64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeMacosAarch64Publish"
 printf '%s\n' "$resolved_modules" | rg -x "nativeWindowsAmd64Publish"
+
+printf '%s\n' "$resolved_publish_tasks" | rg -x "publishSonatypeCentral"
+printf '%s\n' "$resolved_publish_tasks" | rg -x "assemblyPublish.publishSonatypeCentral"
+printf '%s\n' "$resolved_publish_tasks" | rg -x "nativeLinuxAmd64Publish.publishSonatypeCentral"
+printf '%s\n' "$resolved_publish_tasks" | rg -x "nativeLinuxAarch64Publish.publishSonatypeCentral"
+printf '%s\n' "$resolved_publish_tasks" | rg -x "nativeMacosAmd64Publish.publishSonatypeCentral"
+printf '%s\n' "$resolved_publish_tasks" | rg -x "nativeMacosAarch64Publish.publishSonatypeCentral"
+printf '%s\n' "$resolved_publish_tasks" | rg -x "nativeWindowsAmd64Publish.publishSonatypeCentral"

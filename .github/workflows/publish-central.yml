@@ -48,11 +48,11 @@ jobs:
 
       - name: Publish library artifact
         shell: bash
-        run: scripts/ci/publish-central.sh publish "${{ needs.metadata.outputs.version }}"
+        run: scripts/ci/publish-central.sh publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
 
       - name: Publish assembly jar artifact
         shell: bash
-        run: scripts/ci/publish-central.sh assemblyPublish.publish "${{ needs.metadata.outputs.version }}"
+        run: scripts/ci/publish-central.sh assemblyPublish.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
 
   publish-native:
     needs: metadata
@@ -60,15 +60,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - module: nativeLinuxAmd64Publish.publish
+          - module: nativeLinuxAmd64Publish.publishSonatypeCentral
             runner: ubuntu-latest
-          - module: nativeLinuxAarch64Publish.publish
+          - module: nativeLinuxAarch64Publish.publishSonatypeCentral
             runner: ubuntu-24.04-arm
-          - module: nativeMacosAmd64Publish.publish
+          - module: nativeMacosAmd64Publish.publishSonatypeCentral
             runner: macos-15-intel
-          - module: nativeMacosAarch64Publish.publish
+          - module: nativeMacosAarch64Publish.publishSonatypeCentral
             runner: macos-14
-          - module: nativeWindowsAmd64Publish.publish
+          - module: nativeWindowsAmd64Publish.publishSonatypeCentral
             runner: windows-latest
     runs-on: ${{ matrix.runner }}
     env:

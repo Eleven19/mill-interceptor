@@ -4,9 +4,11 @@ import mill.*
 import mill.javalib.NativeImageModule
 import mill.scalalib.JavaModule
 import mill.scalalib.PublishModule
+import mill.scalalib.SonatypeCentralPublishModule
 import mill.scalalib.publish.{Artifact, Developer, License, PomSettings, PublishInfo, VersionControl}
 
-trait PublishSupport extends PublishModule { this: JavaModule & NativeImageModule & ReleaseSupport =>
+trait PublishSupport extends PublishModule with SonatypeCentralPublishModule {
+  this: JavaModule & NativeImageModule & ReleaseSupport =>
   private val defaultPublishVersion = "0.0.0-SNAPSHOT"
   private val nativePublishModules = Seq(
     "x86_64-unknown-linux-gnu" -> "milli-native-linux-amd64",
@@ -57,7 +59,7 @@ trait PublishSupport extends PublishModule { this: JavaModule & NativeImageModul
     }
   }
 
-  trait PublishedAssetModule extends mill.Module with PublishModule {
+  trait PublishedAssetModule extends mill.Module with PublishModule with SonatypeCentralPublishModule {
     def publishedArtifactId: String
     def publishedExt: String
 

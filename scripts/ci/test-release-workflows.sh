@@ -36,6 +36,13 @@ rg -F 'secrets.ELEVEN19_SONATYPE_USERNAME' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_SONATYPE_PASSWORD' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_IO_PGP_SECRET_BASE64' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_IO_PGP_PASSPHRASE' .github/workflows/publish-central.yml
+rg -F 'scripts/ci/publish-central.sh publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'assemblyPublish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'nativeLinuxAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'nativeLinuxAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'nativeMacosAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'nativeMacosAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'nativeWindowsAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
 
 if rg -F 'ghaction-import-gpg' .github/workflows/publish-central.yml >/dev/null; then
   echo ".github/workflows/publish-central.yml should not import a GPG key directly" >&2

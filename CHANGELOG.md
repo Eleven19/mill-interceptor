@@ -19,6 +19,7 @@ leading `v`.
 ### CI
 
 - Aligned Maven Central publishing with Eleven19 org secrets by using the `ELEVEN19_*` Sonatype and base64 PGP credentials path.
+- Switched Maven Central publishing tasks to Mill's `publishSonatypeCentral` surface so release jobs use the same Central publishing path as `ascribe`.
 - Fixed release extras packaging so the Unix `milli` launcher is retained in GitHub release assets alongside `milli.bat`.
 - Added manual `workflow_dispatch` support for the Maven Central publish workflow so release publishing can be retried without a new tag.
 
