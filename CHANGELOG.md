@@ -19,6 +19,7 @@ leading `v`.
 ### CI
 
 - Aligned Maven Central publishing with Eleven19 org secrets by using the `ELEVEN19_*` Sonatype and base64 PGP credentials path.
+- Fixed release extras packaging so the Unix `milli` launcher is retained in GitHub release assets alongside `milli.bat`.
 
 ## [0.2.0] - 2026-03-16
 

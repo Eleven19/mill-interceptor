@@ -22,6 +22,10 @@ done
 
 rg -F 'runner: macos-15-intel' .github/workflows/release.yml
 rg -F 'runner: macos-15-intel' .github/workflows/publish-central.yml
+rg -F 'name: release-extras' .github/workflows/release.yml
+rg -F 'path: |' .github/workflows/release.yml
+rg -x '            out/releaseAssembly.dest' .github/workflows/release.yml
+rg -x '            out/releaseLauncher.dest' .github/workflows/release.yml
 
 rg -F 'secrets.ELEVEN19_SONATYPE_USERNAME' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_SONATYPE_PASSWORD' .github/workflows/publish-central.yml

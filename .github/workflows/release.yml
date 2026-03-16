@@ -119,9 +119,8 @@ jobs:
         with:
           name: release-extras
           path: |
-            out/releaseAssembly.dest/${{ steps.assembly-name.outputs.assembly_name }}
-            out/releaseLauncher.dest/${{ steps.unix-launcher-name.outputs.unix_launcher_name }}
-            out/releaseLauncher.dest/${{ steps.windows-launcher-name.outputs.windows_launcher_name }}
+            out/releaseAssembly.dest
+            out/releaseLauncher.dest
           if-no-files-found: error
 
   publish:
