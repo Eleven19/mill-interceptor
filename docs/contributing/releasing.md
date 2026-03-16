@@ -97,6 +97,52 @@ Two release entrypoints are supported:
 
 Tag pushes are the normal stable-release path. `workflow_dispatch` is useful for prereleases, dry-run-style cuts against a branch head, or when you want the workflow to create the matching Git tag for you.
 
+## Recommending the next prerelease
+
+When you want to cut a prerelease but do not want to derive the version
+manually, use:
+
+```bash
+scripts/ci/recommend-prerelease.sh
+```
+
+The helper:
+
+- finds the latest stable `vX.Y.Z` tag
+- inspects commits since that tag using conventional-commit signals
+- recommends the next prerelease base:
+  - breaking change -> next major
+  - `feat` -> next minor
+  - otherwise -> next patch
+- computes the next prerelease number for:
+  - `rc`
+  - `beta`
+  - `alpha`
+  - a branch-based prerelease identifier derived from the current branch name
+
+Example output:
+
+```text
+Latest stable tag: v0.1.0
+Current branch: mi-123-launcher-redesign
+Branch prerelease channel: mi-123-launcher-redesign
+
+Recommended prerelease:
+- rc: 0.2.0-rc.1
+
+Alternative channels on 0.2.0:
+- beta: 0.2.0-beta.1
+- alpha: 0.2.0-alpha.1
+- branch: 0.2.0-mi-123-launcher-redesign.1
+```
+
+After reviewing the recommendation, ask the user which channel or exact version
+to use and dispatch the existing release workflow:
+
+```bash
+gh workflow run release.yml --ref <branch> -f version=<chosen-version>
+```
+
 ## Versioning rules
 
 The repository uses two related but different version forms:

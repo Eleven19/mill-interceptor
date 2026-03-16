@@ -32,3 +32,5 @@ rg -F 'mill-jvm-version: "graalvm-java25:25.0.1"' build.mill.yaml
 test "$(rg -c 'jvmVersion: "graalvm-java25:25.0.1"' build.mill.yaml)" = "2"
 
 test -f scripts/ci/test-namespace-rename.sh
+test -f scripts/ci/recommend-prerelease.sh
+test -f scripts/ci/test-recommend-prerelease.sh
