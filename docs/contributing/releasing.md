@@ -453,11 +453,12 @@ The Maven Central workflow is intentionally separate from GitHub Releases so pub
 
 The workflow expects Actions secrets for:
 
-- Sonatype credentials
-- GPG private key
-- GPG passphrase
+- `ELEVEN19_SONATYPE_USERNAME`
+- `ELEVEN19_SONATYPE_PASSWORD`
+- `ELEVEN19_IO_PGP_SECRET_BASE64`
+- `ELEVEN19_IO_PGP_PASSPHRASE`
 
-This repository is expected to consume the organization-provided secret set rather than introducing a second credentials scheme.
+These are organization-provided secrets already used by other Eleven19 repositories. The workflow forwards the Sonatype credentials and base64-encoded PGP material directly to Mill rather than importing a raw GPG key inside Actions.
 
 ## Manual release flow
 

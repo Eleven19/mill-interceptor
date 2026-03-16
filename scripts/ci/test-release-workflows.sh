@@ -23,14 +23,20 @@ done
 rg -F 'runner: macos-15-intel' .github/workflows/release.yml
 rg -F 'runner: macos-15-intel' .github/workflows/publish-central.yml
 
-rg -F 'secrets.SONATYPE_USERNAME || secrets.CENTRAL_PORTAL_USERNAME' .github/workflows/publish-central.yml
-rg -F 'secrets.SONATYPE_PASSWORD || secrets.CENTRAL_PORTAL_PASSWORD' .github/workflows/publish-central.yml
-rg -F 'secrets.SONATYPE_GPG_PRIVATE_KEY || secrets.CENTRAL_SIGNING_KEY' .github/workflows/publish-central.yml
-rg -F 'secrets.SONATYPE_GPG_PASSPHRASE || secrets.CENTRAL_SIGNING_PASSWORD' .github/workflows/publish-central.yml
+rg -F 'secrets.ELEVEN19_SONATYPE_USERNAME' .github/workflows/publish-central.yml
+rg -F 'secrets.ELEVEN19_SONATYPE_PASSWORD' .github/workflows/publish-central.yml
+rg -F 'secrets.ELEVEN19_IO_PGP_SECRET_BASE64' .github/workflows/publish-central.yml
+rg -F 'secrets.ELEVEN19_IO_PGP_PASSPHRASE' .github/workflows/publish-central.yml
+
+if rg -F 'ghaction-import-gpg' .github/workflows/publish-central.yml >/dev/null; then
+  echo ".github/workflows/publish-central.yml should not import a GPG key directly" >&2
+  exit 1
+fi
 
 rg -F 'mill-jvm-version: "graalvm-java25:25.0.1"' build.mill.yaml
 test "$(rg -c 'jvmVersion: "graalvm-java25:25.0.1"' build.mill.yaml)" = "2"
 
 test -f scripts/ci/test-namespace-rename.sh
+test -f scripts/ci/test-publish-central.sh
 test -f scripts/ci/recommend-prerelease.sh
 test -f scripts/ci/test-recommend-prerelease.sh

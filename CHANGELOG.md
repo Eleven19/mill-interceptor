@@ -18,6 +18,8 @@ leading `v`.
 
 ### CI
 
+- Aligned Maven Central publishing with Eleven19 org secrets by using the `ELEVEN19_*` Sonatype and base64 PGP credentials path.
+
 ## [0.2.0] - 2026-03-16
 
 ### Added
