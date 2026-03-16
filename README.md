@@ -1,7 +1,7 @@
 # mill-interceptor
 
 [![CI](https://github.com/Eleven19/mill-interceptor/actions/workflows/ci.yml/badge.svg)](https://github.com/Eleven19/mill-interceptor/actions/workflows/ci.yml)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.eleven19.mill-interceptor/milli_3)](https://central.sonatype.com/artifact/io.github.eleven19.mill-interceptor/milli_3)
+[![Maven Central](https://img.shields.io/maven-central/v/io.eleven19.mill-interceptor/milli_3)](https://central.sonatype.com/artifact/io.eleven19.mill-interceptor/milli_3)
 [![GitHub Release](https://img.shields.io/github/v/release/Eleven19/mill-interceptor)](https://github.com/Eleven19/mill-interceptor/releases/latest)
 
 A tool for intercepting other build tools using mill.
@@ -54,7 +54,7 @@ GitHub Releases publish:
 - `milli`
 - `milli.bat`
 
-Maven Central publishes the `milli` artifact family under `io.github.eleven19.mill-interceptor`:
+Maven Central publishes the `milli` artifact family under `io.eleven19.mill-interceptor`:
 
 - `milli`
 - `milli-dist`
