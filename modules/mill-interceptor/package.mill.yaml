@@ -1,0 +1,3 @@
+extends: _root_.build.InterceptorModule
+
+mainClass: io.eleven19.mill.interceptor.Main

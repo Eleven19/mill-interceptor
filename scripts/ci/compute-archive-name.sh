@@ -6,7 +6,7 @@ target="${2:?target is required}"
 output_file="${GITHUB_OUTPUT:-}"
 
 archive_name="$(
-  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh show releaseAssetName \
+  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh show modules.mill-interceptor.releaseAssetName \
     --version "$version" \
     --target "$target" \
   | sed -n 's/^"//; s/"$//; p' \

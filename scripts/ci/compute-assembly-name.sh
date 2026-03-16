@@ -5,7 +5,7 @@ version="${1:?version is required}"
 output_file="${GITHUB_OUTPUT:-}"
 
 assembly_name="$(
-  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh show releaseAssemblyAssetName \
+  COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" scripts/ci/run-mill.sh show modules.mill-interceptor.releaseAssemblyAssetName \
     --version "$version" \
   | sed -n 's/^"//; s/"$//; p' \
   | tail -n 1

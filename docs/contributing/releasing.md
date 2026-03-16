@@ -359,13 +359,13 @@ The build exposes release-specific commands through `mill-build/src/build/Releas
 Useful local commands:
 
 ```bash
-./mill show releaseTargets
-./mill show releaseAssetName --version 1.2.3 --target x86_64-unknown-linux-gnu
-./mill show releaseArchive --version 1.2.3 --target x86_64-unknown-linux-gnu
-./mill show releaseAssemblyAssetName --version 1.2.3
-./mill show releaseAssembly --version 1.2.3
-./mill show releaseLauncher --version 1.2.3 --launcher-os unix
-./mill show publishArtifactSummary
+./mill show modules.mill-interceptor.releaseTargets
+./mill show modules.mill-interceptor.releaseAssetName --version 1.2.3 --target x86_64-unknown-linux-gnu
+./mill show modules.mill-interceptor.releaseArchive --version 1.2.3 --target x86_64-unknown-linux-gnu
+./mill show modules.mill-interceptor.releaseAssemblyAssetName --version 1.2.3
+./mill show modules.mill-interceptor.releaseAssembly --version 1.2.3
+./mill show modules.mill-interceptor.releaseLauncher --version 1.2.3 --launcher-os unix
+./mill show modules.mill-interceptor.publishArtifactSummary
 ```
 
 These commands are what the workflow uses under the hood. If you need to debug packaging behavior, start here rather than editing the workflow first.
@@ -373,7 +373,7 @@ These commands are what the workflow uses under the hood. If you need to debug p
 ## Packaging flow diagram
 
 ```text
-releaseArchive(version, target)
+modules.mill-interceptor.releaseArchive(version, target)
           |
           v
 +---------------------------+
@@ -416,11 +416,11 @@ tar.gz         zip
 Before pushing release-workflow changes, run at least:
 
 ```bash
-COURSIER_CACHE=/tmp/coursier ./mill test.testLocal
-COURSIER_CACHE=/tmp/coursier ./mill show releaseTargets
-COURSIER_CACHE=/tmp/coursier ./mill show releaseArchive --version 1.2.3 --target aarch64-unknown-linux-gnu
+COURSIER_CACHE=/tmp/coursier ./mill modules.mill-interceptor.test.testLocal
+COURSIER_CACHE=/tmp/coursier ./mill show modules.mill-interceptor.releaseTargets
+COURSIER_CACHE=/tmp/coursier ./mill show modules.mill-interceptor.releaseArchive --version 1.2.3 --target aarch64-unknown-linux-gnu
 scripts/verify-release-archive.sh \
-  out/releaseArchive.dest/mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz \
+  out/modules/mill-interceptor/releaseArchive.dest/mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz \
   mill-interceptor-v1.2.3-aarch64-unknown-linux-gnu.tar.gz \
   mill-interceptor
 ```
@@ -542,7 +542,7 @@ Check the `metadata` job output and confirm the version follows semantic version
 Verify locally with:
 
 ```bash
-./mill show releaseAssetName --version 1.2.3 --target x86_64-pc-windows-msvc
+./mill show modules.mill-interceptor.releaseAssetName --version 1.2.3 --target x86_64-pc-windows-msvc
 ```
 
 ### Workflow YAML is getting hard to read
