@@ -11,7 +11,7 @@ gpg_passphrase="${SONATYPE_GPG_PASSPHRASE:?SONATYPE_GPG_PASSPHRASE is required}"
 export MILLI_PUBLISH_VERSION="$version"
 
 args=(
-  ./mill
+  scripts/ci/run-mill.sh
   --no-server
   "$module_task"
   --sonatypeCreds

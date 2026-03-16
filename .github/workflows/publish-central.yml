@@ -26,10 +26,10 @@ jobs:
     needs: metadata
     runs-on: ubuntu-latest
     env:
-      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-      SONATYPE_GPG_PRIVATE_KEY: ${{ secrets.SONATYPE_GPG_PRIVATE_KEY }}
-      SONATYPE_GPG_PASSPHRASE: ${{ secrets.SONATYPE_GPG_PASSPHRASE }}
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME || secrets.CENTRAL_PORTAL_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD || secrets.CENTRAL_PORTAL_PASSWORD }}
+      SONATYPE_GPG_PRIVATE_KEY: ${{ secrets.SONATYPE_GPG_PRIVATE_KEY || secrets.CENTRAL_SIGNING_KEY }}
+      SONATYPE_GPG_PASSPHRASE: ${{ secrets.SONATYPE_GPG_PASSPHRASE || secrets.CENTRAL_SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -63,17 +63,17 @@ jobs:
           - module: nativeLinuxAarch64Publish.publish
             runner: ubuntu-24.04-arm
           - module: nativeMacosAmd64Publish.publish
-            runner: macos-13
+            runner: macos-15-intel
           - module: nativeMacosAarch64Publish.publish
             runner: macos-14
           - module: nativeWindowsAmd64Publish.publish
             runner: windows-latest
     runs-on: ${{ matrix.runner }}
     env:
-      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-      SONATYPE_GPG_PRIVATE_KEY: ${{ secrets.SONATYPE_GPG_PRIVATE_KEY }}
-      SONATYPE_GPG_PASSPHRASE: ${{ secrets.SONATYPE_GPG_PASSPHRASE }}
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME || secrets.CENTRAL_PORTAL_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD || secrets.CENTRAL_PORTAL_PASSWORD }}
+      SONATYPE_GPG_PRIVATE_KEY: ${{ secrets.SONATYPE_GPG_PRIVATE_KEY || secrets.CENTRAL_SIGNING_KEY }}
+      SONATYPE_GPG_PASSPHRASE: ${{ secrets.SONATYPE_GPG_PASSPHRASE || secrets.CENTRAL_SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
