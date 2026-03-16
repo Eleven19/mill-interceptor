@@ -8,13 +8,13 @@ summary="$(
     scripts/ci/run-mill.sh --no-server show publishArtifactSummary
 )"
 
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-dist:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-linux-amd64:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-linux-aarch64:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-macos-amd64:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-macos-aarch64:${version}\""
-printf '%s\n' "$summary" | rg -F "\"io.github.eleven19.mill-interceptor:milli-native-windows-amd64:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli-dist:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli-native-linux-amd64:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli-native-linux-aarch64:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli-native-macos-amd64:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli-native-macos-aarch64:${version}\""
+printf '%s\n' "$summary" | rg -F "\"io.eleven19.mill-interceptor:milli-native-windows-amd64:${version}\""
 
 dist_payload="$(
   COURSIER_CACHE="${RUNNER_TEMP:-/tmp}/coursier" MILLI_PUBLISH_VERSION="$version" \

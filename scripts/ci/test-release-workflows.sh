@@ -30,3 +30,5 @@ rg -F 'secrets.SONATYPE_GPG_PASSPHRASE || secrets.CENTRAL_SIGNING_PASSWORD' .git
 
 rg -F 'mill-jvm-version: "graalvm-java25:25.0.1"' build.mill.yaml
 test "$(rg -c 'jvmVersion: "graalvm-java25:25.0.1"' build.mill.yaml)" = "2"
+
+test -f scripts/ci/test-namespace-rename.sh
