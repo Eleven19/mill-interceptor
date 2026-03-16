@@ -54,6 +54,10 @@ jobs:
         shell: bash
         run: scripts/ci/publish-central.sh modules.mill-interceptor.assemblyPublish.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
 
+      - name: Publish Maven plugin artifact
+        shell: bash
+        run: scripts/ci/publish-central.sh modules.mill-interceptor-maven-plugin.publishSonatypeCentral "${{ needs.metadata.outputs.version }}"
+
   publish-native:
     needs: metadata
     strategy:

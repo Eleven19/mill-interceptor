@@ -38,6 +38,7 @@ rg -F 'secrets.ELEVEN19_IO_PGP_SECRET_BASE64' .github/workflows/publish-central.
 rg -F 'secrets.ELEVEN19_IO_PGP_PASSPHRASE' .github/workflows/publish-central.yml
 rg -F 'scripts/ci/publish-central.sh modules.mill-interceptor.publishSonatypeCentral' .github/workflows/publish-central.yml
 rg -F 'modules.mill-interceptor.assemblyPublish.publishSonatypeCentral' .github/workflows/publish-central.yml
+rg -F 'modules.mill-interceptor-maven-plugin.publishSonatypeCentral' .github/workflows/publish-central.yml
 rg -F 'modules.mill-interceptor.nativeLinuxAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
 rg -F 'modules.mill-interceptor.nativeLinuxAarch64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml
 rg -F 'modules.mill-interceptor.nativeMacosAmd64Publish.publishSonatypeCentral' .github/workflows/publish-central.yml

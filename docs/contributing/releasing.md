@@ -6,6 +6,7 @@ This repository publishes:
 - an executable assembly jar through GitHub Releases
 - `milli` and `milli.bat` launcher scripts through GitHub Releases
 - the `milli` artifact family through Maven Central
+- the `mill-interceptor-maven-plugin` artifact through Maven Central
 
 ## Overview
 
@@ -15,7 +16,7 @@ The release automation has four goals:
 2. Package each executable into a predictable archive layout that `mise` can install from GitHub Releases.
 3. Publish an executable assembly jar plus `milli` launcher scripts alongside the native archives in GitHub Releases.
 4. Publish release notes that start with curated changelog content and then append generated `git-cliff` notes.
-5. Publish the `milli`, the `milli-dist` assembly jar artifact, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
+5. Publish the `milli`, `milli-dist`, `mill-interceptor-maven-plugin`, and platform-specific `milli-native-*` artifacts to Maven Central from a separate workflow.
 
 The workflow definitions live in:
 
