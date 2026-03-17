@@ -8,6 +8,21 @@ cliff_config="${CLIFF_CONFIG:-$repo_root/cliff.toml}"
 release_notes_file="${RELEASE_NOTES_FILE:-$repo_root/out/release-notes-$version.md}"
 release_tag="v$version"
 
+previous_tag_for() {
+    local target_tag="${1:?target tag is required}"
+
+    git tag --sort=version:refname \
+        | awk -v target="$target_tag" '
+            $0 == target {
+                if (prev != "") {
+                    print prev
+                }
+                exit
+            }
+            { prev = $0 }
+        '
+}
+
 if [[ ! -f "$changelog_path" ]]; then
     echo "CHANGELOG not found: $changelog_path" >&2
     exit 1
@@ -41,7 +56,17 @@ if [[ -z "${curated_section//[$'\t\r\n ']}" ]]; then
 fi
 
 if git rev-parse -q --verify "refs/tags/$release_tag" >/dev/null 2>&1; then
-    generated_notes="$(git-cliff --config "$cliff_config" --current --tag "$release_tag" --strip all)"
+    if git tag --points-at HEAD | grep -Fxq "$release_tag"; then
+        generated_notes="$(git-cliff --config "$cliff_config" --current --tag "$release_tag" --strip all)"
+    else
+        previous_tag="$(previous_tag_for "$release_tag")"
+
+        if [[ -n "$previous_tag" ]]; then
+            generated_notes="$(git-cliff --config "$cliff_config" --tag "$release_tag" --strip all "$previous_tag..$release_tag")"
+        else
+            generated_notes="$(git-cliff --config "$cliff_config" --tag "$release_tag" --strip all "$release_tag")"
+        fi
+    fi
 else
     generated_notes="$(git-cliff --config "$cliff_config" --unreleased --strip all)"
 fi
