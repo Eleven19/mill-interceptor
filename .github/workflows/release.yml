@@ -106,21 +106,33 @@ jobs:
         shell: bash
         run: scripts/ci/build-release-assembly.sh "${{ needs.metadata.outputs.version }}" "${{ steps.assembly-name.outputs.assembly_name }}"
 
+      - name: Stage release assembly jar
+        shell: bash
+        run: scripts/ci/stage-release-extra.sh "out/modules/mill-interceptor/releaseAssembly.dest/${{ steps.assembly-name.outputs.assembly_name }}" release-extras/releaseAssembly.dest
+
       - name: Build Unix launcher
         shell: bash
         run: scripts/ci/build-release-launcher.sh "${{ needs.metadata.outputs.version }}" unix "${{ steps.unix-launcher-name.outputs.unix_launcher_name }}"
 
+      - name: Stage Unix launcher
+        shell: bash
+        run: scripts/ci/stage-release-extra.sh "out/modules/mill-interceptor/releaseLauncher.dest/${{ steps.unix-launcher-name.outputs.unix_launcher_name }}" release-extras/releaseLauncher.dest
+
       - name: Build Windows launcher
         shell: bash
         run: scripts/ci/build-release-launcher.sh "${{ needs.metadata.outputs.version }}" windows "${{ steps.windows-launcher-name.outputs.windows_launcher_name }}"
+
+      - name: Stage Windows launcher
+        shell: bash
+        run: scripts/ci/stage-release-extra.sh "out/modules/mill-interceptor/releaseLauncher.dest/${{ steps.windows-launcher-name.outputs.windows_launcher_name }}" release-extras/releaseLauncher.dest
 
       - name: Upload release extras
         uses: actions/upload-artifact@v4
         with:
           name: release-extras
           path: |
-            out/modules/mill-interceptor/releaseAssembly.dest
-            out/modules/mill-interceptor/releaseLauncher.dest
+            release-extras/releaseAssembly.dest
+            release-extras/releaseLauncher.dest
           if-no-files-found: error
 
   publish:

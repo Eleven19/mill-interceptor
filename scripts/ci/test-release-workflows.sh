@@ -28,9 +28,12 @@ rg -F 'description: "Release version (e.g. 1.0.0) - omit the leading v"' .github
 rg -F 'required: true' .github/workflows/publish-central.yml
 rg -F "version: \${{ inputs.version || '' }}" .github/workflows/publish-central.yml
 rg -F 'name: release-extras' .github/workflows/release.yml
+rg -F 'name: Stage release assembly jar' .github/workflows/release.yml
+rg -F 'name: Stage Unix launcher' .github/workflows/release.yml
+rg -F 'name: Stage Windows launcher' .github/workflows/release.yml
 rg -F 'path: |' .github/workflows/release.yml
-rg -x '            out/modules/mill-interceptor/releaseAssembly.dest' .github/workflows/release.yml
-rg -x '            out/modules/mill-interceptor/releaseLauncher.dest' .github/workflows/release.yml
+rg -x '            release-extras/releaseAssembly.dest' .github/workflows/release.yml
+rg -x '            release-extras/releaseLauncher.dest' .github/workflows/release.yml
 
 rg -F 'secrets.ELEVEN19_SONATYPE_USERNAME' .github/workflows/publish-central.yml
 rg -F 'secrets.ELEVEN19_SONATYPE_PASSWORD' .github/workflows/publish-central.yml
@@ -59,3 +62,9 @@ test -f scripts/ci/test-publish-central.sh
 test -f scripts/ci/recommend-prerelease.sh
 test -f scripts/ci/test-recommend-prerelease.sh
 test -f scripts/ci/test-multi-module-layout.sh
+test -f scripts/ci/stage-release-extra.sh
+test -f scripts/ci/test-release-extras-staging.sh
+
+rg -F 'scripts/ci/stage-release-extra.sh' .github/workflows/release.yml
+rg -F 'release-extras/releaseAssembly.dest' .github/workflows/release.yml
+rg -F 'release-extras/releaseLauncher.dest' .github/workflows/release.yml
