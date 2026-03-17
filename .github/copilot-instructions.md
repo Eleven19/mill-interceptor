@@ -15,3 +15,9 @@ instead of inventing a separate process:
 Use `CHANGELOG.md`, `docs/contributing/changelog.md`,
 `docs/contributing/releasing.md`, `cliff.toml`, and
 `scripts/ci/build-release-notes.sh` as the source of truth.
+
+For beads tracker work, prefer the root repository checkout or worktrees
+created with `bd worktree create`. If a worktree has `.beads` but no
+`.beads/redirect`, it is misconfigured and should be repaired with the
+repo-local skill `.github/skills/beads-worktree-recovery/SKILL.md`. The
+redirect path is resolved relative to the worktree root.
