@@ -1,9 +1,10 @@
 # Claude Instructions
 
 When writing Scala in this repo, prefer Scala filesystem libraries over raw
-`java.nio.file` APIs: use Kyo's file capabilities first, then `os-lib`, and
-only drop to Java NIO at interop or platform boundaries or when the Scala
-options are insufficient.
+`java.nio.file` APIs: in module application or library code, use Kyo's file
+capabilities first, then `os-lib`; in `mill-build/`, prefer `os-lib`
+directly. Only drop to Java NIO at interop or platform boundaries or when the
+Scala options are insufficient.
 
 For changelog or release-related work, consult these repo-local skills first:
 
