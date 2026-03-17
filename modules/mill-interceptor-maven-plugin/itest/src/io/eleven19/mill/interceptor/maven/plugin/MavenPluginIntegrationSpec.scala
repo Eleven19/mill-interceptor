@@ -1,140 +1,147 @@
 package io.eleven19.mill.interceptor.maven.plugin
 
+import kyo.*
 import kyo.test.KyoSpecDefault
 import zio.test.*
 
-import java.io.IOException
-import java.nio.file.*
+import java.io.File
+import java.lang.System as JSystem
+import java.nio.file.{FileVisitResult, Files, Paths, SimpleFileVisitor, StandardCopyOption}
 import java.nio.file.attribute.BasicFileAttributes
-import scala.sys.process.*
 
 object MavenPluginIntegrationSpec extends KyoSpecDefault:
 
     private val mavenVersion = "3.9.13"
 
+    private def tempPath(name: String): Path =
+        Path("out", "maven-plugin-itest", name)
+
+    private def absolute(path: Path): String =
+        path.toJava.toAbsolutePath.normalize.toString
+
     def spec: Spec[Any, Any] = suite("MavenPluginIntegrationSpec")(
         test("publishes locally and executes the placeholder goal through Maven") {
-            val tempDir    = Files.createTempDirectory("mill-interceptor-maven-plugin-itest")
-            val localRepo  = tempDir.resolve("m2-repository")
-            val fixtureDir = tempDir.resolve("fixture")
-            val mavenCmd   = resolveMavenExecutable(tempDir)
+            val tempDir    = tempPath(s"run-${JSystem.nanoTime()}")
+            val localRepo  = Path(tempDir, "m2-repository")
+            val fixtureDir = Path(tempDir, "fixture")
             val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
             val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
 
-            copyFixtureDirectory("fixtures/placeholder-goal", fixtureDir)
-
-            val install = runCommand(
-                Seq(
-                    mavenCmd.toString,
-                    s"-Dmaven.repo.local=$localRepo",
-                    "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
-                    s"-Dfile=$pluginJar",
-                    s"-DpomFile=$pluginPom"
-                ),
-                tempDir
-            )
-            val validate = runCommand(
-                Seq(
-                    mavenCmd.toString,
-                    s"-Dmaven.repo.local=$localRepo",
-                    "validate"
-                ),
-                fixtureDir
-            )
-
-            deleteRecursively(tempDir)
-
-            assertTrue(install.exitCode == 0) &&
-            assertTrue(validate.exitCode == 0) &&
-            assertTrue(validate.output.contains(MavenPluginModule.placeholderMessage))
+            for
+                _ <- tempDir.removeAll
+                _ <- tempDir.mkDir
+                mavenCmd <- resolveMavenExecutable(tempDir)
+                _ <- copyFixtureDirectory("fixtures/placeholder-goal", fixtureDir)
+                install <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                        s"-Dfile=$pluginJar",
+                        s"-DpomFile=$pluginPom"
+                    ),
+                    tempDir
+                )
+                validate <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "validate"
+                    ),
+                    fixtureDir
+                )
+                _ <- tempDir.removeAll
+            yield
+                assertTrue(install.exitCode == 0) &&
+                assertTrue(validate.exitCode == 0) &&
+                assertTrue(validate.output.contains(MavenPluginModule.placeholderMessage))
         }
     )
 
     private case class CommandResult(exitCode: Int, output: String)
 
-    private def resolveMavenExecutable(tempDir: Path): Path =
-        sys.env.get("MVN_CMD").map(Paths.get(_)).filter(Files.isExecutable(_)).getOrElse {
-            findOnPath("mvn").getOrElse(downloadMaven(tempDir))
+    private def resolveMavenExecutable(tempDir: Path): String < Sync =
+        sys.env.get("MVN_CMD") match
+            case Some(cmd) => Sync.defer(cmd)
+            case None =>
+                findOnPath("mvn").map {
+                    case Some(cmd) => Sync.defer(cmd)
+                    case None      => downloadMaven(tempDir)
+                }
+
+    private def requiredPathEnv(name: String): String =
+        sys.env.getOrElse(name, throw IllegalStateException(s"Missing required env var: $name"))
+
+    private def findOnPath(command: String): Option[String] < Sync =
+        Sync.defer {
+            sys.env
+                .get("PATH")
+                .toSeq
+                .flatMap(_.split(File.pathSeparator))
+                .map(path => Paths.get(path).resolve(command))
+                .find(Files.isExecutable(_))
+                .map(_.toString)
         }
 
-    private def requiredPathEnv(name: String): Path =
-        Paths.get(
-            sys.env.getOrElse(name, throw IllegalStateException(s"Missing required env var: $name"))
-        )
-
-    private def findOnPath(command: String): Option[Path] =
-        sys.env
-            .get("PATH")
-            .toSeq
-            .flatMap(_.split(java.io.File.pathSeparator))
-            .map(path => Paths.get(path).resolve(command))
-            .find(Files.isExecutable(_))
-
-    private def downloadMaven(tempDir: Path): Path =
-        val archive   = tempDir.resolve(s"apache-maven-$mavenVersion-bin.tar.gz")
-        val installTo = tempDir.resolve(s"apache-maven-$mavenVersion")
+    private def downloadMaven(tempDir: Path): String < Sync =
+        val archive   = Path(tempDir, s"apache-maven-$mavenVersion-bin.tar.gz")
+        val installTo = Path(tempDir, s"apache-maven-$mavenVersion")
         val url =
             s"https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$mavenVersion/apache-maven-$mavenVersion-bin.tar.gz"
 
-        val download =
-            runCommand(Seq("curl", "-fsSL", url, "-o", archive.toString), tempDir)
-        val extract =
-            runCommand(Seq("tar", "-xzf", archive.toString, "-C", tempDir.toString), tempDir)
+        for
+            download <- runCommand(
+                Seq("curl", "-fsSL", url, "-o", absolute(archive)),
+                tempDir
+            )
+            extract <- runCommand(
+                Seq("tar", "-xzf", absolute(archive), "-C", absolute(tempDir)),
+                tempDir
+            )
+            _ <- Sync.defer {
+                if download.exitCode != 0 then
+                    throw new IllegalStateException(s"Failed to download Maven:\n${download.output}")
+            }
+            _ <- Sync.defer {
+                if extract.exitCode != 0 then
+                    throw new IllegalStateException(s"Failed to extract Maven:\n${extract.output}")
+            }
+        yield absolute(Path(installTo, "bin", "mvn"))
 
-        require(download.exitCode == 0, s"Failed to download Maven:\n${download.output}")
-        require(extract.exitCode == 0, s"Failed to extract Maven:\n${extract.output}")
+    private def runCommand(command: Seq[String], cwd: Path): CommandResult < Sync =
+        val processCommand = Process.Command(command*).cwd(cwd.toJava).redirectErrorStream(true)
+        for
+            process <- processCommand.spawn
+            output <- Sync.defer(new String(process.stdout.readAllBytes()))
+            exitCode <- process.waitFor
+        yield CommandResult(exitCode, output)
 
-        installTo.resolve("bin").resolve("mvn")
+    private def copyFixtureDirectory(resourceDir: String, targetDir: Path): Unit < Sync =
+        Sync.defer {
+            val resourceUri = MavenPluginIntegrationSpec.getClass.getClassLoader.getResource(resourceDir).toURI
+            val sourceDir   = Paths.get(resourceUri)
+            val targetRoot  = targetDir.toJava
 
-    private def runCommand(command: Seq[String], cwd: Path): CommandResult =
-        val output = new StringBuilder
-        val logger = ProcessLogger(
-            line =>
-                output.append(line)
-                output.append('\n')
-                (),
-            line =>
-                output.append(line)
-                output.append('\n')
-                ()
-        )
-        val exitCode = Process(command, cwd.toFile).!(logger)
-
-        CommandResult(exitCode, output.toString)
-
-    private def copyFixtureDirectory(resourceDir: String, targetDir: Path): Unit =
-        val resourceUri = getClass.getClassLoader.getResource(resourceDir).toURI
-        val sourceDir   = Paths.get(resourceUri)
-
-        val _ = Files.walkFileTree(
-            sourceDir,
-            new SimpleFileVisitor[Path]:
-                override def preVisitDirectory(
-                    dir: Path,
-                    attrs: BasicFileAttributes
-                ): FileVisitResult =
-                    Files.createDirectories(targetDir.resolve(sourceDir.relativize(dir)))
-                    FileVisitResult.CONTINUE
-
-                override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult =
-                    Files.copy(
-                        file,
-                        targetDir.resolve(sourceDir.relativize(file)),
-                        StandardCopyOption.REPLACE_EXISTING
-                    )
-                    FileVisitResult.CONTINUE
-        )
-
-    private def deleteRecursively(path: Path): Unit =
-        if Files.exists(path) then
             val _ = Files.walkFileTree(
-                path,
-                new SimpleFileVisitor[Path]:
-                    override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult =
-                        Files.deleteIfExists(file)
+                sourceDir,
+                new SimpleFileVisitor[java.nio.file.Path]:
+                    override def preVisitDirectory(
+                        dir: java.nio.file.Path,
+                        attrs: BasicFileAttributes
+                    ): FileVisitResult =
+                        Files.createDirectories(targetRoot.resolve(sourceDir.relativize(dir)))
                         FileVisitResult.CONTINUE
 
-                    override def postVisitDirectory(dir: Path, exc: IOException | Null): FileVisitResult =
-                        Files.deleteIfExists(dir)
+                    override def visitFile(
+                        file: java.nio.file.Path,
+                        attrs: BasicFileAttributes
+                    ): FileVisitResult =
+                        Files.copy(
+                            file,
+                            targetRoot.resolve(sourceDir.relativize(file)),
+                            StandardCopyOption.REPLACE_EXISTING
+                        )
                         FileVisitResult.CONTINUE
             )
+            ()
+        }
