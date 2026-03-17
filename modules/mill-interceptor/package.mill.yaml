@@ -16,6 +16,8 @@ nativeImageOptions:
 object test:
   extends:
     - ScoverageTests
+    - ScalaTests
+    - _root_.build.CommonScalaTestModule
     - TestModule.ZioTest
   mvnDeps:
     - dev.zio::zio-test::2.1.24
@@ -25,6 +27,7 @@ object test:
 object itest:
   extends:
     - ScalaTests
+    - _root_.build.CommonScalaTestModule
     - TestModule.Junit5
   mvnDeps:
     - org.scalameta::munit::1.0.4

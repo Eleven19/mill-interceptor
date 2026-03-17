@@ -29,6 +29,7 @@ pomSettings:
 object test:
   extends:
     - ScalaTests
+    - _root_.build.CommonScalaTestModule
     - TestModule.ZioTest
   mvnDeps:
     - dev.zio::zio-test::2.1.24
