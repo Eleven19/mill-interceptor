@@ -29,6 +29,14 @@ trait CommonScalaModule extends ScalaModule with scalafmt.ScalafmtModule {
   }
 }
 
+trait CommonScalaTestModule extends ScalaModule {
+  private val unsafeMemoryAccessOption = "--sun-misc-unsafe-memory-access=allow"
+
+  override def forkArgs = Task {
+    super.forkArgs() ++ Seq(unsafeMemoryAccessOption)
+  }
+}
+
 trait InterceptorModule
     extends CommonScalaModule
     with mill.contrib.scoverage.ScoverageModule
@@ -101,18 +109,16 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   }
 
   def publishedPluginJar = Task {
-    publishArtifacts()
-      .payload
-      .collectFirst { case (path, fileName) if fileName.endsWith(".jar") => path }
+    publishArtifactsPayload()()
+      .collectFirst { case (subPath, path) if subPath.last.endsWith(".jar") => path }
       .getOrElse {
         throw new IllegalStateException("Unable to locate the published Maven plugin jar payload.")
       }
   }
 
   def publishedPluginPom = Task {
-    publishArtifacts()
-      .payload
-      .collectFirst { case (path, fileName) if fileName.endsWith(".pom") => path }
+    publishArtifactsPayload()()
+      .collectFirst { case (subPath, path) if subPath.last.endsWith(".pom") => path }
       .getOrElse {
         throw new IllegalStateException("Unable to locate the published Maven plugin pom payload.")
       }
@@ -124,7 +130,7 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
 
   override def pomPackagingType = "maven-plugin"
 
-  trait MavenPluginItestModule extends ScalaTests with TestModule.ZioTest {
+  trait MavenPluginItestModule extends ScalaTests with CommonScalaTestModule with TestModule.ZioTest {
     override def forkEnv = Task {
       super.forkEnv() ++ Map(
         "MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR" -> MavenPluginSupport.this.publishedPluginJar().path.toString,

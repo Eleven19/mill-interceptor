@@ -62,6 +62,7 @@ trait PublishSupport extends PublishModule with SonatypeCentralPublishModule {
   trait PublishedAssetModule extends mill.Module with PublishModule with SonatypeCentralPublishModule {
     def publishedArtifactId: String
     def publishedExt: String
+    def publishedArtifact: T[PathRef]
 
     def publishVersion = PublishSupport.this.publishVersion
     def pomSettings = PublishSupport.this.pomSettings
@@ -69,23 +70,27 @@ trait PublishSupport extends PublishModule with SonatypeCentralPublishModule {
     override def artifactMetadata = Task {
       Artifact(publishGroup(), publishedArtifactId, publishVersion())
     }
+
+    override def publishArtifactsDefaultPayload(
+        sources: Boolean = true,
+        docs: Boolean = true
+    ) = Task.Anon {
+      val version = publishVersion()
+      Map(
+        os.SubPath(s"$publishedArtifactId-$version.pom") -> pom(),
+        os.SubPath(s"$publishedArtifactId-$version.$publishedExt") -> publishedArtifact()
+      )
+    }
   }
 
   object assemblyPublish extends PublishedAssetModule {
     def publishedArtifactId = "milli-dist"
     def publishedExt = "jar"
 
-    override def publishArtifacts = Task {
-      val version = PublishSupport.this.publishVersion()
+    def publishedArtifact = Task {
       val destination = Task.dest / s"artifact.$publishedExt"
       os.copy.over(PublishSupport.this.assembly().path, destination, createFolders = true)
-      mill.scalalib.PublishModule.PublishData(
-        artifactMetadata(),
-        Seq(
-          pom() -> s"$publishedArtifactId-$version.pom",
-          PathRef(destination) -> s"$publishedArtifactId-$version.$publishedExt"
-        )
-      )
+      PathRef(destination)
     }
   }
 
@@ -95,9 +100,8 @@ trait PublishSupport extends PublishModule with SonatypeCentralPublishModule {
     def publishedArtifactId = nativeArtifactModuleNameFor(releaseTarget)
     def publishedExt = archiveExtensionFor(releaseTarget)
 
-    override def publishArtifacts = Task {
+    def publishedArtifact = Task {
       val checkedTarget = validatedTarget(releaseTarget)
-      val version = PublishSupport.this.publishVersion()
       val destination = Task.dest / s"artifact.$publishedExt"
       val stageDir = destination / os.up / "stage"
       val executableName = executableNameFor(checkedTarget)
@@ -121,13 +125,7 @@ trait PublishSupport extends PublishModule with SonatypeCentralPublishModule {
           executableName
         ).call(check = true)
 
-      mill.scalalib.PublishModule.PublishData(
-        artifactMetadata(),
-        Seq(
-          pom() -> s"$publishedArtifactId-$version.pom",
-          PathRef(destination) -> s"$publishedArtifactId-$version.$publishedExt"
-        )
-      )
+      PathRef(destination)
     }
   }
 
