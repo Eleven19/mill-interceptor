@@ -3,8 +3,12 @@ package io.eleven19.mill.interceptor.shim
 import kyo.*
 import kyo.test.KyoSpecDefault
 import zio.test.*
+import java.lang.System as JSystem
 
 object ShimGeneratorSpec extends KyoSpecDefault:
+
+    private def tempPath(name: String): Path =
+        Path("out", "mill-interceptor-tests", name)
 
     def spec: Spec[Any, Any] = suite("ShimGenerator")(
         suite("unixContent")(
@@ -83,6 +87,34 @@ object ShimGeneratorSpec extends KyoSpecDefault:
             test("uses powershell for download") {
                 val content = ShimGenerator.windowsContent(BuildTool.Maven, "0.1.0")
                 Sync.defer(assertTrue(content.contains("powershell")))
+            }
+        ),
+        suite("generate")(
+            test("writes shim files to the requested directory") {
+                val outputDir = tempPath(s"shim-generator-${JSystem.nanoTime()}")
+                val options = ShimGenerateOptions(
+                    tools = List(BuildTool.Maven),
+                    wrapper = false,
+                    outputDir = outputDir,
+                    version = "9.9.9"
+                )
+                val unixPath = Path(outputDir, "mvn")
+                val cmdPath  = Path(outputDir, "mvn.cmd")
+
+                for
+                    _ <- outputDir.removeAll
+                    generated <- ShimGenerator.generate(options)
+                    unixExists <- unixPath.exists
+                    windowsExists <- cmdPath.exists
+                    unixContent <- unixPath.read
+                    windowsContent <- cmdPath.read
+                    _ <- outputDir.removeAll
+                yield
+                    assertTrue(generated.map(_.path).toSet == Set(unixPath, cmdPath)) &&
+                    assertTrue(unixExists) &&
+                    assertTrue(windowsExists) &&
+                    assertTrue(unixContent.contains("9.9.9")) &&
+                    assertTrue(windowsContent.contains("9.9.9"))
             }
         )
     )

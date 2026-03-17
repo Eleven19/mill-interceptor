@@ -5,11 +5,13 @@ Notes and short articles for anyone working on this codebase (including future y
 ## Coding Conventions
 
 For Scala filesystem work, prefer Scala libraries over raw `java.nio.file`
-types. Use Kyo's file capabilities first so filesystem code composes with the
-repo's effect model and testing style. If Kyo is not sufficient or would add
-unnecessary friction, prefer `os-lib` next. Use Java NIO only at interop or
-platform boundaries, or when neither Scala option can reasonably express the
-need.
+types. In application and library code under `modules/`, use Kyo's file
+capabilities first so filesystem code composes with the repo's effect model and
+testing style. In `mill-build/`, prefer `os-lib` directly because it is the
+natural build-runtime abstraction. If Kyo is not sufficient in module code or
+would add unnecessary friction, prefer `os-lib` next. Use Java NIO only at
+interop or platform boundaries, or when neither Scala option can reasonably
+express the need.
 
 ## Articles
 

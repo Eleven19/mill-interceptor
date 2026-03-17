@@ -41,10 +41,13 @@ cp -rf source dest          # NOT: cp -r source dest
 When writing Scala in this repo, prefer Scala filesystem libraries over raw
 `java.nio.file` APIs.
 
-- Prefer Kyo's file capabilities first so filesystem work stays aligned with the
-  project's effect model and test style.
-- If Kyo is not sufficient or would add unnecessary friction, prefer `os-lib`
-  next.
+- In application and library code under `modules/`, prefer Kyo's file
+  capabilities first so filesystem work stays aligned with the project's effect
+  model and test style.
+- In `mill-build/`, prefer `os-lib` directly since that is the native build
+  runtime abstraction.
+- If Kyo is not sufficient in module code or would add unnecessary friction,
+  prefer `os-lib` next.
 - Use `java.nio.file` only at interop or platform boundaries, or when Kyo and
   `os-lib` cannot reasonably express the need.
 
