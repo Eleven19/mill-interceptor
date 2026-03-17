@@ -1,7 +1,7 @@
 package io.eleven19.mill.interceptor.shim
 
 import kyo.*
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 import scala.util.Try
 
@@ -21,7 +21,7 @@ object ShimGenerateOptions:
     val default: ShimGenerateOptions = ShimGenerateOptions(
         tools = BuildTool.all,
         wrapper = false,
-        outputDir = Paths.get("."),
+        outputDir = Path("."),
         version = "latest"
     )
 end ShimGenerateOptions
@@ -39,25 +39,29 @@ object ShimGenerator:
       * `List[GeneratedShim]` suspended in `Sync`.
       */
     def generate(options: ShimGenerateOptions): List[GeneratedShim] < Sync =
-        Kyo.foreach(options.tools) { tool =>
-            val baseName = tool.scriptName(options.wrapper)
-            for
-                unix <- generateFile(
-                    options.outputDir,
-                    baseName,
-                    ShimTemplate.unix(tool, options.version),
-                    tool,
-                    "unix"
-                )
-                windows <- generateFile(
-                    options.outputDir,
-                    s"$baseName.cmd",
-                    ShimTemplate.windows(tool, options.version),
-                    tool,
-                    "windows"
-                )
-            yield List(unix, windows)
-        }.map(_.flatten)
+        for
+            outputDirExists <- options.outputDir.exists
+            _ <- if outputDirExists then Kyo.unit else options.outputDir.mkDir
+            generated <- Kyo.foreach(options.tools) { tool =>
+                val baseName = tool.scriptName(options.wrapper)
+                for
+                    unix <- generateFile(
+                        options.outputDir,
+                        baseName,
+                        ShimTemplate.unix(tool, options.version),
+                        tool,
+                        "unix"
+                    )
+                    windows <- generateFile(
+                        options.outputDir,
+                        s"$baseName.cmd",
+                        ShimTemplate.windows(tool, options.version),
+                        tool,
+                        "windows"
+                    )
+                yield List(unix, windows)
+            }
+        yield generated.flatten
 
     /** Generate the content for a Unix shim script without writing to disk. */
     def unixContent(tool: BuildTool, version: String): String =
@@ -74,21 +78,23 @@ object ShimGenerator:
         tool: BuildTool,
         platform: String
     ): GeneratedShim < Sync =
-        Sync.defer {
-            Files.createDirectories(outputDir)
-            val filePath = outputDir.resolve(fileName)
-            Files.writeString(filePath, content)
+        val filePath = Path(outputDir, fileName)
+        for
+            _ <- filePath.write(content)
+            _ <- setUnixExecutableIfPossible(filePath, platform)
+        yield GeneratedShim(filePath, tool, platform)
 
-            // Try to set executable permission on Unix platforms
+    private def setUnixExecutableIfPossible(filePath: Path, platform: String): Unit < Sync =
+        Sync.defer {
             if platform == "unix" then
-                val _: Try[Path] = Try {
-                    val perms = Files.getPosixFilePermissions(filePath)
+                val _: Try[Unit] = Try {
+                    val perms = Files.getPosixFilePermissions(filePath.toJava)
                     perms.add(PosixFilePermission.OWNER_EXECUTE)
                     perms.add(PosixFilePermission.GROUP_EXECUTE)
                     perms.add(PosixFilePermission.OTHERS_EXECUTE)
-                    Files.setPosixFilePermissions(filePath, perms)
+                    Files.setPosixFilePermissions(filePath.toJava, perms)
+                    ()
                 }
-
-            GeneratedShim(filePath, tool, platform)
+            ()
         }
 end ShimGenerator

@@ -2,7 +2,6 @@ package io.eleven19.mill.interceptor
 
 import kyo.*
 import shim.{BuildTool, ShimGenerateOptions}
-import java.nio.file.Paths
 
 enum InterceptTool derives CanEqual:
     case Maven, Sbt, Gradle
@@ -91,7 +90,7 @@ object Cli:
             case ("-w" | "--wrapper") :: rest =>
                 parseShimOpts(rest, opts.copy(wrapper = true))
             case ("-o" | "--output-dir") :: dir :: rest =>
-                parseShimOpts(rest, opts.copy(outputDir = Paths.get(dir)))
+                parseShimOpts(rest, opts.copy(outputDir = Path(dir)))
             case ("-o" | "--output-dir") :: Nil =>
                 Abort.fail(new IllegalArgumentException("Missing value for --output-dir"))
             case "--version" :: v :: rest =>

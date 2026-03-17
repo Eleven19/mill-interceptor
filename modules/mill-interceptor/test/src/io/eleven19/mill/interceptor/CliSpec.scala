@@ -4,7 +4,6 @@ import kyo.*
 import kyo.test.KyoSpecDefault
 import zio.test.*
 import shim.{BuildTool, ShimGenerateOptions}
-import java.nio.file.Paths
 
 object CliSpec extends KyoSpecDefault:
 
@@ -157,7 +156,7 @@ object CliSpec extends KyoSpecDefault:
             test("shim generate --output-dir sets output directory") {
                 parseSuccess("shim", "generate", "--output-dir", "/tmp/shims").map { result =>
                     assertTrue(result match
-                        case CliResult.ShimGenerate(opts) => opts.outputDir.toString == "/tmp/shims"
+                        case CliResult.ShimGenerate(opts) => opts.outputDir == Path("/tmp/shims")
                         case _                            => false
                     )
                 }
@@ -165,7 +164,7 @@ object CliSpec extends KyoSpecDefault:
             test("shim generate -o sets output directory") {
                 parseSuccess("shim", "generate", "-o", "/tmp/shims").map { result =>
                     assertTrue(result match
-                        case CliResult.ShimGenerate(opts) => opts.outputDir.toString == "/tmp/shims"
+                        case CliResult.ShimGenerate(opts) => opts.outputDir == Path("/tmp/shims")
                         case _                            => false
                     )
                 }
@@ -185,7 +184,7 @@ object CliSpec extends KyoSpecDefault:
                             case CliResult.ShimGenerate(opts) =>
                                 opts.tools == List(BuildTool.Maven) &&
                                 opts.wrapper &&
-                                opts.outputDir.toString == "/tmp" &&
+                                opts.outputDir == Path("/tmp") &&
                                 opts.version == "2.0.0"
                             case _ => false
                         )
