@@ -69,7 +69,7 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
       case "windows" => "milli.bat"
 
   private def launcherTemplatePath(taskDest: os.Path, launcherOs: String): os.Path =
-    taskDest / os.up / os.up / "launcher" / launcherFileNameFor(launcherOs)
+    taskDest / os.up / os.up / os.up / os.up / "launcher" / launcherFileNameFor(launcherOs)
 
   def releaseTargets = Task {
     supportedReleaseTargets
