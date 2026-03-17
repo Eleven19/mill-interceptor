@@ -18,6 +18,30 @@ leading `v`.
 
 ### CI
 
+## [0.3.0] - 2026-03-17
+
+### Added
+
+- Added a real multi-module Mill layout with `modules/mill-interceptor` and a published `mill-interceptor-maven-plugin` artifact.
+- Added Maven plugin packaging and end-to-end integration coverage so the published plugin can be installed and invoked from Maven.
+
+### Changed
+
+- Reorganized the repository so the aggregate root coordinates module wiring while the `milli` product and Maven plugin publish from dedicated module paths.
+- Switched module application and test code to Kyo-first filesystem and process boundaries while keeping `os-lib` as the preferred build-runtime abstraction in `mill-build/`.
+
+### Fixed
+
+- Removed deprecated Mill publish API usage from the custom publish modules and Maven plugin publish helpers.
+- Suppressed the JDK 25 `sun.misc.Unsafe` warning for Mill and forked test workers without leaking unsupported JVM flags into nested Maven invocations.
+
+### Documentation
+
+- Added maintainer guidance for beads-aware worktrees and recovery steps for misconfigured or tracker-broken worktrees.
+- Added contributor guidance on filesystem library preferences for Kyo-based module code versus `os-lib` in Mill build code.
+
+### CI
+
 - Aligned Maven Central publishing with Eleven19 org secrets by using the `ELEVEN19_*` Sonatype and base64 PGP credentials path.
 - Switched Maven Central publishing tasks to Mill's `publishSonatypeCentral` surface so release jobs use the same Central publishing path as `ascribe`.
 - Fixed release extras packaging so the Unix `milli` launcher is retained in GitHub release assets alongside `milli.bat`.
