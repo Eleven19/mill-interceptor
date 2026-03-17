@@ -41,7 +41,7 @@ object ShimGenerator:
     def generate(options: ShimGenerateOptions): List[GeneratedShim] < Sync =
         for
             outputDirExists <- options.outputDir.exists
-            _ <- if outputDirExists then Kyo.unit else options.outputDir.mkDir
+            _               <- if outputDirExists then Kyo.unit else options.outputDir.mkDir
             generated <- Kyo.foreach(options.tools) { tool =>
                 val baseName = tool.scriptName(options.wrapper)
                 for
