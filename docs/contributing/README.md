@@ -2,6 +2,15 @@
 
 Notes and short articles for anyone working on this codebase (including future you). They explain design choices, integrations, and how to change or extend things.
 
+## Coding Conventions
+
+For Scala filesystem work, prefer Scala libraries over raw `java.nio.file`
+types. Use Kyo's file capabilities first so filesystem code composes with the
+repo's effect model and testing style. If Kyo is not sufficient or would add
+unnecessary friction, prefer `os-lib` next. Use Java NIO only at interop or
+platform boundaries, or when neither Scala option can reasonably express the
+need.
+
 ## Articles
 
 - **[Maintaining the Changelog](changelog.md)** — How `CHANGELOG.md` is structured, how `[Unreleased]` is maintained, and what has to exist before a release can be published.
