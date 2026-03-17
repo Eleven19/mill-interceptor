@@ -32,19 +32,8 @@ trait CommonScalaModule extends ScalaModule with scalafmt.ScalafmtModule {
 trait CommonScalaTestModule extends ScalaModule {
   private val unsafeMemoryAccessOption = "--sun-misc-unsafe-memory-access=allow"
 
-  override def jvmOptions = Task {
-    super.jvmOptions() ++ Seq(unsafeMemoryAccessOption)
-  }
-
-  override def forkEnv = Task {
-    val inherited = super.forkEnv()
-    val javaToolOptions = inherited
-      .get("JAVA_TOOL_OPTIONS")
-      .filter(_.nonEmpty)
-      .map(_ + s" $unsafeMemoryAccessOption")
-      .getOrElse(unsafeMemoryAccessOption)
-
-    inherited + ("JAVA_TOOL_OPTIONS" -> javaToolOptions)
+  override def forkArgs = Task {
+    super.forkArgs() ++ Seq(unsafeMemoryAccessOption)
   }
 }
 
