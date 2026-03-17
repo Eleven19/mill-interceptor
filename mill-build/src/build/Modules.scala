@@ -101,18 +101,16 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   }
 
   def publishedPluginJar = Task {
-    publishArtifacts()
-      .payload
-      .collectFirst { case (path, fileName) if fileName.endsWith(".jar") => path }
+    publishArtifactsPayload()()
+      .collectFirst { case (subPath, path) if subPath.last.endsWith(".jar") => path }
       .getOrElse {
         throw new IllegalStateException("Unable to locate the published Maven plugin jar payload.")
       }
   }
 
   def publishedPluginPom = Task {
-    publishArtifacts()
-      .payload
-      .collectFirst { case (path, fileName) if fileName.endsWith(".pom") => path }
+    publishArtifactsPayload()()
+      .collectFirst { case (subPath, path) if subPath.last.endsWith(".pom") => path }
       .getOrElse {
         throw new IllegalStateException("Unable to locate the published Maven plugin pom payload.")
       }
