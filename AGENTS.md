@@ -10,6 +10,7 @@ bd show <id>          # View issue details
 bd update <id> --claim  # Claim work atomically
 bd close <id>         # Complete work
 bd dolt push          # Push beads data to remote
+bd worktree create <name>  # Create a worktree that shares the root beads store
 ```
 
 ## Non-Interactive Shell Commands
@@ -133,6 +134,25 @@ bd automatically syncs via Dolt:
 - Each write auto-commits to Dolt history
 - Use `bd dolt push`/`bd dolt pull` for remote sync
 - No manual export/import needed!
+
+### Worktrees
+
+When a task needs tracker access from a Git worktree, create the worktree with
+`bd worktree create`, not plain `git worktree add`. The beads-aware command
+creates `.beads/redirect` so the worktree shares the root repository's tracker
+store.
+
+Rules:
+
+- Run tracker commands from the repo root or from worktrees created with
+  `bd worktree create`.
+- If a worktree has `.beads` but no `.beads/redirect`, treat it as
+  misconfigured.
+- The redirect path in `.beads/redirect` is resolved relative to the worktree
+  root, not relative to the `.beads` directory.
+- Use the repo-local skill `.github/skills/beads-worktree-recovery/SKILL.md`
+  and `docs/contributing/beads-worktrees.md` when diagnosing or repairing this
+  state.
 
 ### Important Rules
 

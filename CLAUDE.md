@@ -15,3 +15,10 @@ Use the supporting repo docs instead of duplicating process text:
 
 - `docs/contributing/changelog.md`
 - `docs/contributing/releasing.md`
+
+For beads tracker work in this repo, run commands from the root checkout or
+from worktrees created with `bd worktree create`. If a worktree has `.beads`
+but no `.beads/redirect`, it is misconfigured; use
+`.github/skills/beads-worktree-recovery/SKILL.md` and
+`docs/contributing/beads-worktrees.md` to repair it. The redirect path is
+resolved relative to the worktree root.
