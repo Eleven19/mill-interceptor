@@ -3,6 +3,7 @@ package io.eleven19.mill.interceptor.maven.plugin.config
 import kyo.Path
 import org.virtuslab.yaml.*
 
+/** Effective Maven plugin configuration after applying defaults and overlays. */
 final case class EffectiveConfig(
     mode: String = "strict",
     mill: MillConfig = MillConfig(),
@@ -11,6 +12,7 @@ final case class EffectiveConfig(
     validate: ValidateConfig = ValidateConfig()
 ) derives CanEqual
 
+/** Runtime settings for invoking the external Mill CLI. */
 final case class MillConfig(
     executable: String = "mill",
     environment: Map[String, String] = Map.empty,
@@ -18,12 +20,17 @@ final case class MillConfig(
 ) derives CanEqual,
       YamlCodec
 
+/** Validate-phase checks that supplement the lifecycle baseline. */
 final case class ValidateConfig(
-    scalafmtEnabled: Boolean = false,
+    scalafmtEnabled: Boolean = true,
     scalafmtTarget: Option[String] = None
 ) derives CanEqual,
       YamlCodec
 
+/** Layered configuration input before defaults are finalized.
+  *
+  * Later overlays replace scalar fields and override mappings by key.
+  */
 final case class ConfigOverlay(
     mode: Option[String] = None,
     mill: Option[MillConfigOverlay] = None,
@@ -33,6 +40,7 @@ final case class ConfigOverlay(
 ) derives CanEqual,
       YamlCodec:
 
+    /** Merge a later overlay into this one using plugin precedence rules. */
     def merge(other: ConfigOverlay): ConfigOverlay =
         ConfigOverlay(
             mode = other.mode.orElse(mode),
@@ -50,6 +58,7 @@ final case class ConfigOverlay(
                 case (None, None)                     => None
         )
 
+    /** Materialize the overlay into the final runtime configuration. */
     def toEffectiveConfig: EffectiveConfig =
         EffectiveConfig(
             mode = mode.getOrElse("strict"),
@@ -61,6 +70,7 @@ final case class ConfigOverlay(
 
 object ConfigOverlay:
 
+    /** Decode a raw YAML or PKL-derived object into an overlay. */
     def fromRawMap(raw: Map[String, Any], source: Path): ConfigOverlay =
         ConfigOverlay(
             mode = optionalString(raw, "mode", source),
@@ -126,6 +136,7 @@ object ConfigOverlay:
                     s"Expected '$parentField.$field' to be a sequence of strings but found ${other.getClass.getSimpleName}"
                 )
 
+/** Optional Mill CLI overrides supplied by a config layer. */
 final case class MillConfigOverlay(
     executable: Option[String] = None,
     environment: Map[String, String] = Map.empty,
@@ -133,6 +144,7 @@ final case class MillConfigOverlay(
 ) derives CanEqual,
       YamlCodec:
 
+    /** Merge a later Mill config overlay into this one. */
     def merge(other: MillConfigOverlay): MillConfigOverlay =
         MillConfigOverlay(
             executable = other.executable.orElse(executable),
@@ -140,6 +152,7 @@ final case class MillConfigOverlay(
             workingDirectory = other.workingDirectory.orElse(workingDirectory)
         )
 
+    /** Materialize the overlay into the final Mill runtime settings. */
     def toEffectiveConfig: MillConfig =
         MillConfig(
             executable = executable.getOrElse("mill"),
@@ -149,6 +162,7 @@ final case class MillConfigOverlay(
 
 object MillConfigOverlay:
 
+    /** Decode a raw object into a Mill-specific config overlay. */
     def fromRawMap(raw: Map[String, Any], source: Path): MillConfigOverlay =
         MillConfigOverlay(
             executable = raw.get("executable").map {
@@ -185,26 +199,30 @@ object MillConfigOverlay:
             }
         )
 
+/** Optional validate-phase overrides supplied by a config layer. */
 final case class ValidateConfigOverlay(
     scalafmtEnabled: Option[Boolean] = None,
     scalafmtTarget: Option[String] = None
 ) derives CanEqual,
       YamlCodec:
 
+    /** Merge a later validate overlay into this one. */
     def merge(other: ValidateConfigOverlay): ValidateConfigOverlay =
         ValidateConfigOverlay(
             scalafmtEnabled = other.scalafmtEnabled.orElse(scalafmtEnabled),
             scalafmtTarget = other.scalafmtTarget.orElse(scalafmtTarget)
         )
 
+    /** Materialize the overlay into validate-phase settings. */
     def toEffectiveConfig: ValidateConfig =
         ValidateConfig(
-            scalafmtEnabled = scalafmtEnabled.getOrElse(false),
+            scalafmtEnabled = scalafmtEnabled.getOrElse(true),
             scalafmtTarget = scalafmtTarget
         )
 
 object ValidateConfigOverlay:
 
+    /** Decode a raw object into validate-specific overrides. */
     def fromRawMap(raw: Map[String, Any], source: Path): ValidateConfigOverlay =
         ValidateConfigOverlay(
             scalafmtEnabled = raw.get("scalafmtEnabled").map {
@@ -225,5 +243,6 @@ object ValidateConfigOverlay:
             }
         )
 
+/** Configuration load failure with source path context. */
 final case class ConfigLoadException(path: Path, detail: String, cause0: Throwable | Null = null)
     extends RuntimeException(s"Failed to load config from $path: $detail", cause0)
