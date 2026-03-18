@@ -9,11 +9,13 @@ partial beads installation.
 Create tracker-aware worktrees with:
 
 ```bash
-bd worktree create <name>
+bd worktree create .worktrees/<name> --branch <name>
 ```
 
 That command creates a Git worktree and a `.beads/redirect` file so tracker
 commands inside the worktree resolve back to the repository root `.beads`.
+For this repository, `.worktrees/` is the preferred location for repo-local
+worktrees.
 
 If you create a worktree with plain `git worktree add`, either:
 
@@ -43,10 +45,10 @@ Important detail:
 - the path in `.beads/redirect` is resolved relative to the worktree root, not
   relative to the `.beads` directory
 
-Example for this repository's `.claude/worktrees/<name>` layout:
+Example for this repository's preferred `.worktrees/<name>` layout:
 
 ```text
-../../../.beads
+../../.beads
 ```
 
 ## Verification

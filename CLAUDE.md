@@ -21,4 +21,6 @@ from worktrees created with `bd worktree create`. If a worktree has `.beads`
 but no `.beads/redirect`, it is misconfigured; use
 `.github/skills/beads-worktree-recovery/SKILL.md` and
 `docs/contributing/beads-worktrees.md` to repair it. The redirect path is
-resolved relative to the worktree root.
+resolved relative to the worktree root. Prefer repo-local worktrees under
+`.worktrees/`, for example
+`bd worktree create .worktrees/<name> --branch <name>`.

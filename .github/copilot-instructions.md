@@ -20,4 +20,6 @@ For beads tracker work, prefer the root repository checkout or worktrees
 created with `bd worktree create`. If a worktree has `.beads` but no
 `.beads/redirect`, it is misconfigured and should be repaired with the
 repo-local skill `.github/skills/beads-worktree-recovery/SKILL.md`. The
-redirect path is resolved relative to the worktree root.
+redirect path is resolved relative to the worktree root. Prefer repo-local
+worktrees under `.worktrees/`, for example
+`bd worktree create .worktrees/<name> --branch <name>`.

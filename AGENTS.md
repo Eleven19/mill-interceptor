@@ -10,7 +10,7 @@ bd show <id>          # View issue details
 bd update <id> --claim  # Claim work atomically
 bd close <id>         # Complete work
 bd dolt push          # Push beads data to remote
-bd worktree create <name>  # Create a worktree that shares the root beads store
+bd worktree create .worktrees/<name> --branch <name>  # Create a repo-local worktree that shares the root beads store
 ```
 
 ## Non-Interactive Shell Commands
@@ -144,6 +144,8 @@ store.
 
 Rules:
 
+- Prefer placing repo-local worktrees under `.worktrees/`, for example
+  `bd worktree create .worktrees/<name> --branch <name>`.
 - Run tracker commands from the repo root or from worktrees created with
   `bd worktree create`.
 - If a worktree has `.beads` but no `.beads/redirect`, treat it as
