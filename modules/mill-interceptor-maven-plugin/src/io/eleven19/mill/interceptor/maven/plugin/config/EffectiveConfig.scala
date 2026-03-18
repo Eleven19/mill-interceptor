@@ -19,7 +19,7 @@ final case class MillConfig(
       YamlCodec
 
 final case class ValidateConfig(
-    scalafmtEnabled: Boolean = false,
+    scalafmtEnabled: Boolean = true,
     scalafmtTarget: Option[String] = None
 ) derives CanEqual,
       YamlCodec
@@ -199,7 +199,7 @@ final case class ValidateConfigOverlay(
 
     def toEffectiveConfig: ValidateConfig =
         ValidateConfig(
-            scalafmtEnabled = scalafmtEnabled.getOrElse(false),
+            scalafmtEnabled = scalafmtEnabled.getOrElse(true),
             scalafmtTarget = scalafmtTarget
         )
 
