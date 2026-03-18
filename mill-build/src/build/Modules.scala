@@ -52,9 +52,60 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   this: CommonScalaModule =>
   private val defaultPublishVersion = "0.0.0-SNAPSHOT"
   private val goalPrefix = "mill-interceptor"
-  private val descriptorGoal = "describe"
-  private val descriptorImplementation =
+  private val lifecyclePlaceholderImplementation =
     "io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo"
+  private val supportedGoals = Seq(
+    (
+      "describe",
+      lifecyclePlaceholderImplementation,
+      "Describe the available Maven plugin goals."
+    ),
+    (
+      "inspect-plan",
+      lifecyclePlaceholderImplementation,
+      "Placeholder inspect-plan goal until the forwarding service is implemented."
+    ),
+    (
+      "clean",
+      lifecyclePlaceholderImplementation,
+      "Placeholder clean goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "validate",
+      lifecyclePlaceholderImplementation,
+      "Placeholder validate goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "compile",
+      lifecyclePlaceholderImplementation,
+      "Placeholder compile goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "test",
+      lifecyclePlaceholderImplementation,
+      "Placeholder test goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "package",
+      lifecyclePlaceholderImplementation,
+      "Placeholder package goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "verify",
+      lifecyclePlaceholderImplementation,
+      "Placeholder verify goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "install",
+      lifecyclePlaceholderImplementation,
+      "Placeholder install goal until lifecycle forwarding is implemented."
+    ),
+    (
+      "deploy",
+      lifecyclePlaceholderImplementation,
+      "Placeholder deploy goal until lifecycle forwarding is implemented."
+    )
+  )
 
   def publishVersion = Task.Input {
     sys.env.getOrElse("MILLI_PUBLISH_VERSION", defaultPublishVersion)
@@ -70,6 +121,22 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
       publishedArtifactId: String,
       version: String
   ): String =
+    val mojos = supportedGoals
+      .map { goal =>
+        s"""    <mojo>
+      <goal>${goal._1}</goal>
+      <description>${goal._3}</description>
+      <implementation>${goal._2}</implementation>
+      <language>java</language>
+      <instantiationStrategy>per-lookup</instantiationStrategy>
+      <executionStrategy>once-per-session</executionStrategy>
+      <threadSafe>true</threadSafe>
+      <parameters/>
+      <configuration/>
+    </mojo>"""
+      }
+      .mkString("\n")
+
     s"""<?xml version="1.0" encoding="UTF-8"?>
 <plugin>
   <name>Mill Interceptor Maven Plugin</name>
@@ -81,17 +148,7 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   <isolatedRealm>false</isolatedRealm>
   <inheritedByDefault>true</inheritedByDefault>
   <mojos>
-    <mojo>
-      <goal>$descriptorGoal</goal>
-      <description>Placeholder goal for validating Maven plugin packaging and execution.</description>
-      <implementation>$descriptorImplementation</implementation>
-      <language>java</language>
-      <instantiationStrategy>per-lookup</instantiationStrategy>
-      <executionStrategy>once-per-session</executionStrategy>
-      <threadSafe>true</threadSafe>
-      <parameters/>
-      <configuration/>
-    </mojo>
+$mojos
   </mojos>
 </plugin>
 """
@@ -102,7 +159,12 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
     os.makeDir.all(descriptorDir)
     os.write.over(
       descriptorDir / "plugin.xml",
-      pluginDescriptor(pom.organization, pom.description, artifactId(), publishVersion()),
+      pluginDescriptor(
+        pom.organization,
+        pom.description,
+        artifactId(),
+        publishVersion()
+      ),
       createFolders = true
     )
     PathRef(Task.dest)
