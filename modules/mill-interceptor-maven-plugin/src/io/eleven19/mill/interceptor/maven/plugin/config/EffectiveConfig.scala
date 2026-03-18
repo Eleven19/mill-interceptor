@@ -15,12 +15,14 @@ final case class MillConfig(
     executable: String = "mill",
     environment: Map[String, String] = Map.empty,
     workingDirectory: Option[String] = None
-) derives CanEqual, YamlCodec
+) derives CanEqual,
+      YamlCodec
 
 final case class ValidateConfig(
     scalafmtEnabled: Boolean = false,
     scalafmtTarget: Option[String] = None
-) derives CanEqual, YamlCodec
+) derives CanEqual,
+      YamlCodec
 
 final case class ConfigOverlay(
     mode: Option[String] = None,
@@ -28,50 +30,54 @@ final case class ConfigOverlay(
     lifecycle: Map[String, Seq[String]] = Map.empty,
     goals: Map[String, Seq[String]] = Map.empty,
     validate: Option[ValidateConfigOverlay] = None
-) derives CanEqual, YamlCodec:
+) derives CanEqual,
+      YamlCodec:
 
     def merge(other: ConfigOverlay): ConfigOverlay =
         ConfigOverlay(
-          mode = other.mode.orElse(mode),
-          mill = (mill, other.mill) match
-              case (Some(existing), Some(incoming)) => Some(existing.merge(incoming))
-              case (_, Some(incoming))              => Some(incoming)
-              case (Some(existing), None)           => Some(existing)
-              case (None, None)                     => None,
-          lifecycle = lifecycle ++ other.lifecycle,
-          goals = goals ++ other.goals,
-          validate = (validate, other.validate) match
-              case (Some(existing), Some(incoming)) => Some(existing.merge(incoming))
-              case (_, Some(incoming))              => Some(incoming)
-              case (Some(existing), None)           => Some(existing)
-              case (None, None)                     => None
+            mode = other.mode.orElse(mode),
+            mill = (mill, other.mill) match
+                case (Some(existing), Some(incoming)) => Some(existing.merge(incoming))
+                case (_, Some(incoming))              => Some(incoming)
+                case (Some(existing), None)           => Some(existing)
+                case (None, None)                     => None,
+            lifecycle = lifecycle ++ other.lifecycle,
+            goals = goals ++ other.goals,
+            validate = (validate, other.validate) match
+                case (Some(existing), Some(incoming)) => Some(existing.merge(incoming))
+                case (_, Some(incoming))              => Some(incoming)
+                case (Some(existing), None)           => Some(existing)
+                case (None, None)                     => None
         )
 
     def toEffectiveConfig: EffectiveConfig =
         EffectiveConfig(
-          mode = mode.getOrElse("strict"),
-          mill = mill.map(_.toEffectiveConfig).getOrElse(MillConfig()),
-          lifecycle = lifecycle,
-          goals = goals,
-          validate = validate.map(_.toEffectiveConfig).getOrElse(ValidateConfig())
+            mode = mode.getOrElse("strict"),
+            mill = mill.map(_.toEffectiveConfig).getOrElse(MillConfig()),
+            lifecycle = lifecycle,
+            goals = goals,
+            validate = validate.map(_.toEffectiveConfig).getOrElse(ValidateConfig())
         )
 
 object ConfigOverlay:
 
     def fromRawMap(raw: Map[String, Any], source: Path): ConfigOverlay =
         ConfigOverlay(
-          mode = optionalString(raw, "mode", source),
-          mill = optionalObject(raw, "mill", source).map(MillConfigOverlay.fromRawMap(_, source)),
-          lifecycle = optionalCommandMap(raw, "lifecycle", source).getOrElse(Map.empty),
-          goals = optionalCommandMap(raw, "goals", source).getOrElse(Map.empty),
-          validate = optionalObject(raw, "validate", source).map(ValidateConfigOverlay.fromRawMap(_, source))
+            mode = optionalString(raw, "mode", source),
+            mill = optionalObject(raw, "mill", source).map(MillConfigOverlay.fromRawMap(_, source)),
+            lifecycle = optionalCommandMap(raw, "lifecycle", source).getOrElse(Map.empty),
+            goals = optionalCommandMap(raw, "goals", source).getOrElse(Map.empty),
+            validate = optionalObject(raw, "validate", source).map(ValidateConfigOverlay.fromRawMap(_, source))
         )
 
     private def optionalString(raw: Map[String, Any], field: String, source: Path): Option[String] =
         raw.get(field).map {
             case value: String => value
             case other =>
-                throw ConfigLoadException(source, s"Expected '$field' to be a string but found ${other.getClass.getSimpleName}")
+                throw ConfigLoadException(
+                    source,
+                    s"Expected '$field' to be a string but found ${other.getClass.getSimpleName}"
+                )
         }
 
     private def optionalObject(
@@ -83,7 +89,10 @@ object ConfigOverlay:
             case value: Map[?, ?] =>
                 value.toSeq.collect { case (key: String, nested) => key -> nested }.toMap
             case other =>
-                throw ConfigLoadException(source, s"Expected '$field' to be an object but found ${other.getClass.getSimpleName}")
+                throw ConfigLoadException(
+                    source,
+                    s"Expected '$field' to be an object but found ${other.getClass.getSimpleName}"
+                )
         }
 
     private def optionalCommandMap(
@@ -107,111 +116,113 @@ object ConfigOverlay:
                     case item: String => item
                     case other =>
                         throw ConfigLoadException(
-                          source,
-                          s"Expected '$parentField.$field' to contain only strings but found ${other.getClass.getSimpleName}"
+                            source,
+                            s"Expected '$parentField.$field' to contain only strings but found ${other.getClass.getSimpleName}"
                         )
                 }
             case other =>
                 throw ConfigLoadException(
-                  source,
-                  s"Expected '$parentField.$field' to be a sequence of strings but found ${other.getClass.getSimpleName}"
+                    source,
+                    s"Expected '$parentField.$field' to be a sequence of strings but found ${other.getClass.getSimpleName}"
                 )
 
 final case class MillConfigOverlay(
     executable: Option[String] = None,
     environment: Map[String, String] = Map.empty,
     workingDirectory: Option[String] = None
-) derives CanEqual, YamlCodec:
+) derives CanEqual,
+      YamlCodec:
 
     def merge(other: MillConfigOverlay): MillConfigOverlay =
         MillConfigOverlay(
-          executable = other.executable.orElse(executable),
-          environment = environment ++ other.environment,
-          workingDirectory = other.workingDirectory.orElse(workingDirectory)
+            executable = other.executable.orElse(executable),
+            environment = environment ++ other.environment,
+            workingDirectory = other.workingDirectory.orElse(workingDirectory)
         )
 
     def toEffectiveConfig: MillConfig =
         MillConfig(
-          executable = executable.getOrElse("mill"),
-          environment = environment,
-          workingDirectory = workingDirectory
+            executable = executable.getOrElse("mill"),
+            environment = environment,
+            workingDirectory = workingDirectory
         )
 
 object MillConfigOverlay:
 
     def fromRawMap(raw: Map[String, Any], source: Path): MillConfigOverlay =
         MillConfigOverlay(
-          executable = raw.get("executable").map {
-              case value: String => value
-              case other =>
-                  throw ConfigLoadException(
-                    source,
-                    s"Expected 'mill.executable' to be a string but found ${other.getClass.getSimpleName}"
-                  )
-          },
-          environment = raw.get("environment") match
-              case None => Map.empty
-              case Some(values: Map[?, ?]) =>
-                  values.map {
-                      case (key: String, value: String) => key -> value
-                      case (_, other) =>
-                          throw ConfigLoadException(
-                            source,
-                            s"Expected 'mill.environment' values to be strings but found ${other.getClass.getSimpleName}"
-                          )
-                  }.toMap
-              case Some(other) =>
-                  throw ConfigLoadException(
-                    source,
-                    s"Expected 'mill.environment' to be an object but found ${other.getClass.getSimpleName}"
-                  ),
-          workingDirectory = raw.get("workingDirectory").map {
-              case value: String => value
-              case other =>
-                  throw ConfigLoadException(
-                    source,
-                    s"Expected 'mill.workingDirectory' to be a string but found ${other.getClass.getSimpleName}"
-                  )
-          }
+            executable = raw.get("executable").map {
+                case value: String => value
+                case other =>
+                    throw ConfigLoadException(
+                        source,
+                        s"Expected 'mill.executable' to be a string but found ${other.getClass.getSimpleName}"
+                    )
+            },
+            environment = raw.get("environment") match
+                case None => Map.empty
+                case Some(values: Map[?, ?]) =>
+                    values.map {
+                        case (key: String, value: String) => key -> value
+                        case (_, other) =>
+                            throw ConfigLoadException(
+                                source,
+                                s"Expected 'mill.environment' values to be strings but found ${other.getClass.getSimpleName}"
+                            )
+                    }.toMap
+                case Some(other) =>
+                    throw ConfigLoadException(
+                        source,
+                        s"Expected 'mill.environment' to be an object but found ${other.getClass.getSimpleName}"
+                    ),
+            workingDirectory = raw.get("workingDirectory").map {
+                case value: String => value
+                case other =>
+                    throw ConfigLoadException(
+                        source,
+                        s"Expected 'mill.workingDirectory' to be a string but found ${other.getClass.getSimpleName}"
+                    )
+            }
         )
 
 final case class ValidateConfigOverlay(
     scalafmtEnabled: Option[Boolean] = None,
     scalafmtTarget: Option[String] = None
-) derives CanEqual, YamlCodec:
+) derives CanEqual,
+      YamlCodec:
 
     def merge(other: ValidateConfigOverlay): ValidateConfigOverlay =
         ValidateConfigOverlay(
-          scalafmtEnabled = other.scalafmtEnabled.orElse(scalafmtEnabled),
-          scalafmtTarget = other.scalafmtTarget.orElse(scalafmtTarget)
+            scalafmtEnabled = other.scalafmtEnabled.orElse(scalafmtEnabled),
+            scalafmtTarget = other.scalafmtTarget.orElse(scalafmtTarget)
         )
 
     def toEffectiveConfig: ValidateConfig =
         ValidateConfig(
-          scalafmtEnabled = scalafmtEnabled.getOrElse(false),
-          scalafmtTarget = scalafmtTarget
+            scalafmtEnabled = scalafmtEnabled.getOrElse(false),
+            scalafmtTarget = scalafmtTarget
         )
 
 object ValidateConfigOverlay:
 
     def fromRawMap(raw: Map[String, Any], source: Path): ValidateConfigOverlay =
         ValidateConfigOverlay(
-          scalafmtEnabled = raw.get("scalafmtEnabled").map {
-              case value: Boolean => value
-              case other =>
-                  throw ConfigLoadException(
-                    source,
-                    s"Expected 'validate.scalafmtEnabled' to be a boolean but found ${other.getClass.getSimpleName}"
-                  )
-          },
-          scalafmtTarget = raw.get("scalafmtTarget").map {
-              case value: String => value
-              case other =>
-                  throw ConfigLoadException(
-                    source,
-                    s"Expected 'validate.scalafmtTarget' to be a string but found ${other.getClass.getSimpleName}"
-                  )
-          }
+            scalafmtEnabled = raw.get("scalafmtEnabled").map {
+                case value: Boolean => value
+                case other =>
+                    throw ConfigLoadException(
+                        source,
+                        s"Expected 'validate.scalafmtEnabled' to be a boolean but found ${other.getClass.getSimpleName}"
+                    )
+            },
+            scalafmtTarget = raw.get("scalafmtTarget").map {
+                case value: String => value
+                case other =>
+                    throw ConfigLoadException(
+                        source,
+                        s"Expected 'validate.scalafmtTarget' to be a string but found ${other.getClass.getSimpleName}"
+                    )
+            }
         )
 
 final case class ConfigLoadException(path: Path, detail: String, cause0: Throwable | Null = null)

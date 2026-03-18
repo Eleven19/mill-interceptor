@@ -3,14 +3,15 @@ package io.eleven19.mill.interceptor.maven.plugin
 import scala.util.Using
 
 object MavenPluginModule:
+
     final case class GoalDescriptor(
         goal: String,
         implementationClass: String,
         description: String
     )
 
-    val artifactId = "mill-interceptor-maven-plugin"
-    val goalPrefix = "mill-interceptor"
+    val artifactId         = "mill-interceptor-maven-plugin"
+    val goalPrefix         = "mill-interceptor"
     val placeholderMessage = "Mill Interceptor Maven plugin placeholder goal invoked."
 
     private val supportedGoalsResource = "/maven-plugin-goals.tsv"
@@ -29,7 +30,7 @@ object MavenPluginModule:
             }
             .getOrElse {
                 throw new IllegalStateException(
-                  s"Unable to load Maven plugin goal registry resource: $supportedGoalsResource"
+                    s"Unable to load Maven plugin goal registry resource: $supportedGoalsResource"
                 )
             }
             .map(_.trim)

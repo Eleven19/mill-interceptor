@@ -18,7 +18,7 @@ object PklConfigEvaluator:
                     finally evaluator.close()
                 catch
                     case error: ConfigLoadException => throw error
-                    case error: Throwable          => throw ConfigLoadException(path, error.getMessage.nn, error)
+                    case error: Throwable           => throw ConfigLoadException(path, error.getMessage.nn, error)
             }
         }
 
