@@ -12,3 +12,6 @@ dist/
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Repo-local worktrees
+.worktrees/
