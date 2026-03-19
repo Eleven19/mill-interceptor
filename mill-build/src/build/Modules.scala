@@ -5,6 +5,7 @@ import mill.javalib.NativeImageModule
 import mill.scalalib.*
 import mill.scalalib.PublishModule
 import mill.scalalib.SonatypeCentralPublishModule
+import mill.scalalib.publish.{Developer, License, PomSettings, VersionControl}
 
 trait CommonScalaModule extends ScalaModule with scalafmt.ScalafmtModule {
   override def jvmVersion = Task {
@@ -52,57 +53,91 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   this: CommonScalaModule =>
   private val defaultPublishVersion = "0.0.0-SNAPSHOT"
   private val goalPrefix = "mill-interceptor"
-  private val lifecyclePlaceholderImplementation =
+  private val describeImplementation =
     "io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo"
+  private val inspectPlanImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo"
+  private val cleanImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.CleanMojo"
+  private val validateImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.ValidateMojo"
+  private val compileImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.CompileMojo"
+  private val testImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.TestMojo"
+  private val packageImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.PackageMojo"
+  private val verifyImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.VerifyMojo"
+  private val installImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.InstallMojo"
+  private val deployImplementation =
+      "io.eleven19.mill.interceptor.maven.plugin.mojo.DeployMojo"
+  def pomSettings = Task {
+    PomSettings(
+      description = "A Maven plugin for bridging Maven lifecycle executions into Mill interceptor workflows.",
+      organization = "io.eleven19.mill-interceptor",
+      url = "https://github.com/Eleven19/mill-interceptor",
+      licenses = Seq(License.`Apache-2.0`),
+      versionControl = VersionControl.github("Eleven19", "mill-interceptor"),
+      developers = Seq(
+        Developer(
+          id = "DamianReeves",
+          name = "Damian Reeves",
+          url = "https://github.com/DamianReeves"
+        )
+      )
+    )
+  }
   private val supportedGoals = Seq(
     (
       "describe",
-      lifecyclePlaceholderImplementation,
+      describeImplementation,
       "Describe the available Maven plugin goals."
     ),
     (
       "inspect-plan",
-      lifecyclePlaceholderImplementation,
+      inspectPlanImplementation,
       "Placeholder inspect-plan goal until the forwarding service is implemented."
     ),
     (
       "clean",
-      lifecyclePlaceholderImplementation,
+      cleanImplementation,
       "Placeholder clean goal until lifecycle forwarding is implemented."
     ),
     (
       "validate",
-      lifecyclePlaceholderImplementation,
+      validateImplementation,
       "Placeholder validate goal until lifecycle forwarding is implemented."
     ),
     (
       "compile",
-      lifecyclePlaceholderImplementation,
+      compileImplementation,
       "Placeholder compile goal until lifecycle forwarding is implemented."
     ),
     (
       "test",
-      lifecyclePlaceholderImplementation,
+      testImplementation,
       "Placeholder test goal until lifecycle forwarding is implemented."
     ),
     (
       "package",
-      lifecyclePlaceholderImplementation,
+      packageImplementation,
       "Placeholder package goal until lifecycle forwarding is implemented."
     ),
     (
       "verify",
-      lifecyclePlaceholderImplementation,
+      verifyImplementation,
       "Placeholder verify goal until lifecycle forwarding is implemented."
     ),
     (
       "install",
-      lifecyclePlaceholderImplementation,
+      installImplementation,
       "Placeholder install goal until lifecycle forwarding is implemented."
     ),
     (
       "deploy",
-      lifecyclePlaceholderImplementation,
+      deployImplementation,
       "Placeholder deploy goal until lifecycle forwarding is implemented."
     )
   )

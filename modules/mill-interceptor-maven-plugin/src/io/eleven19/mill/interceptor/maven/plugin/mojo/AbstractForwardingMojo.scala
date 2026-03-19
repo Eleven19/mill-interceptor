@@ -1,5 +1,6 @@
 package io.eleven19.mill.interceptor.maven.plugin.mojo
 
+import io.eleven19.mill.interceptor.maven.plugin.MavenPluginModule
 import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequest
 import org.apache.maven.plugin.AbstractMojo
 
@@ -14,3 +15,6 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
 
     final protected def executionRequest: ExecutionRequest =
         executionContext.toExecutionRequest
+
+    final protected def placeholderExecute(): Unit =
+        getLog.info(MavenPluginModule.placeholderMessage)

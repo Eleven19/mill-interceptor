@@ -16,18 +16,6 @@ mvnDeps:
   - org.pkl-lang:pkl-core:0.31.0
   - org.virtuslab::scala-yaml:0.3.0
 
-pomSettings:
-  description: A Maven plugin for bridging Maven lifecycle executions into Mill interceptor workflows.
-  organization: io.eleven19.mill-interceptor
-  url: https://github.com/Eleven19/mill-interceptor
-  licenses:
-    - Apache-2.0
-  versionControl: https://github.com/Eleven19/mill-interceptor
-  developers:
-    - id: DamianReeves
-      name: Damian Reeves
-      url: https://github.com/DamianReeves
-
 object test:
   extends:
     - ScalaTests
