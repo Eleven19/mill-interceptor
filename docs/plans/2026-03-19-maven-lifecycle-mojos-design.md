@@ -125,6 +125,20 @@ Failure reporting should stay explicit and actionable:
 - `inspect-plan` should render the ordered plan truthfully rather than inventing
   synthetic output
 
+This phase should not introduce a mediator or event bus. The execution flow is
+still synchronous and linear:
+
+- Maven boundary
+- config loading
+- plan resolution
+- runner execution
+- Maven exception mapping
+
+Adding a mediator now would mostly obscure direct service calls behind extra
+abstraction. If we need richer diagnostics or progress signals later, the
+preferred next step is a small typed execution-event model rather than a full
+message bus.
+
 ## Minimal Configuration Expectations
 
 The happy path should require no explicit lifecycle mapping for common repos.
@@ -161,5 +175,7 @@ surface is in place.
   - end-to-end Maven lifecycle fixtures and docs
 - `MI-8l6`
   - CLI-guided Maven plugin setup generation
+- `MI-815`
+  - evaluate typed execution events for the Maven plugin and CLI
 - later phase of `MI-okw`
   - direct plugin-goal interception beyond the common lifecycle

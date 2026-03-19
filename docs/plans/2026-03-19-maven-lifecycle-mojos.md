@@ -8,6 +8,10 @@
 
 **Tech Stack:** Scala 3, Mill declarative build, Maven plugin annotations/APIs, Kyo, zio-test, scribe
 
+**Explicit non-goal for this plan:** Do not introduce a mediator or event bus.
+If structured execution signals become necessary, add a small typed execution
+event layer later instead. That follow-up is tracked separately as `MI-815`.
+
 ---
 
 ### Task 1: Add the shared Maven adapter model
