@@ -19,17 +19,49 @@ final case class StepResult(
 ) derives CanEqual
 
 /** Structured metadata for a terminal runner failure. */
-final case class RunnerFailure(
-    kind: RunnerStepKind,
-    message: String,
-    guidance: Seq[String] = Seq.empty,
-    command: Option[Seq[String]] = None,
-    exitCode: Option[Int] = None
-) derives CanEqual
+sealed trait RunnerFailure derives CanEqual:
 
-/** Summary of a runner invocation over a resolved Mill execution plan. */
-final case class RunnerResult(
-    status: RunnerStatus,
-    stepResults: Seq[StepResult],
-    failure: Option[RunnerFailure] = None
-) derives CanEqual
+    def kind: RunnerStepKind
+    def message: String
+    def guidance: Seq[String]
+
+object RunnerFailure:
+
+    /** Failure caused by an explicit fail step in the plan. */
+    final case class FailStep(
+        message: String,
+        guidance: Seq[String] = Seq.empty
+    ) extends RunnerFailure:
+        val kind = RunnerStepKind.Fail
+
+    /** Failure caused by an unavailable Mill target probe. */
+    final case class ProbeFailure(
+        target: String,
+        command: Seq[String],
+        exitCode: Option[Int],
+        message: String,
+        guidance: Seq[String] = Seq.empty
+    ) extends RunnerFailure:
+        val kind = RunnerStepKind.ProbeTarget
+
+    /** Failure caused by a non-zero Mill invocation exit. */
+    final case class InvocationFailure(
+        command: Seq[String],
+        exitCode: Option[Int],
+        message: String,
+        guidance: Seq[String] = Seq.empty
+    ) extends RunnerFailure:
+        val kind = RunnerStepKind.InvokeMill
+
+/** Structured outcome of a runner invocation. */
+sealed trait RunnerResult derives CanEqual:
+
+    def stepResults: Seq[StepResult]
+
+object RunnerResult:
+
+    /** Successful plan execution with all steps completed. */
+    final case class Success(stepResults: Seq[StepResult]) extends RunnerResult
+
+    /** Failed plan execution with the terminal failure attached. */
+    final case class Failure(stepResults: Seq[StepResult], failure: RunnerFailure) extends RunnerResult
