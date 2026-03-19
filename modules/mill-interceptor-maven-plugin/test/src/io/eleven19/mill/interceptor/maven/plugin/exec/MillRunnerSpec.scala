@@ -155,7 +155,16 @@ object MillRunnerSpec extends KyoSpecDefault:
                     steps = Seq(PlanStep.ProbeTarget("checkFormat"))
                 )
 
-                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                MillRunner.execute(
+                    plan,
+                    EffectiveConfig(
+                        mill = MillConfig(
+                            executable = "millw",
+                            environment = Map("JAVA_HOME" -> "/opt/java")
+                        )
+                    ),
+                    executor
+                ).map {
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
                         assertTrue(failure == RunnerFailure.ProbeFailure(
@@ -166,7 +175,11 @@ object MillRunnerSpec extends KyoSpecDefault:
                             guidance = Seq("Run `mill resolve checkFormat` to inspect available targets")
                         )) &&
                         assertTrue(executor.calls == Seq(
-                            (Seq("millw", "resolve", "checkFormat"), Path("/repo", "module-a"))
+                            (
+                                Seq("millw", "resolve", "checkFormat"),
+                                Path("/repo", "module-a"),
+                                Map("JAVA_HOME" -> "/opt/java")
+                            )
                         ))
                     case other =>
                         assertTrue(false)
@@ -183,7 +196,16 @@ object MillRunnerSpec extends KyoSpecDefault:
                     )
                 )
 
-                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                MillRunner.execute(
+                    plan,
+                    EffectiveConfig(
+                        mill = MillConfig(
+                            executable = "millw",
+                            environment = Map("MILL_OPTS" -> "--jobs 4")
+                        )
+                    ),
+                    executor
+                ).map {
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
@@ -198,8 +220,16 @@ object MillRunnerSpec extends KyoSpecDefault:
                             message = "Mill exited with code 9"
                         )) &&
                         assertTrue(executor.calls == Seq(
-                            (Seq("millw", "resolve", "checkFormat"), Path("/repo", "module-a")),
-                            (Seq("millw", "compile", "test"), Path("/repo", "module-a"))
+                            (
+                                Seq("millw", "resolve", "checkFormat"),
+                                Path("/repo", "module-a"),
+                                Map("MILL_OPTS" -> "--jobs 4")
+                            ),
+                            (
+                                Seq("millw", "compile", "test"),
+                                Path("/repo", "module-a"),
+                                Map("MILL_OPTS" -> "--jobs 4")
+                            )
                         ))
                     case other =>
                         assertTrue(false)
@@ -216,7 +246,16 @@ object MillRunnerSpec extends KyoSpecDefault:
                     )
                 )
 
-                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                MillRunner.execute(
+                    plan,
+                    EffectiveConfig(
+                        mill = MillConfig(
+                            executable = "millw",
+                            environment = Map("CI" -> "true")
+                        )
+                    ),
+                    executor
+                ).map {
                     case RunnerResult.Success(stepResults) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
@@ -231,8 +270,16 @@ object MillRunnerSpec extends KyoSpecDefault:
                             )
                         )) &&
                         assertTrue(executor.calls == Seq(
-                            (Seq("millw", "resolve", "checkFormat"), Path("/repo", "module-a")),
-                            (Seq("millw", "compile", "test"), Path("/repo", "module-a"))
+                            (
+                                Seq("millw", "resolve", "checkFormat"),
+                                Path("/repo", "module-a"),
+                                Map("CI" -> "true")
+                            ),
+                            (
+                                Seq("millw", "compile", "test"),
+                                Path("/repo", "module-a"),
+                                Map("CI" -> "true")
+                            )
                         ))
                     case other =>
                         assertTrue(false)
@@ -242,12 +289,12 @@ object MillRunnerSpec extends KyoSpecDefault:
     )
 
     private final class RecordingExecutor(exitCodes: Seq[Int] = Seq.empty) extends MillRunner.SubprocessExecutor:
-        private val callsBuffer = scala.collection.mutable.ArrayBuffer.empty[(Seq[String], Path)]
+        private val callsBuffer = scala.collection.mutable.ArrayBuffer.empty[(Seq[String], Path, Map[String, String])]
 
-        def calls: Seq[(Seq[String], Path)] = callsBuffer.toSeq
+        def calls: Seq[(Seq[String], Path, Map[String, String])] = callsBuffer.toSeq
 
-        def run(command: Seq[String], workingDirectory: Path): Int < Sync =
+        def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int < Sync =
             Sync.defer {
-                callsBuffer.append((command, workingDirectory))
+                callsBuffer.append((command, workingDirectory, environment))
                 exitCodes.lift(callsBuffer.size - 1).getOrElse(0)
             }

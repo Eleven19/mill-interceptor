@@ -31,16 +31,17 @@ object MillRunner:
 
     /** Small injectable subprocess boundary for plan execution. */
     trait SubprocessExecutor:
-        def run(command: Seq[String], workingDirectory: Path): Int < Sync
+        def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int < Sync
 
     object SubprocessExecutor:
 
         val live: SubprocessExecutor = new SubprocessExecutor:
-            def run(command: Seq[String], workingDirectory: Path): Int < Sync =
+            def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int < Sync =
                 direct {
                     Process
                         .Command(command*)
                         .cwd(workingDirectory.toJava)
+                        .env(environment)
                         .stdin(Process.Input.Inherit)
                         .stdout(Process.Output.Inherit)
                         .stderr(Process.Output.Inherit)
@@ -59,14 +60,15 @@ object MillRunner:
         executor: SubprocessExecutor = SubprocessExecutor.live
     ): RunnerResult < Sync =
         val workingDirectory = resolveWorkingDirectory(plan.request.moduleRoot, config.mill.workingDirectory)
-        executeSteps(plan.steps, Vector.empty, workingDirectory, config, executor)
+        executeSteps(plan.steps, Vector.empty, workingDirectory, config, executor, config.mill.environment)
 
     private def executeSteps(
         remaining: Seq[PlanStep],
         completed: Vector[StepResult],
         workingDirectory: Path,
         config: EffectiveConfig,
-        executor: SubprocessExecutor
+        executor: SubprocessExecutor,
+        environment: Map[String, String]
     ): RunnerResult < Sync =
         remaining.headOption match
             case None =>
@@ -81,7 +83,7 @@ object MillRunner:
             case Some(PlanStep.ProbeTarget(target)) =>
                 val command = Seq(config.mill.executable, "resolve", target)
                 for
-                    exitCode <- executor.run(command, workingDirectory)
+                    exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
                         if exitCode == 0 then
                             executeSteps(
@@ -93,7 +95,8 @@ object MillRunner:
                                 ),
                                 workingDirectory,
                                 config,
-                                executor
+                                executor,
+                                environment
                             )
                         else
                             Sync.defer(
@@ -112,7 +115,7 @@ object MillRunner:
             case Some(PlanStep.InvokeMill(targets)) =>
                 val command = Seq(config.mill.executable) ++ targets
                 for
-                    exitCode <- executor.run(command, workingDirectory)
+                    exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
                         if exitCode == 0 then
                             executeSteps(
@@ -124,7 +127,8 @@ object MillRunner:
                                 ),
                                 workingDirectory,
                                 config,
-                                executor
+                                executor,
+                                environment
                             )
                         else
                             Sync.defer(
