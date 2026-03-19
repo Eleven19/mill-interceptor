@@ -7,6 +7,7 @@ import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
 import io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan
 import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
 import io.eleven19.mill.interceptor.maven.plugin.model.PlanStep
+import kyo.*
 import kyo.Path
 import kyo.test.KyoSpecDefault
 import zio.test.*
@@ -118,5 +119,135 @@ object MillRunnerSpec extends KyoSpecDefault:
                     guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                 )
             ))
-        }
+        },
+        suite("execute")(
+            test("short-circuits on fail steps without invoking subprocesses") {
+                val executor = new RecordingExecutor()
+                val plan = MillExecutionPlan(
+                    request = request(),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(
+                        PlanStep.Fail(
+                            message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                            guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
+                        ),
+                        PlanStep.InvokeMill(Seq("compile"))
+                    )
+                )
+
+                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                    case RunnerResult.Failure(stepResults, failure) =>
+                        assertTrue(stepResults.isEmpty) &&
+                        assertTrue(failure == RunnerFailure.FailStep(
+                            message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                            guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
+                        )) &&
+                        assertTrue(executor.calls.isEmpty)
+                    case other =>
+                        assertTrue(false)
+                }
+            },
+            test("returns probe failures with the probe command and exit code") {
+                val executor = new RecordingExecutor(Seq(17))
+                val plan = MillExecutionPlan(
+                    request = request(),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.ProbeTarget("checkFormat"))
+                )
+
+                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                    case RunnerResult.Failure(stepResults, failure) =>
+                        assertTrue(stepResults.isEmpty) &&
+                        assertTrue(failure == RunnerFailure.ProbeFailure(
+                            target = "checkFormat",
+                            command = Seq("millw", "resolve", "checkFormat"),
+                            exitCode = Some(17),
+                            message = "Mill target 'checkFormat' is unavailable",
+                            guidance = Seq("Run `mill resolve checkFormat` to inspect available targets")
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (Seq("millw", "resolve", "checkFormat"), Path("/repo", "module-a"))
+                        ))
+                    case other =>
+                        assertTrue(false)
+                }
+            },
+            test("returns invocation failures with the invocation command and exit code") {
+                val executor = new RecordingExecutor(Seq(0, 9))
+                val plan = MillExecutionPlan(
+                    request = request(),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(
+                        PlanStep.ProbeTarget("checkFormat"),
+                        PlanStep.InvokeMill(Seq("compile", "test"))
+                    )
+                )
+
+                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                    case RunnerResult.Failure(stepResults, failure) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.ProbeTarget,
+                                command = Some(Seq("millw", "resolve", "checkFormat")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(failure == RunnerFailure.InvocationFailure(
+                            command = Seq("millw", "compile", "test"),
+                            exitCode = Some(9),
+                            message = "Mill exited with code 9"
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (Seq("millw", "resolve", "checkFormat"), Path("/repo", "module-a")),
+                            (Seq("millw", "compile", "test"), Path("/repo", "module-a"))
+                        ))
+                    case other =>
+                        assertTrue(false)
+                }
+            },
+            test("accumulates ordered step results for successful execution") {
+                val executor = new RecordingExecutor(Seq(0, 0))
+                val plan = MillExecutionPlan(
+                    request = request(),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(
+                        PlanStep.ProbeTarget("checkFormat"),
+                        PlanStep.InvokeMill(Seq("compile", "test"))
+                    )
+                )
+
+                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.ProbeTarget,
+                                command = Some(Seq("millw", "resolve", "checkFormat")),
+                                exitCode = Some(0)
+                            ),
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq("millw", "compile", "test")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (Seq("millw", "resolve", "checkFormat"), Path("/repo", "module-a")),
+                            (Seq("millw", "compile", "test"), Path("/repo", "module-a"))
+                        ))
+                    case other =>
+                        assertTrue(false)
+                }
+            }
+        )
     )
+
+    private final class RecordingExecutor(exitCodes: Seq[Int] = Seq.empty) extends MillRunner.SubprocessExecutor:
+        private val callsBuffer = scala.collection.mutable.ArrayBuffer.empty[(Seq[String], Path)]
+
+        def calls: Seq[(Seq[String], Path)] = callsBuffer.toSeq
+
+        def run(command: Seq[String], workingDirectory: Path): Int < Sync =
+            Sync.defer {
+                callsBuffer.append((command, workingDirectory))
+                exitCodes.lift(callsBuffer.size - 1).getOrElse(0)
+            }
