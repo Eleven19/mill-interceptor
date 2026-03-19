@@ -63,6 +63,8 @@ object MillRunner:
 
     private def resolveWorkingDirectory(base: Path, overridePath: Option[String]): Path =
         overridePath match
-            case Some(value) if value.nonEmpty && value.startsWith("/") => Path(value)
-            case Some(value) if value.nonEmpty                          => Path(base.toJava.resolve(value).toString)
-            case _                                                      => base
+            case Some(value) if value.nonEmpty =>
+                val overrideJava = java.nio.file.Paths.get(value)
+                if overrideJava.isAbsolute then Path(overrideJava.toString)
+                else Path(base.toJava.resolve(overrideJava).toString)
+            case _ => base

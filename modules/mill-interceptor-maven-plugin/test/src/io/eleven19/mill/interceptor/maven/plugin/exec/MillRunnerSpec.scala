@@ -70,6 +70,31 @@ object MillRunnerSpec extends KyoSpecDefault:
                 )
             ))
         },
+        test("renders absolute working directory overrides without rebasing") {
+            val plan = MillExecutionPlan(
+                request = request(),
+                executionMode = ExecutionMode.Strict,
+                steps = Seq(PlanStep.InvokeMill(Seq("compile")))
+            )
+
+            val rendered = MillRunner.dryRun(
+                plan,
+                EffectiveConfig(
+                    mill = MillConfig(
+                        executable = "millw",
+                        workingDirectory = Some("/opt/mill-work")
+                    )
+                )
+            )
+
+            assertTrue(rendered.steps == Seq(
+                DryRunStep(
+                    kind = RunnerStepKind.InvokeMill,
+                    command = Some(Seq("millw", "compile")),
+                    workingDirectory = Path("/opt/mill-work")
+                )
+            ))
+        },
         test("renders fail steps without spawning a process") {
             val plan = MillExecutionPlan(
                 request = request(),
