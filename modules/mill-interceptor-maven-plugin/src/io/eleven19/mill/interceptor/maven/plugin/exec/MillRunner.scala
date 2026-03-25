@@ -61,11 +61,13 @@ object MillRunner:
     ): RunnerResult < Sync =
         for
             executable <- resolveExecutable(plan.request, config)
+            forwardedArgs = forwardedPropertyArgs(plan.request)
             result <- executeSteps(
                 plan.steps,
                 Vector.empty,
                 resolveWorkingDirectory(plan.request.moduleRoot, config.mill.workingDirectory),
                 executable,
+                forwardedArgs,
                 config,
                 executor,
                 config.mill.environment
@@ -77,6 +79,7 @@ object MillRunner:
         completed: Vector[StepResult],
         workingDirectory: Path,
         executable: String,
+        forwardedArgs: Seq[String],
         config: EffectiveConfig,
         executor: SubprocessExecutor,
         environment: Map[String, String]
@@ -92,7 +95,7 @@ object MillRunner:
                     )
                 )
             case Some(PlanStep.ProbeTarget(target)) =>
-                val command = Seq(executable, "resolve", target)
+                val command = Seq(executable) ++ forwardedArgs ++ Seq("resolve", target)
                 for
                     exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
@@ -106,6 +109,7 @@ object MillRunner:
                                 ),
                                 workingDirectory,
                                 executable,
+                                forwardedArgs,
                                 config,
                                 executor,
                                 environment
@@ -125,7 +129,7 @@ object MillRunner:
                             )
                 yield result
             case Some(PlanStep.InvokeMill(targets)) =>
-                val command = Seq(executable) ++ targets
+                val command = Seq(executable) ++ forwardedArgs ++ targets
                 for
                     exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
@@ -139,6 +143,7 @@ object MillRunner:
                                 ),
                                 workingDirectory,
                                 executable,
+                                forwardedArgs,
                                 config,
                                 executor,
                                 environment
@@ -162,17 +167,18 @@ object MillRunner:
         config: EffectiveConfig
     ): DryRunStep =
         val workingDirectory = resolveWorkingDirectory(request.moduleRoot, config.mill.workingDirectory)
+        val forwardedArgs    = forwardedPropertyArgs(request)
         step match
             case PlanStep.ProbeTarget(target) =>
                 DryRunStep(
                     kind = RunnerStepKind.ProbeTarget,
-                    command = Some(Seq(config.mill.executable, "resolve", target)),
+                    command = Some(Seq(config.mill.executable) ++ forwardedArgs ++ Seq("resolve", target)),
                     workingDirectory = workingDirectory
                 )
             case PlanStep.InvokeMill(targets) =>
                 DryRunStep(
                     kind = RunnerStepKind.InvokeMill,
-                    command = Some(Seq(config.mill.executable) ++ targets),
+                    command = Some(Seq(config.mill.executable) ++ forwardedArgs ++ targets),
                     workingDirectory = workingDirectory
                 )
             case PlanStep.Fail(message, guidance) =>
@@ -204,3 +210,6 @@ object MillRunner:
                     Sync.defer(candidate.toFile.exists()).map(exists => candidate -> exists)
                 }
             yield candidates.collectFirst { case (candidate, true) => candidate.toString }.getOrElse("mill")
+
+    private def forwardedPropertyArgs(request: ExecutionRequest): Seq[String] =
+        request.properties.get("maven.repo.local").toSeq.map(value => s"-Dmaven.repo.local=$value")

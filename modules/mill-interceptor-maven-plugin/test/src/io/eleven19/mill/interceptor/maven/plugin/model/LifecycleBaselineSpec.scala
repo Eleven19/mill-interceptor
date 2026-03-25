@@ -19,7 +19,7 @@ object LifecycleBaselineSpec extends KyoSpecDefault:
                     "test" -> Seq("compile", "test"),
                     "package" -> Seq("compile", "test", "jar"),
                     "verify" -> Seq("compile", "test"),
-                    "install" -> Seq("compile", "test", "jar", "publishLocal"),
+                    "install" -> Seq("compile", "test", "jar", "publishM2Local"),
                     "deploy" -> Seq("compile", "test", "jar", "publish")
                 )
             ) &&

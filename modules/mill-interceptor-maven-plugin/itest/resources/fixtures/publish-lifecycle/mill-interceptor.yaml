@@ -1,0 +1,15 @@
+validate:
+  scalafmtEnabled: false
+lifecycle:
+  deploy:
+    - mill.javalib.MavenPublishModule/
+    - --publishArtifacts
+    - publishArtifacts
+    - --username
+    - fixture
+    - --password
+    - fixture
+    - --releaseUri
+    - file:out/maven-repo
+    - --snapshotUri
+    - file:out/maven-repo

@@ -1,0 +1,23 @@
+extends:
+  - ScalaModule
+  - PublishModule
+  - scalafmt.ScalafmtModule
+
+scalaVersion: 3.8.2
+publishVersion: 0.0.1
+artifactName: publish-lifecycle-fixture
+pomSettings:
+  description: Publish lifecycle fixture
+  organization: io.eleven19.mill.interceptor.fixture
+  url: https://github.com/Eleven19/mill-interceptor
+  licenses:
+    - Apache-2.0
+  versionControl: https://github.com/Eleven19/mill-interceptor
+  developers:
+    - name: Fixture
+      email: fixture@example.invalid
+
+object test:
+  extends:
+    - ScalaTests
+    - TestModule.ZioTest

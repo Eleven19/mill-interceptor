@@ -15,7 +15,8 @@ import zio.test.*
 object MillRunnerSpec extends KyoSpecDefault:
 
     private def request(
-        moduleRoot: Path = Path("/repo", "module-a")
+        moduleRoot: Path = Path("/repo", "module-a"),
+        properties: Map[String, String] = Map.empty
     ): ExecutionRequest =
         ExecutionRequest(
             kind = ExecutionRequestKind.LifecyclePhase,
@@ -25,7 +26,8 @@ object MillRunnerSpec extends KyoSpecDefault:
             module = ModuleRef(
                 artifactId = "module-a",
                 packaging = "jar"
-            )
+            ),
+            properties = properties
         )
 
     def spec: Spec[Any, Any] = suite("MillRunner")(
@@ -68,6 +70,50 @@ object MillRunnerSpec extends KyoSpecDefault:
                     kind = RunnerStepKind.InvokeMill,
                     command = Some(Seq("millw", "compile", "test")),
                     workingDirectory = Path("/repo", "module-a", "build")
+                )
+            ))
+        },
+        test("forwards selected Maven system properties into rendered Mill commands") {
+            val plan = MillExecutionPlan(
+                request = request().copy(
+                    requestedName = "install",
+                    properties = Map("maven.repo.local" -> "/tmp/m2-repo")
+                ),
+                executionMode = ExecutionMode.Strict,
+                steps = Seq(PlanStep.InvokeMill(Seq("publishM2Local")))
+            )
+
+            val rendered = MillRunner.dryRun(
+                plan,
+                EffectiveConfig(
+                    mill = MillConfig(
+                        executable = "millw"
+                    )
+                )
+            )
+
+            assertTrue(rendered.steps == Seq(
+                DryRunStep(
+                    kind = RunnerStepKind.InvokeMill,
+                    command = Some(Seq("millw", "-Dmaven.repo.local=/tmp/m2-repo", "publishM2Local")),
+                    workingDirectory = Path("/repo", "module-a")
+                )
+            ))
+        },
+        test("forwards maven.repo.local into rendered mill commands") {
+            val plan = MillExecutionPlan(
+                request = request(properties = Map("maven.repo.local" -> "/tmp/m2-repo")),
+                executionMode = ExecutionMode.Strict,
+                steps = Seq(PlanStep.InvokeMill(Seq("publishM2Local")))
+            )
+
+            val rendered = MillRunner.dryRun(plan, EffectiveConfig())
+
+            assertTrue(rendered.steps == Seq(
+                DryRunStep(
+                    kind = RunnerStepKind.InvokeMill,
+                    command = Some(Seq("mill", "-Dmaven.repo.local=/tmp/m2-repo", "publishM2Local")),
+                    workingDirectory = Path("/repo", "module-a")
                 )
             ))
         },

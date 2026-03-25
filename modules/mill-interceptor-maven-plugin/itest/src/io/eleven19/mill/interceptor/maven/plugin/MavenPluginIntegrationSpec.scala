@@ -111,6 +111,83 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 assertTrue(inspectPlan.exitCode == 0) &&
                 assertTrue(inspectPlan.output.contains("Resolved Mill execution plan"))
         },
+        test("publishes install and deploy through an extension-only publish-capable fixture") {
+            val tempDir    = tempPath(s"publish-${JSystem.nanoTime()}")
+            val localRepo  = Path(tempDir, "m2-repository")
+            val fixtureDir = Path(tempDir, "fixture")
+            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
+            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
+            val installedPom = Path(
+                localRepo,
+                "io",
+                "eleven19",
+                "mill",
+                "interceptor",
+                "fixture",
+                "publish-lifecycle-fixture",
+                "0.0.1",
+                "publish-lifecycle-fixture-0.0.1.pom"
+            )
+            val deployedPom = Path(
+                fixtureDir,
+                "out",
+                "maven-repo",
+                "io",
+                "eleven19",
+                "mill",
+                "interceptor",
+                "fixture",
+                "publish-lifecycle-fixture",
+                "0.0.1",
+                "publish-lifecycle-fixture-0.0.1.pom"
+            )
+
+            for
+                _ <- tempDir.removeAll
+                _ <- tempDir.mkDir
+                mavenCmd <- resolveMavenExecutable(tempDir)
+                _ <- copyFixtureDirectory("fixtures/publish-lifecycle", fixtureDir)
+                _ <- installRepoMillLauncher(fixtureDir)
+                install <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                        s"-Dfile=$pluginJar",
+                        s"-DpomFile=$pluginPom"
+                    ),
+                    tempDir
+                )
+                installPhase <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "install"
+                    ),
+                    fixtureDir
+                )
+                deployPhase <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        s"-DaltDeploymentRepository=fixture::default::file:${absolute(Path(fixtureDir, "out", "maven-repo"))}",
+                        "deploy"
+                    ),
+                    fixtureDir
+                )
+                installedExists <- pathExists(installedPom)
+                deployedExists <- pathExists(deployedPom)
+                _ <- tempDir.removeAll
+            yield
+                assertTrue(install.exitCode == 0) &&
+                assertTrue(installPhase.exitCode == 0) &&
+                assertTrue(deployPhase.exitCode == 0) &&
+                assertTrue(installedExists) &&
+                assertTrue(deployedExists) &&
+                assertTrue(installPhase.output.contains("publishM2Local")) &&
+                assertTrue(deployPhase.output.contains("mill-interceptor:0.0.0-SNAPSHOT:deploy")) &&
+                assertTrue(deployPhase.output.contains("fixture/mill compile test jar publish"))
+        },
         test("publishes locally and executes the placeholder goal through Maven") {
             val tempDir    = tempPath(s"run-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
@@ -146,7 +223,7 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 assertTrue(install.exitCode == 0) &&
                 assertTrue(validate.exitCode == 0) &&
                 assertTrue(validate.output.contains(MavenPluginModule.placeholderMessage))
-        }
+        },
     )
 
     private case class CommandResult(exitCode: Int, output: String)
@@ -246,3 +323,6 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             )
             ()
         }
+
+    private def pathExists(path: Path): Boolean < Sync =
+        Sync.defer(path.toJava.toFile.exists())
