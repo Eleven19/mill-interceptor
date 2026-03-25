@@ -42,7 +42,15 @@ Expected: FAIL because the minimal lifecycle fixture does not exist yet.
 Create the checked-in fixture with:
 - `.mvn/extensions.xml`
 - no YAML or PKL config
-- a tiny Mill build that exposes the baseline lifecycle targets used by the plugin
+- a realistic Mill module layout
+- baseline-friendly query targets in mind:
+  - `clean`
+  - `__.checkFormat`
+  - `__.compile`
+  - `__.test`
+
+Use the fixture to test whether the conventional baseline is realistic without
+falling back to toy top-level target names.
 
 **Step 4: Run the test to verify it passes**
 

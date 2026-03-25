@@ -102,6 +102,29 @@ The important assertion is not just exit code success. The fixture should prove
 that the plugin actually forwards to Mill and that the conventional baseline is
 usable without extra config.
 
+## Baseline Realism
+
+The minimal fixture should use a realistic Mill layout rather than toy
+top-level targets.
+
+The conventional lifecycle baseline should prefer Mill query syntax where it
+creates a better no-config default for real builds:
+
+- `clean` -> `clean`
+- validate Scalafmt hook -> `__.checkFormat`
+- `compile` -> `__.compile`
+- `test` -> `__.test`
+
+This makes the fixture a design probe as well as a test:
+
+- if query-based defaults work well for realistic module layouts, the baseline
+  is strong
+- if `package`, `install`, or `deploy` still require too much explicit config,
+  that should be treated as signal to revisit the baseline rather than merely
+  documenting complexity
+
+`verify` can continue to reflect validate-hook behavior plus test execution.
+
 ### Override Fixture
 
 The multi-module fixture should cover:
