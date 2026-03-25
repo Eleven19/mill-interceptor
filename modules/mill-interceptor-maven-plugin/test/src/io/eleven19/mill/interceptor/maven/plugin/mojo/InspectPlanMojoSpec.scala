@@ -5,8 +5,8 @@ import io.eleven19.mill.interceptor.maven.plugin.config.MillConfig
 import io.eleven19.mill.interceptor.maven.plugin.config.ValidateConfig
 import io.eleven19.mill.interceptor.maven.plugin.exec.MillRunner
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerResult
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.ModuleRef
 import java.io.File
 import kyo.Path
 import kyo.test.KyoSpecDefault
@@ -121,7 +121,7 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
         override protected def loadEffectiveConfig(): EffectiveConfig = config0
 
         override protected def executeResolvedPlan(
-            plan: io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan,
+            plan: io.eleven19.mill.interceptor.model.MillExecutionPlan,
             config: EffectiveConfig
         ): RunnerResult =
             executedPlan = true

@@ -5,6 +5,8 @@ extends:
   - _root_.build.MavenPluginSupport
 
 artifactId: mill-interceptor-maven-plugin
+moduleDeps:
+  - "modules.mill-interceptor"
 
 mvnDeps:
   - com.outr::scribe::3.18.0

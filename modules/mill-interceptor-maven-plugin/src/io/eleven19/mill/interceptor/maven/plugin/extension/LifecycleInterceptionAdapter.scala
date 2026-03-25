@@ -1,7 +1,7 @@
 package io.eleven19.mill.interceptor.maven.plugin.extension
 
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.ModuleRef
 import io.eleven19.mill.interceptor.maven.plugin.mojo.MavenExecutionContext
 import java.io.File
 import org.apache.maven.execution.MavenSession

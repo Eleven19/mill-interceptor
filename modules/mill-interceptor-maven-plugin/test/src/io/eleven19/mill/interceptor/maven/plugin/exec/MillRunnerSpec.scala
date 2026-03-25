@@ -1,12 +1,12 @@
 package io.eleven19.mill.interceptor.maven.plugin.exec
 
 import io.eleven19.mill.interceptor.maven.plugin.config.{EffectiveConfig, MillConfig}
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionMode
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequest
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan
-import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
-import io.eleven19.mill.interceptor.maven.plugin.model.PlanStep
+import io.eleven19.mill.interceptor.model.ExecutionMode
+import io.eleven19.mill.interceptor.model.ExecutionRequest
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.MillExecutionPlan
+import io.eleven19.mill.interceptor.model.ModuleRef
+import io.eleven19.mill.interceptor.model.PlanStep
 import kyo.*
 import kyo.Path
 import kyo.test.KyoSpecDefault

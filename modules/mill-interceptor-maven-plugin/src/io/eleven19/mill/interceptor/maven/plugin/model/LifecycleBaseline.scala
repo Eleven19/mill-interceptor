@@ -1,5 +1,6 @@
 package io.eleven19.mill.interceptor.maven.plugin.model
 
+import io.eleven19.mill.interceptor.model.ExecutionMode
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 
 /** Optional Scalafmt validation target and its disable switch. */

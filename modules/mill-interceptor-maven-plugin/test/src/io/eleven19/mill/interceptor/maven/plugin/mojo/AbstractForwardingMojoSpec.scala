@@ -1,6 +1,6 @@
 package io.eleven19.mill.interceptor.maven.plugin.mojo
 
-import io.eleven19.mill.interceptor.maven.plugin.model.*
+import io.eleven19.mill.interceptor.model.*
 import kyo.Path
 import kyo.test.KyoSpecDefault
 import zio.test.*

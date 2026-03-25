@@ -3,7 +3,7 @@ package io.eleven19.mill.interceptor.maven.plugin.mojo
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerFailure
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerResult
-import io.eleven19.mill.interceptor.maven.plugin.model.*
+import io.eleven19.mill.interceptor.model.*
 import kyo.Path
 import kyo.test.KyoSpecDefault
 import org.apache.maven.plugin.MojoExecutionException

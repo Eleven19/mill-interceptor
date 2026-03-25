@@ -1,10 +1,10 @@
 package io.eleven19.mill.interceptor.maven.plugin.exec
 
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequest
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan
-import io.eleven19.mill.interceptor.maven.plugin.model.PlanStep
+import io.eleven19.mill.interceptor.model.ExecutionRequest
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.MillExecutionPlan
+import io.eleven19.mill.interceptor.model.PlanStep
 import kyo.*
 
 /** A rendered command and its working directory for dry-run inspection. */

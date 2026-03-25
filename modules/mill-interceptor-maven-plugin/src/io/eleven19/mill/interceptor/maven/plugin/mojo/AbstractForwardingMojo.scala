@@ -9,10 +9,10 @@ import io.eleven19.mill.interceptor.maven.plugin.exec.MillRunner
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerFailure
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerResult
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerStepKind
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequest
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan
-import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
+import io.eleven19.mill.interceptor.model.ExecutionRequest
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.MillExecutionPlan
+import io.eleven19.mill.interceptor.model.ModuleRef
 import io.eleven19.mill.interceptor.maven.plugin.resolve.ExecutionPlanResolver
 import java.io.File
 import java.util.Properties

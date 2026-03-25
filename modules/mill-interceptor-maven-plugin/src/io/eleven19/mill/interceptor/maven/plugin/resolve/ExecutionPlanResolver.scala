@@ -1,7 +1,8 @@
 package io.eleven19.mill.interceptor.maven.plugin.resolve
 
+import io.eleven19.mill.interceptor.model.*
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
-import io.eleven19.mill.interceptor.maven.plugin.model.*
+import io.eleven19.mill.interceptor.maven.plugin.model.LifecycleBaseline
 
 object ExecutionPlanResolver:
 
