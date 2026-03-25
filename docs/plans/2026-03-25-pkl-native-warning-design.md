@@ -24,6 +24,16 @@ The ordering should be:
 3. if not, apply a Maven-plugin-test-scoped JVM flag or env configuration
 4. keep the fix local to the affected module/tests
 
+## Chosen Fix
+
+The warning is resolved by adding `--enable-native-access=ALL-UNNAMED` to a Maven-plugin-test-scoped Mill test trait in `mill-build`, then using that trait from the Maven plugin `test` and `itest` modules.
+
+This keeps the suppression:
+
+- out of production PKL evaluator code
+- out of unrelated repo test modules
+- local to the Maven plugin surface where PKL-backed config loading is exercised
+
 ## Why This Scope
 
 The issue is noisy but low-risk. The right fix should:

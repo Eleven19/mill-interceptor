@@ -38,6 +38,14 @@ trait CommonScalaTestModule extends ScalaModule {
   }
 }
 
+trait PklEnabledScalaTestModule extends CommonScalaTestModule {
+  private val nativeAccessOption = "--enable-native-access=ALL-UNNAMED"
+
+  override def forkArgs = Task {
+    super.forkArgs() ++ Seq(nativeAccessOption)
+  }
+}
+
 trait InterceptorModule
     extends CommonScalaModule
     with mill.contrib.scoverage.ScoverageModule

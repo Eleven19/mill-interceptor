@@ -84,3 +84,7 @@ Keep the docs aligned with the actual narrow fix that landed.
 git add docs/plans modules/mill-interceptor-maven-plugin
 git commit -m "docs: record pkl warning resolution"
 ```
+
+## Result
+
+The implemented fix adds a new `PklEnabledScalaTestModule` trait in `mill-build` that appends `--enable-native-access=ALL-UNNAMED` to test fork arguments, and the Maven plugin module opts into that trait for both `test` and `itest`.
