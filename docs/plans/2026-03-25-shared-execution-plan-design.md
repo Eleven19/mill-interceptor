@@ -18,8 +18,10 @@ The CLI does not currently depend on these plan types. It generates Maven setup 
 
 Extract only the neutral model types first:
 
+- `ExecutionMode`
 - `ExecutionRequest`
 - `ExecutionRequestKind`
+- `ModuleRef`
 - `MillExecutionPlan`
 - `PlanStep`
 
@@ -59,6 +61,24 @@ Keep local to the Maven plugin:
 - Mojo failure mapping
 
 Only the type model should move in this task.
+
+## Result
+
+The extraction is clean with one important clarification: `ExecutionMode` is part of the neutral model boundary too, because `MillExecutionPlan` and lifecycle-baseline resolution both depend on it. The Maven plugin now depends on the shared `modules.mill-interceptor` package for:
+
+- `ExecutionMode`
+- `ExecutionRequest`
+- `ExecutionRequestKind`
+- `ModuleRef`
+- `MillExecutionPlan`
+- `PlanStep`
+
+Maven-specific policy remains local to the plugin:
+
+- `LifecycleBaseline`
+- `ExecutionPlanResolver`
+- `MillRunner`
+- Mojo adapters and failure mapping
 
 ## Risks
 

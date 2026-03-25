@@ -102,3 +102,7 @@ If the extraction is clean, keep the docs as implemented. If hidden coupling blo
 git add docs/plans modules/mill-interceptor modules/mill-interceptor-maven-plugin
 git commit -m "docs: record shared execution plan evaluation"
 ```
+
+## Result
+
+The extracted shared package lives at `modules/mill-interceptor/src/io/eleven19/mill/interceptor/model/MillExecutionPlan.scala`, and the Maven plugin now depends on it via `moduleDeps: ["modules.mill-interceptor"]`. No further shared extraction was needed for resolver or runner behavior in this task.
