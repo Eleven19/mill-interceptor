@@ -29,6 +29,10 @@ object MavenSetupGenerator:
         yield files.map(file => GeneratedSetupFile(file.path, file.content))
 
     def renderExtensionsXml(extensionVersion: String): String =
+        val safeVersion = extensionVersion
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
         s"""<?xml version="1.0" encoding="UTF-8"?>
            |<extensions xmlns="http://maven.apache.org/EXTENSIONS/1.0.0"
            |            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -36,7 +40,7 @@ object MavenSetupGenerator:
            |  <extension>
            |    <groupId>$extensionGroupId</groupId>
            |    <artifactId>$extensionArtifactId</artifactId>
-           |    <version>$extensionVersion</version>
+           |    <version>$safeVersion</version>
            |  </extension>
            |</extensions>
            |""".stripMargin
@@ -92,6 +96,7 @@ object MavenSetupGenerator:
         format: MavenSetupFormat,
         extensionVersion: String
     ): List[PlannedFile] =
+        val cfgFile = configFileName(format)
         List(
             PlannedFile(
                 Path(".mvn", "extensions.xml"),
@@ -99,8 +104,8 @@ object MavenSetupGenerator:
                 renderExtensionsXml(extensionVersion)
             ),
             PlannedFile(
-                Path(configFileName(format)),
-                repoRoot.resolve(configFileName(format)),
+                Path(cfgFile),
+                repoRoot.resolve(cfgFile),
                 renderStarterConfig(format)
             )
         )

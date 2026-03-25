@@ -62,6 +62,10 @@ object Cli:
                         Abort.fail(new IllegalArgumentException(s"Unsupported intercept tool: $other"))
             case "maven" :: "setup" :: rest =>
                 parseMavenSetup(rest)
+            case "maven" :: Nil =>
+                Abort.fail(new IllegalArgumentException("Missing maven subcommand. Use: maven setup"))
+            case "maven" :: sub :: _ =>
+                Abort.fail(new IllegalArgumentException(s"Unknown maven subcommand: $sub"))
             case "shim" :: "generate" :: rest =>
                 parseShimGenerate(rest)
             case "shim" :: Nil =>

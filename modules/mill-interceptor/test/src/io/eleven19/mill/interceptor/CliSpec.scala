@@ -297,5 +297,17 @@ object CliSpec extends KyoSpecDefault:
                     assertTrue(msg.contains("Unknown maven setup option"))
                 }
             }
+        ),
+        suite("maven - subcommand error cases")(
+            test("maven without subcommand fails with Abort") {
+                parseError("maven").map { msg =>
+                    assertTrue(msg.contains("Missing maven subcommand"))
+                }
+            },
+            test("maven with unknown subcommand fails with Abort") {
+                parseError("maven", "unknown").map { msg =>
+                    assertTrue(msg.contains("Unknown maven subcommand"))
+                }
+            }
         )
     )

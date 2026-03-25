@@ -40,6 +40,15 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
                     assertTrue(!xml.contains("\\\""))
                 }
             },
+            test("extensions xml escapes XML-special characters in the version") {
+                val xml = MavenSetupGenerator.renderExtensionsXml("1.0&beta<2>")
+                Sync.defer {
+                    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    builder.parse(InputSource(StringReader(xml)))
+                    assertTrue(xml.contains("1.0&amp;beta&lt;2&gt;")) &&
+                    assertTrue(!xml.contains("1.0&beta<2>"))
+                }
+            },
             test("yaml starter is the default file content") {
                 val yaml = MavenSetupGenerator.renderStarterConfig(MavenSetupFormat.Yaml)
                 Sync.defer(
@@ -146,6 +155,30 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
                     xml <- Sync.defer(Files.readString(xmlPath))
                     _ <- repoRoot.removeAll
                 yield assertTrue(xml.contains("1.2.3"))
+            },
+            test("pkl format writes mill-interceptor.pkl instead of yaml") {
+                val repoRoot = tempPath(s"maven-setup-pkl-${JSystem.nanoTime()}")
+                val nested   = Path(repoRoot, "modules", "app")
+                val pklPath  = fsPath(repoRoot).resolve("mill-interceptor.pkl")
+                val yamlPath = fsPath(repoRoot).resolve("mill-interceptor.yaml")
+
+                for
+                    _ <- repoRoot.removeAll
+                    _ <- nested.mkDir
+                    _ <- Path(repoRoot, ".git").mkDir
+                    generated <- generateSuccess(
+                        nested,
+                        MavenSetupOptions(format = MavenSetupFormat.Pkl)
+                    )
+                    pklExists  <- Sync.defer(Files.exists(pklPath))
+                    yamlExists <- Sync.defer(Files.exists(yamlPath))
+                    pkl <- Sync.defer(Files.readString(pklPath))
+                    _ <- repoRoot.removeAll
+                yield
+                    assertTrue(generated.map(_.path).toSet == Set(Path(".mvn", "extensions.xml"), Path("mill-interceptor.pkl"))) &&
+                    assertTrue(pklExists) &&
+                    assertTrue(!yamlExists) &&
+                    assertTrue(pkl.contains("scalafmtEnabled = true"))
             }
         )
     )
