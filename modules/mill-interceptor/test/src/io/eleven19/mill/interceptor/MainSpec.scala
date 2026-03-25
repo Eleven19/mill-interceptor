@@ -16,10 +16,10 @@ object MainSpec extends KyoSpecDefault:
                         assertTrue(false)
                 }
             },
-            test("keeps direct top-level tool commands invalid") {
+            test("rejects unsupported direct maven subcommands") {
                 Abort.run[IllegalArgumentException](Cli.parse(Chunk("maven", "clean"))).map {
                     case kyo.Result.Error(ex) =>
-                        assertTrue(ex.getMessage == "Unsupported command: maven")
+                        assertTrue(ex.getMessage == "Unknown maven subcommand: clean")
                     case other =>
                         assertTrue(false)
                 }
