@@ -4,6 +4,7 @@ import io.eleven19.mill.interceptor.maven.plugin.mojo.CleanMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.CompileMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.DeployMojo
+import io.eleven19.mill.interceptor.maven.plugin.mojo.InspectPlanMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.InstallMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.PackageMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.TestMojo
@@ -39,6 +40,11 @@ object MavenPluginModuleSpec extends KyoSpecDefault:
       "deploy"   -> classOf[DeployMojo].getName
     )
 
+    private val expectedOperationalImplementations = Map(
+      "describe"     -> classOf[DescribeMojo].getName,
+      "inspect-plan" -> classOf[InspectPlanMojo].getName
+    )
+
     def spec: Spec[Any, Any] = suite("MavenPluginModule")(
         test("exposes the published artifact id") {
             assertTrue(MavenPluginModule.artifactId == "mill-interceptor-maven-plugin")
@@ -49,6 +55,15 @@ object MavenPluginModuleSpec extends KyoSpecDefault:
         test("maps lifecycle goals to distinct concrete mojo implementations") {
             assertTrue(
                 expectedLifecycleImplementations.forall { case (goal, implementationClass) =>
+                    MavenPluginModule.supportedGoals
+                        .find(_.goal == goal)
+                        .exists(_.implementationClass == implementationClass)
+                }
+            )
+        },
+        test("maps operational goals to their concrete mojo implementations") {
+            assertTrue(
+                expectedOperationalImplementations.forall { case (goal, implementationClass) =>
                     MavenPluginModule.supportedGoals
                         .find(_.goal == goal)
                         .exists(_.implementationClass == implementationClass)

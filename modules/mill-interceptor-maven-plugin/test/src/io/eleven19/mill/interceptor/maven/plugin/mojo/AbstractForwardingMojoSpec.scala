@@ -78,9 +78,11 @@ object AbstractForwardingMojoSpec extends KyoSpecDefault:
     )
 
     private final class TestForwardingMojo(context: MavenExecutionContext) extends AbstractForwardingMojo:
-        override protected def executionContext: MavenExecutionContext = context
+        override protected def executionKind: ExecutionRequestKind = context.kind
 
-        override def execute(): Unit = ()
+        override protected def requestedName: String = context.requestedName
+
+        override protected def executionContext: MavenExecutionContext = context
 
         def request: ExecutionRequest =
             executionRequest

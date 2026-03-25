@@ -56,7 +56,7 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   private val describeImplementation =
     "io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo"
   private val inspectPlanImplementation =
-    "io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo"
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.InspectPlanMojo"
   private val cleanImplementation =
     "io.eleven19.mill.interceptor.maven.plugin.mojo.CleanMojo"
   private val validateImplementation =
@@ -98,47 +98,47 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
     (
       "inspect-plan",
       inspectPlanImplementation,
-      "Placeholder inspect-plan goal until the forwarding service is implemented."
+      "Render the resolved Mill execution plan without invoking subprocesses."
     ),
     (
       "clean",
       cleanImplementation,
-      "Placeholder clean goal until lifecycle forwarding is implemented."
+      "Forward the Maven clean phase to the resolved Mill plan."
     ),
     (
       "validate",
       validateImplementation,
-      "Placeholder validate goal until lifecycle forwarding is implemented."
+      "Forward the Maven validate phase to the resolved Mill plan."
     ),
     (
       "compile",
       compileImplementation,
-      "Placeholder compile goal until lifecycle forwarding is implemented."
+      "Forward the Maven compile phase to the resolved Mill plan."
     ),
     (
       "test",
       testImplementation,
-      "Placeholder test goal until lifecycle forwarding is implemented."
+      "Forward the Maven test phase to the resolved Mill plan."
     ),
     (
       "package",
       packageImplementation,
-      "Placeholder package goal until lifecycle forwarding is implemented."
+      "Forward the Maven package phase to the resolved Mill plan."
     ),
     (
       "verify",
       verifyImplementation,
-      "Placeholder verify goal until lifecycle forwarding is implemented."
+      "Forward the Maven verify phase to the resolved Mill plan."
     ),
     (
       "install",
       installImplementation,
-      "Placeholder install goal until lifecycle forwarding is implemented."
+      "Forward the Maven install phase to the resolved Mill plan."
     ),
     (
       "deploy",
       deployImplementation,
-      "Placeholder deploy goal until lifecycle forwarding is implemented."
+      "Forward the Maven deploy phase to the resolved Mill plan."
     )
   )
 
