@@ -2,6 +2,7 @@ package io.eleven19.mill.interceptor
 
 import kyo.*
 import maven.Mvn
+import maven.MavenSetupGenerator
 import sbt.Sbt
 import gradle.Gradle
 import shim.ShimGenerator
@@ -25,6 +26,26 @@ object Main extends KyoApp:
                             .foreach(generated)(shim => Log.info(s"Generated ${shim.platform} shim: ${shim.path}"))
                             .now
                         Console.printLine(s"Generated ${generated.size} shim script(s)").now
+                    case Result.Success(CliResult.MavenSetup(options)) =>
+                        val extensionVersion = options.extensionVersion.orElse(RuntimeVersion.current) match
+                            case Some(version) => version
+                            case None =>
+                                Abort
+                                    .fail(
+                                        new IllegalArgumentException(
+                                            "Could not determine the mill-interceptor version for .mvn/extensions.xml. Re-run with --extension-version <version>."
+                                        )
+                                    )
+                                    .now
+                        val generated = MavenSetupGenerator.generate(Path("."), options, extensionVersion).now
+                        val action    = if options.dryRun then "Would write" else "Wrote"
+                        val _         = Kyo.foreach(generated)(file => Log.info(s"$action ${file.path}")).now
+                        val message =
+                            if options.dryRun then
+                                s"Planned ${generated.size} Maven setup file(s). Run mvn mill-interceptor:inspect-plan after applying them."
+                            else
+                                s"Generated ${generated.size} Maven setup file(s). Next: run mvn mill-interceptor:inspect-plan or mvn validate."
+                        Console.printLine(message).now
                     case Result.Success(CliResult.Help(None)) =>
                         Console.printLine(Cli.usage).now
                     case Result.Success(CliResult.Help(Some(message))) =>
