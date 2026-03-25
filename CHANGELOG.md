@@ -10,11 +10,20 @@ leading `v`.
 
 ### Added
 
+- Added a real Maven core-extension activation path so `.mvn/extensions.xml` can drive the common Maven lifecycle through Mill without a POM plugin declaration.
+- Added end-to-end Maven fixture coverage for extension-only lifecycle forwarding, publish-capable `install` and `deploy`, multi-module overrides, and strict-failure diagnostics.
+
 ### Changed
+
+- Strengthened the conventional Maven baseline so realistic Mill module queries cover the common lifecycle, while publish-related phases now explicitly depend on a `PublishModule`-capable Mill surface.
 
 ### Fixed
 
+- Fixed Maven Mojo execution-context derivation to prefer real `MavenProject` and `MavenSession` state, which keeps module-local overrides working inside reactor builds.
+
 ### Documentation
+
+- Documented real Maven plugin setup, minimal extension-only usage, config discovery, publish requirements, and override examples in the README and a dedicated usage guide.
 
 ### CI
 
