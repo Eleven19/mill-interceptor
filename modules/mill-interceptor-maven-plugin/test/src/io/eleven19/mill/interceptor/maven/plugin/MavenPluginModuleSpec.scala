@@ -12,9 +12,13 @@ import io.eleven19.mill.interceptor.maven.plugin.mojo.ValidateMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.VerifyMojo
 import kyo.test.KyoSpecDefault
 import org.apache.maven.plugin.AbstractMojo
+import scala.jdk.CollectionConverters.*
 import zio.test.*
 
 object MavenPluginModuleSpec extends KyoSpecDefault:
+
+    private val expectedCoreExtensionParticipant =
+      "io.eleven19.mill.interceptor.maven.plugin.extension.MillInterceptorLifecycleParticipant"
 
     private val expectedGoals = Seq(
       "describe",
@@ -82,5 +86,15 @@ object MavenPluginModuleSpec extends KyoSpecDefault:
                     descriptor.exists(_.contains(impl))
                 )
             )
+        },
+        test("packages core-extension bootstrap metadata for the lifecycle participant") {
+            val namedIndexes = getClass.getClassLoader
+                .getResources("META-INF/sisu/javax.inject.Named")
+                .asScala
+                .toSeq
+                .map(url => scala.io.Source.fromURL(url).mkString)
+
+            assertTrue(namedIndexes.nonEmpty) &&
+            assertTrue(namedIndexes.exists(_.contains(expectedCoreExtensionParticipant)))
         }
     )
