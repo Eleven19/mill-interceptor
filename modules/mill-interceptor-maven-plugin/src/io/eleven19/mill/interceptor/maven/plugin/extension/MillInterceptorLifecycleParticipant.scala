@@ -19,25 +19,19 @@ import scala.jdk.CollectionConverters.*
 final class MillInterceptorLifecycleParticipant extends AbstractMavenLifecycleParticipant:
 
     override def afterProjectsRead(session: MavenSession): Unit =
-        val pluginVersion = MillInterceptorLifecycleParticipant.pluginVersion(getClass.getPackage)
+        val pluginVersion            = MillInterceptorLifecycleParticipant.pluginVersion(getClass.getPackage)
+        val requestedLifecyclePhases = LifecycleInterceptionAdapter.requestedLifecyclePhases(session)
         session.getProjects.asScala.foreach(project =>
-            MillInterceptorLifecycleParticipant.ensureLifecycleBindings(project, pluginVersion)
+            MillInterceptorLifecycleParticipant.ensureLifecycleBindings(
+                project,
+                pluginVersion,
+                requestedLifecyclePhases
+            )
         )
 
 object MillInterceptorLifecycleParticipant:
     private val pluginGroupId        = "io.eleven19.mill-interceptor"
     private val defaultPluginVersion = "0.0.0-SNAPSHOT"
-
-    private val lifecycleGoals = Seq(
-        "clean",
-        "validate",
-        "compile",
-        "test",
-        "package",
-        "verify",
-        "install",
-        "deploy"
-    )
 
     private[extension] def pluginVersion(pluginPackage: Package | Null): String =
         Option(pluginPackage)
@@ -45,7 +39,11 @@ object MillInterceptorLifecycleParticipant:
             .filter(_.nonEmpty)
             .getOrElse(defaultPluginVersion)
 
-    private[extension] def ensureLifecycleBindings(project: MavenProject, pluginVersion: String): Unit =
+    private[extension] def ensureLifecycleBindings(
+        project: MavenProject,
+        pluginVersion: String,
+        lifecycleGoals: Seq[String]
+    ): Unit =
         val build = Option(project.getBuild).getOrElse {
             val created = Build()
             project.setBuild(created)

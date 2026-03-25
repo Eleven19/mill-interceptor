@@ -9,19 +9,8 @@ import scala.jdk.CollectionConverters.*
 import zio.test.*
 
 object MillInterceptorLifecycleParticipantSpec extends KyoSpecDefault:
-    private val expectedLifecycleGoals = Seq(
-      "clean",
-      "validate",
-      "compile",
-      "test",
-      "package",
-      "verify",
-      "install",
-      "deploy"
-    )
-
     def spec: Spec[Any, Any] = suite("MillInterceptorLifecycleParticipant")(
-        test("injects the interceptor plugin with lifecycle bindings into projects after project read") {
+        test("injects the interceptor plugin for the requested lifecycle chain after project read") {
             val participant = new MillInterceptorLifecycleParticipant
             val project = new MavenProject(Model())
             project.setGroupId("fixture")
@@ -29,9 +18,12 @@ object MillInterceptorLifecycleParticipantSpec extends KyoSpecDefault:
             project.setVersion("1.0.0")
             project.setPackaging("jar")
 
+            val request = DefaultMavenExecutionRequest()
+            request.setGoals(java.util.List.of("compile"))
+
             val session = MavenSession(
                 null,
-                DefaultMavenExecutionRequest(),
+                request,
                 DefaultMavenExecutionResult(),
                 java.util.List.of(project)
             )
@@ -46,10 +38,12 @@ object MillInterceptorLifecycleParticipantSpec extends KyoSpecDefault:
             assertTrue(plugin.nonEmpty) &&
             assertTrue(plugin.exists(_.getGroupId == "io.eleven19.mill-interceptor")) &&
             assertTrue(plugin.exists(_.getVersion == "0.0.0-SNAPSHOT")) &&
-            assertTrue(expectedLifecycleGoals.forall(goal =>
+            assertTrue(Seq("validate", "compile").forall(goal =>
                 boundPhases.exists { case (phase, goals) =>
                     phase == goal && goals == Seq(goal)
                 }
-            ))
+            )) &&
+            assertTrue(!boundPhases.exists(_._1 == "test")) &&
+            assertTrue(!boundPhases.exists(_._1 == "deploy"))
         }
     )
