@@ -11,22 +11,12 @@ mvnDeps:
   - io.getkyo::kyo-core::1.0-RC1
   - io.getkyo::kyo-direct:1.0-RC1
   - io.getkyo::kyo-prelude:1.0-RC1
+  - javax.inject:javax.inject:1
+  - org.apache.maven:maven-core:3.9.9
   - org.apache.maven:maven-plugin-api:3.9.9
   - org.apache.maven.plugin-tools:maven-plugin-annotations:3.15.2
   - org.pkl-lang:pkl-core:0.31.0
   - org.virtuslab::scala-yaml:0.3.0
-
-pomSettings:
-  description: A Maven plugin for bridging Maven lifecycle executions into Mill interceptor workflows.
-  organization: io.eleven19.mill-interceptor
-  url: https://github.com/Eleven19/mill-interceptor
-  licenses:
-    - Apache-2.0
-  versionControl: https://github.com/Eleven19/mill-interceptor
-  developers:
-    - id: DamianReeves
-      name: Damian Reeves
-      url: https://github.com/DamianReeves
 
 object test:
   extends:

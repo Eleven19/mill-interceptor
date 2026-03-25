@@ -1,0 +1,20 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.eleven19.mill.interceptor.fixture</groupId>
+  <artifactId>publish-lifecycle-fixture</artifactId>
+  <version>0.0.1</version>
+
+  <distributionManagement>
+    <repository>
+      <id>fixture-deploy</id>
+      <url>file://${project.basedir}/out/maven-repo</url>
+    </repository>
+    <snapshotRepository>
+      <id>fixture-deploy-snapshots</id>
+      <url>file://${project.basedir}/out/maven-repo</url>
+    </snapshotRepository>
+  </distributionManagement>
+</project>

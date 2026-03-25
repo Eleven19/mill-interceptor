@@ -31,7 +31,7 @@ object LifecycleBaseline:
         "test"     -> Seq("compile", "test"),
         "package"  -> Seq("compile", "test", "jar"),
         "verify"   -> Seq("compile", "test"),
-        "install"  -> Seq("compile", "test", "jar", "publishLocal"),
+        "install"  -> Seq("compile", "test", "jar", "publishM2Local"),
         "deploy"   -> Seq("compile", "test", "jar", "publish")
     )
 
@@ -65,7 +65,7 @@ object LifecycleBaseline:
         if enabled then
             Some(
                 ValidateScalafmtHook(
-                    target = config.validate.scalafmtTarget.getOrElse("checkFormat"),
+                    target = config.validate.scalafmtTarget.getOrElse("mill.scalalib.scalafmt/checkFormatAll"),
                     disableProperty = scalafmtDisableProperty
                 )
             )

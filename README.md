@@ -26,6 +26,52 @@ Invoke the interceptor through the explicit parent command:
 
 `mvn` is accepted as an alias for `maven`.
 
+## Maven plugin
+
+The repository also publishes `mill-interceptor-maven-plugin`, which lets Maven forward into Mill through a core extension loaded from `.mvn/extensions.xml`.
+
+Minimal setup:
+
+```xml
+<extensions xmlns="http://maven.apache.org/EXTENSIONS/1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/EXTENSIONS/1.0.0 https://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
+  <extension>
+    <groupId>io.eleven19.mill-interceptor</groupId>
+    <artifactId>mill-interceptor-maven-plugin</artifactId>
+    <version>${mill.interceptor.version}</version>
+  </extension>
+</extensions>
+```
+
+With only that extension file, the current conventional baseline supports:
+
+- `mvn clean`
+- `mvn validate`
+- `mvn compile`
+- `mvn test`
+- `mvn package`
+- `mvn verify`
+- `mvn mill-interceptor:inspect-plan`
+
+`mvn install` and `mvn deploy` are supported when the Mill build exposes a publish-capable surface such as `PublishModule`.
+
+Add `mill-interceptor.yaml` or `mill-interceptor.pkl` only when you need overrides:
+
+- custom lifecycle mappings
+- module-local overrides
+- disabling the validate Scalafmt hook
+- custom Mill executable, working directory, or environment
+
+Config discovery:
+
+- `mill-interceptor.yaml`
+- `mill-interceptor.pkl`
+- `.config/mill-interceptor/config.yaml`
+- `.config/mill-interceptor/config.pkl`
+
+Detailed plugin setup, override examples, and fixture-backed behavior live in [docs/usage/maven-plugin.md](/home/damian/code/repos/github/Eleven19/mill-interceptor/.worktrees/mi-okw-8-fixtures-docs/docs/usage/maven-plugin.md).
+
 ## Launcher scripts
 
 Releases also publish `milli` and `milli.bat` launchers. By default they prefer platform-native artifacts, fall back to the published assembly jar artifact (`milli-dist`) when native artifacts are unavailable, prefer Maven Central as the source, and fall back to GitHub Releases automatically.

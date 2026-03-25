@@ -5,6 +5,7 @@ import mill.javalib.NativeImageModule
 import mill.scalalib.*
 import mill.scalalib.PublishModule
 import mill.scalalib.SonatypeCentralPublishModule
+import mill.scalalib.publish.{Developer, License, PomSettings, VersionControl}
 
 trait CommonScalaModule extends ScalaModule with scalafmt.ScalafmtModule {
   override def jvmVersion = Task {
@@ -52,58 +53,92 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   this: CommonScalaModule =>
   private val defaultPublishVersion = "0.0.0-SNAPSHOT"
   private val goalPrefix = "mill-interceptor"
-  private val lifecyclePlaceholderImplementation =
+  private val describeImplementation =
     "io.eleven19.mill.interceptor.maven.plugin.mojo.DescribeMojo"
+  private val inspectPlanImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.InspectPlanMojo"
+  private val cleanImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.CleanMojo"
+  private val validateImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.ValidateMojo"
+  private val compileImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.CompileMojo"
+  private val testImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.TestMojo"
+  private val packageImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.PackageMojo"
+  private val verifyImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.VerifyMojo"
+  private val installImplementation =
+    "io.eleven19.mill.interceptor.maven.plugin.mojo.InstallMojo"
+  private val deployImplementation =
+      "io.eleven19.mill.interceptor.maven.plugin.mojo.DeployMojo"
+  def pomSettings = Task {
+    PomSettings(
+      description = "A Maven plugin for bridging Maven lifecycle executions into Mill interceptor workflows.",
+      organization = "io.eleven19.mill-interceptor",
+      url = "https://github.com/Eleven19/mill-interceptor",
+      licenses = Seq(License.`Apache-2.0`),
+      versionControl = VersionControl.github("Eleven19", "mill-interceptor"),
+      developers = Seq(
+        Developer(
+          id = "DamianReeves",
+          name = "Damian Reeves",
+          url = "https://github.com/DamianReeves"
+        )
+      )
+    )
+  }
   private val supportedGoals = Seq(
     (
       "describe",
-      lifecyclePlaceholderImplementation,
+      describeImplementation,
       "Describe the available Maven plugin goals."
     ),
     (
       "inspect-plan",
-      lifecyclePlaceholderImplementation,
-      "Placeholder inspect-plan goal until the forwarding service is implemented."
+      inspectPlanImplementation,
+      "Render the resolved Mill execution plan without invoking subprocesses."
     ),
     (
       "clean",
-      lifecyclePlaceholderImplementation,
-      "Placeholder clean goal until lifecycle forwarding is implemented."
+      cleanImplementation,
+      "Forward the Maven clean phase to the resolved Mill plan."
     ),
     (
       "validate",
-      lifecyclePlaceholderImplementation,
-      "Placeholder validate goal until lifecycle forwarding is implemented."
+      validateImplementation,
+      "Forward the Maven validate phase to the resolved Mill plan."
     ),
     (
       "compile",
-      lifecyclePlaceholderImplementation,
-      "Placeholder compile goal until lifecycle forwarding is implemented."
+      compileImplementation,
+      "Forward the Maven compile phase to the resolved Mill plan."
     ),
     (
       "test",
-      lifecyclePlaceholderImplementation,
-      "Placeholder test goal until lifecycle forwarding is implemented."
+      testImplementation,
+      "Forward the Maven test phase to the resolved Mill plan."
     ),
     (
       "package",
-      lifecyclePlaceholderImplementation,
-      "Placeholder package goal until lifecycle forwarding is implemented."
+      packageImplementation,
+      "Forward the Maven package phase to the resolved Mill plan."
     ),
     (
       "verify",
-      lifecyclePlaceholderImplementation,
-      "Placeholder verify goal until lifecycle forwarding is implemented."
+      verifyImplementation,
+      "Forward the Maven verify phase to the resolved Mill plan."
     ),
     (
       "install",
-      lifecyclePlaceholderImplementation,
-      "Placeholder install goal until lifecycle forwarding is implemented."
+      installImplementation,
+      "Forward the Maven install phase to the resolved Mill plan."
     ),
     (
       "deploy",
-      lifecyclePlaceholderImplementation,
-      "Placeholder deploy goal until lifecycle forwarding is implemented."
+      deployImplementation,
+      "Forward the Maven deploy phase to the resolved Mill plan."
     )
   )
 

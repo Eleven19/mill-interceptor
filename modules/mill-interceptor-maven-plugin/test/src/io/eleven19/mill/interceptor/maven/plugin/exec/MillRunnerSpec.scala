@@ -15,7 +15,8 @@ import zio.test.*
 object MillRunnerSpec extends KyoSpecDefault:
 
     private def request(
-        moduleRoot: Path = Path("/repo", "module-a")
+        moduleRoot: Path = Path("/repo", "module-a"),
+        properties: Map[String, String] = Map.empty
     ): ExecutionRequest =
         ExecutionRequest(
             kind = ExecutionRequestKind.LifecyclePhase,
@@ -25,7 +26,8 @@ object MillRunnerSpec extends KyoSpecDefault:
             module = ModuleRef(
                 artifactId = "module-a",
                 packaging = "jar"
-            )
+            ),
+            properties = properties
         )
 
     def spec: Spec[Any, Any] = suite("MillRunner")(
@@ -71,6 +73,50 @@ object MillRunnerSpec extends KyoSpecDefault:
                 )
             ))
         },
+        test("forwards selected Maven system properties into rendered Mill commands") {
+            val plan = MillExecutionPlan(
+                request = request().copy(
+                    requestedName = "install",
+                    properties = Map("maven.repo.local" -> "/tmp/m2-repo")
+                ),
+                executionMode = ExecutionMode.Strict,
+                steps = Seq(PlanStep.InvokeMill(Seq("publishM2Local")))
+            )
+
+            val rendered = MillRunner.dryRun(
+                plan,
+                EffectiveConfig(
+                    mill = MillConfig(
+                        executable = "millw"
+                    )
+                )
+            )
+
+            assertTrue(rendered.steps == Seq(
+                DryRunStep(
+                    kind = RunnerStepKind.InvokeMill,
+                    command = Some(Seq("millw", "-Dmaven.repo.local=/tmp/m2-repo", "publishM2Local")),
+                    workingDirectory = Path("/repo", "module-a")
+                )
+            ))
+        },
+        test("forwards maven.repo.local into rendered mill commands") {
+            val plan = MillExecutionPlan(
+                request = request(properties = Map("maven.repo.local" -> "/tmp/m2-repo")),
+                executionMode = ExecutionMode.Strict,
+                steps = Seq(PlanStep.InvokeMill(Seq("publishM2Local")))
+            )
+
+            val rendered = MillRunner.dryRun(plan, EffectiveConfig())
+
+            assertTrue(rendered.steps == Seq(
+                DryRunStep(
+                    kind = RunnerStepKind.InvokeMill,
+                    command = Some(Seq("mill", "-Dmaven.repo.local=/tmp/m2-repo", "publishM2Local")),
+                    workingDirectory = Path("/repo", "module-a")
+                )
+            ))
+        },
         test("renders absolute working directory overrides without rebasing") {
             val plan = MillExecutionPlan(
                 request = request(),
@@ -102,7 +148,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 executionMode = ExecutionMode.Strict,
                 steps = Seq(
                     PlanStep.Fail(
-                        message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                        message = "No mapping found for explicit goal 'deploy-site'",
                         guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                     )
                 )
@@ -115,12 +161,120 @@ object MillRunnerSpec extends KyoSpecDefault:
                     kind = RunnerStepKind.Fail,
                     command = None,
                     workingDirectory = Path("/repo", "module-a"),
-                    message = Some("No mapping found for explicit goal 'deploy-site' in strict mode"),
+                    message = Some("No mapping found for explicit goal 'deploy-site'"),
                     guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                 )
             ))
         },
         suite("execute")(
+            test("prefers a module-local mill launcher when the repo root does not provide one") {
+                val root = Path("out", "mill-runner-tests", "module-local-launcher")
+                val moduleRoot = Path(root, "module-a")
+                val launcher = Path(moduleRoot, "mill")
+                val executor = new RecordingExecutor(Seq(0))
+                val plan = MillExecutionPlan(
+                    request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(root, "repo-root-without-launcher")),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
+                )
+
+                for
+                    _ <- root.removeAll
+                    _ <- moduleRoot.mkDir
+                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
+                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
+                    _ <- root.removeAll
+                yield result match
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (
+                                Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
+                                moduleRoot,
+                                Map.empty[String, String]
+                            )
+                        ))
+                    case _ =>
+                        assertTrue(false)
+            },
+            test("prefers a module-local mill launcher for absolute module roots") {
+                val root = Path("out", "mill-runner-tests", "absolute-module-local-launcher")
+                val absoluteRoot = Path(root.toJava.toAbsolutePath.normalize.toString)
+                val moduleRoot = Path(absoluteRoot, "module-a")
+                val launcher = Path(moduleRoot, "mill")
+                val executor = new RecordingExecutor(Seq(0))
+                val plan = MillExecutionPlan(
+                    request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(absoluteRoot, "repo-root-without-launcher")),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
+                )
+
+                for
+                    _ <- absoluteRoot.removeAll
+                    _ <- moduleRoot.mkDir
+                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
+                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
+                    _ <- absoluteRoot.removeAll
+                yield result match
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (
+                                Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
+                                moduleRoot,
+                                Map.empty[String, String]
+                            )
+                        ))
+                    case _ =>
+                        assertTrue(false)
+            },
+            test("prefers a repo-local mill launcher when no executable override is configured") {
+                val root = Path("out", "mill-runner-tests", "local-launcher")
+                val launcher = Path(root, "mill")
+                val executor = new RecordingExecutor(Seq(0))
+                val plan = MillExecutionPlan(
+                    request = request(moduleRoot = Path(root, "module-a")).copy(repoRoot = root),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
+                )
+
+                for
+                    _ <- root.removeAll
+                    _ <- root.mkDir
+                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
+                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
+                    _ <- root.removeAll
+                yield result match
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq(root.toJava.resolve("mill").toString, "__.compile")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (
+                                Seq(root.toJava.resolve("mill").toString, "__.compile"),
+                                Path(root, "module-a"),
+                                Map.empty[String, String]
+                            )
+                        ))
+                    case other =>
+                        assertTrue(false)
+            },
             test("short-circuits on fail steps without invoking subprocesses") {
                 val executor = new RecordingExecutor()
                 val plan = MillExecutionPlan(
@@ -128,7 +282,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     executionMode = ExecutionMode.Strict,
                     steps = Seq(
                         PlanStep.Fail(
-                            message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                            message = "No mapping found for explicit goal 'deploy-site'",
                             guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                         ),
                         PlanStep.InvokeMill(Seq("compile"))
@@ -139,7 +293,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
                         assertTrue(failure == RunnerFailure.FailStep(
-                            message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                            message = "No mapping found for explicit goal 'deploy-site'",
                             guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                         )) &&
                         assertTrue(executor.calls.isEmpty)
