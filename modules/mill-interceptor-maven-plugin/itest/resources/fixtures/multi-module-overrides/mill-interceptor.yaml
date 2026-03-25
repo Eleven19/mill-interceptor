@@ -1,0 +1,5 @@
+validate:
+  scalafmtEnabled: false
+lifecycle:
+  compile:
+    - missing.compile

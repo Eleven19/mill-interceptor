@@ -10,7 +10,10 @@ import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
 import java.io.File
 import kyo.Path
 import kyo.test.KyoSpecDefault
+import org.apache.maven.execution.{DefaultMavenExecutionRequest, DefaultMavenExecutionResult, MavenSession}
 import org.apache.maven.plugin.logging.Log
+import org.apache.maven.model.Model
+import org.apache.maven.project.MavenProject
 import zio.test.*
 
 object InspectPlanMojoSpec extends KyoSpecDefault:
@@ -68,6 +71,42 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
             assertTrue(executionContext.repoRoot == Path("/repo/modules/app")) &&
             assertTrue(executionContext.moduleRoot == Path("/repo/modules/app")) &&
             assertTrue(executionContext.requestedName == "inspect-plan")
+        },
+        test("uses Maven session and project objects when file parameters are unavailable") {
+            val mojo = new DerivedContextInspectPlanMojo
+            val project = new MavenProject(Model())
+            project.setGroupId("io.eleven19")
+            project.setArtifactId("app")
+            project.setVersion("1.0.0")
+            project.setPackaging("jar")
+            project.setFile(File("/repo/modules/app/pom.xml"))
+
+            val request = DefaultMavenExecutionRequest()
+            request.setBaseDirectory(File("/repo"))
+
+            val session = MavenSession(
+                null,
+                request,
+                DefaultMavenExecutionResult(),
+                java.util.List.of(project)
+            )
+
+            mojo.configure(
+                repoRoot = null,
+                moduleRoot = null,
+                artifactId = "",
+                packaging = "",
+                groupId = ""
+            )
+            mojo.configureProjectSession(project, session)
+
+            val executionContext = mojo.derivedExecutionContext()
+
+            assertTrue(executionContext.repoRoot == Path("/repo")) &&
+            assertTrue(executionContext.moduleRoot == Path("/repo/modules/app")) &&
+            assertTrue(executionContext.module.artifactId == "app") &&
+            assertTrue(executionContext.module.packaging == "jar") &&
+            assertTrue(executionContext.module.groupId.contains("io.eleven19"))
         }
     )
 
@@ -101,6 +140,10 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
             this.artifactId = artifactId
             this.packaging = packaging
             this.groupId = groupId
+
+        def configureProjectSession(project: MavenProject, session: MavenSession): Unit =
+            this.mavenProject = project
+            this.mavenSession = session
 
         def derivedExecutionContext(): MavenExecutionContext =
             executionContext

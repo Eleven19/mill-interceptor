@@ -188,6 +188,83 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 assertTrue(deployPhase.output.contains("mill-interceptor:0.0.0-SNAPSHOT:deploy")) &&
                 assertTrue(deployPhase.output.contains("fixture/mill compile test jar publish"))
         },
+        test("applies module-local overrides over repository defaults in a multi-module reactor") {
+            val tempDir    = tempPath(s"override-${JSystem.nanoTime()}")
+            val localRepo  = Path(tempDir, "m2-repository")
+            val fixtureDir = Path(tempDir, "fixture")
+            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
+            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
+
+            for
+                _ <- tempDir.removeAll
+                _ <- tempDir.mkDir
+                mavenCmd <- resolveMavenExecutable(tempDir)
+                _ <- copyFixtureDirectory("fixtures/multi-module-overrides", fixtureDir)
+                _ <- installRepoMillLauncher(fixtureDir)
+                install <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                        s"-Dfile=$pluginJar",
+                        s"-DpomFile=$pluginPom"
+                    ),
+                    tempDir
+                )
+                compileApp <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "-pl",
+                        "app",
+                        "compile"
+                    ),
+                    fixtureDir
+                )
+                _ <- tempDir.removeAll
+            yield
+                assertTrue(install.exitCode == 0) &&
+                assertTrue(compileApp.exitCode == 0) &&
+                assertTrue(!compileApp.output.contains("missing.compile")) &&
+                assertTrue(compileApp.output.contains("BUILD SUCCESS"))
+        },
+        test("fails clearly in strict mode when a configured lifecycle target is unavailable") {
+            val tempDir    = tempPath(s"strict-${JSystem.nanoTime()}")
+            val localRepo  = Path(tempDir, "m2-repository")
+            val fixtureDir = Path(tempDir, "fixture")
+            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
+            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
+
+            for
+                _ <- tempDir.removeAll
+                _ <- tempDir.mkDir
+                mavenCmd <- resolveMavenExecutable(tempDir)
+                _ <- copyFixtureDirectory("fixtures/strict-failure", fixtureDir)
+                _ <- installRepoMillLauncher(fixtureDir)
+                install <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                        s"-Dfile=$pluginJar",
+                        s"-DpomFile=$pluginPom"
+                    ),
+                    tempDir
+                )
+                compilePhase <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "compile"
+                    ),
+                    fixtureDir
+                )
+                _ <- tempDir.removeAll
+            yield
+                assertTrue(install.exitCode == 0) &&
+                assertTrue(compilePhase.exitCode != 0) &&
+                assertTrue(compilePhase.output.contains("BUILD FAILURE"))
+        },
         test("publishes locally and executes the placeholder goal through Maven") {
             val tempDir    = tempPath(s"run-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")

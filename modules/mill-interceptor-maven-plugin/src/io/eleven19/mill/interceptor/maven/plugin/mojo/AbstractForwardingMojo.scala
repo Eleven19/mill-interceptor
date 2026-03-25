@@ -17,10 +17,12 @@ import io.eleven19.mill.interceptor.maven.plugin.resolve.ExecutionPlanResolver
 import java.io.File
 import java.util.Properties
 import kyo.*
+import org.apache.maven.execution.MavenSession
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugin.MojoFailureException
 import org.apache.maven.plugins.annotations.Parameter
+import org.apache.maven.project.MavenProject
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 
@@ -36,6 +38,12 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
 
     @Parameter(defaultValue = "${project.basedir}", readonly = true, required = true)
     protected var moduleRootDirectory: File = uninitialized
+
+    @Parameter(defaultValue = "${session}", readonly = true)
+    protected var mavenSession: MavenSession = uninitialized
+
+    @Parameter(defaultValue = "${project}", readonly = true)
+    protected var mavenProject: MavenProject = uninitialized
 
     @Parameter(defaultValue = "${project.artifactId}", readonly = true, required = true)
     protected var artifactId: String = uninitialized
@@ -59,26 +67,53 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
         Path(Option(file).getOrElse(fallback).getAbsolutePath)
 
     protected def executionContext: MavenExecutionContext =
-        val moduleRootFile = Option(moduleRootDirectory).getOrElse(File("."))
-        val repoRootFile   = Option(repoRootDirectory).getOrElse(moduleRootFile)
+        val moduleRootFile = Option(mavenProject)
+            .flatMap(project => Option(project.getBasedir))
+            .orElse(Option(moduleRootDirectory))
+            .getOrElse(File("."))
+        val repoRootFile = Option(mavenSession)
+            .flatMap(session => Option(session.getExecutionRootDirectory).map(File(_)))
+            .orElse(Option(repoRootDirectory))
+            .orElse(Option(mavenProject).flatMap(project => Option(project.getBasedir)))
+            .getOrElse(moduleRootFile)
         MavenExecutionContext(
             kind = executionKind,
             requestedName = requestedName,
             repoRoot = normalizedPath(repoRootFile, moduleRootFile),
             moduleRoot = normalizedPath(moduleRootFile, repoRootFile),
             module = ModuleRef(
-                artifactId = artifactId,
-                packaging = packaging,
-                groupId = Option(groupId).filter(_.nonEmpty)
+                artifactId = Option(mavenProject)
+                    .flatMap(project => Option(project.getArtifactId).filter(_.nonEmpty))
+                    .orElse(Option(artifactId).filter(_.nonEmpty))
+                    .getOrElse("unknown-artifact"),
+                packaging = Option(mavenProject)
+                    .flatMap(project => Option(project.getPackaging).filter(_.nonEmpty))
+                    .orElse(Option(packaging).filter(_.nonEmpty))
+                    .getOrElse("jar"),
+                groupId = Option(mavenProject)
+                    .flatMap(project => Option(project.getGroupId).filter(_.nonEmpty))
+                    .orElse(Option(groupId).filter(_.nonEmpty))
             ),
-            userProperties = sessionUserProperties
-                .stringPropertyNames()
-                .asScala
-                .iterator
-                .map { name =>
-                    name -> sessionUserProperties.getProperty(name)
-                }
-                .toMap
+            userProperties = Option(mavenSession)
+                .flatMap(session => Option(session.getUserProperties))
+                .map(
+                    _.stringPropertyNames().asScala.iterator
+                        .map { name =>
+                            name -> mavenSession.getUserProperties.getProperty(name)
+                        }
+                        .toMap
+                )
+                .orElse(
+                    Option(sessionUserProperties)
+                        .map(
+                            _.stringPropertyNames().asScala.iterator
+                                .map { name =>
+                                    name -> sessionUserProperties.getProperty(name)
+                                }
+                                .toMap
+                        )
+                )
+                .getOrElse(Map.empty)
         )
 
     final protected def executionRequest: ExecutionRequest =
