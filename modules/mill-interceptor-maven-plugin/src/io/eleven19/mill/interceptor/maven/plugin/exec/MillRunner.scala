@@ -59,13 +59,24 @@ object MillRunner:
         config: EffectiveConfig,
         executor: SubprocessExecutor = SubprocessExecutor.live
     ): RunnerResult < Sync =
-        val workingDirectory = resolveWorkingDirectory(plan.request.moduleRoot, config.mill.workingDirectory)
-        executeSteps(plan.steps, Vector.empty, workingDirectory, config, executor, config.mill.environment)
+        for
+            executable <- resolveExecutable(plan.request, config)
+            result <- executeSteps(
+                plan.steps,
+                Vector.empty,
+                resolveWorkingDirectory(plan.request.moduleRoot, config.mill.workingDirectory),
+                executable,
+                config,
+                executor,
+                config.mill.environment
+            )
+        yield result
 
     private def executeSteps(
         remaining: Seq[PlanStep],
         completed: Vector[StepResult],
         workingDirectory: Path,
+        executable: String,
         config: EffectiveConfig,
         executor: SubprocessExecutor,
         environment: Map[String, String]
@@ -81,7 +92,7 @@ object MillRunner:
                     )
                 )
             case Some(PlanStep.ProbeTarget(target)) =>
-                val command = Seq(config.mill.executable, "resolve", target)
+                val command = Seq(executable, "resolve", target)
                 for
                     exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
@@ -94,6 +105,7 @@ object MillRunner:
                                     exitCode = Some(exitCode)
                                 ),
                                 workingDirectory,
+                                executable,
                                 config,
                                 executor,
                                 environment
@@ -113,7 +125,7 @@ object MillRunner:
                             )
                 yield result
             case Some(PlanStep.InvokeMill(targets)) =>
-                val command = Seq(config.mill.executable) ++ targets
+                val command = Seq(executable) ++ targets
                 for
                     exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
@@ -126,6 +138,7 @@ object MillRunner:
                                     exitCode = Some(exitCode)
                                 ),
                                 workingDirectory,
+                                executable,
                                 config,
                                 executor,
                                 environment
@@ -177,3 +190,17 @@ object MillRunner:
                 if overrideJava.isAbsolute then Path(overrideJava.toString)
                 else Path(base.toJava.resolve(overrideJava).toString)
             case _ => base
+
+    private def resolveExecutable(request: ExecutionRequest, config: EffectiveConfig): String < Sync =
+        if config.mill.executable != "mill" then Sync.defer(config.mill.executable)
+        else
+            val launcherCandidates = Seq(
+                request.moduleRoot.toJava.resolve("mill"),
+                request.moduleRoot.toJava.resolve("millw"),
+                request.repoRoot.toJava.resolve("mill"),
+                request.repoRoot.toJava.resolve("millw")
+            )
+            for candidates <- Kyo.foreach(launcherCandidates) { candidate =>
+                    Sync.defer(candidate.toFile.exists()).map(exists => candidate -> exists)
+                }
+            yield candidates.collectFirst { case (candidate, true) => candidate.toString }.getOrElse("mill")

@@ -65,7 +65,7 @@ object LifecycleBaseline:
         if enabled then
             Some(
                 ValidateScalafmtHook(
-                    target = config.validate.scalafmtTarget.getOrElse("checkFormat"),
+                    target = config.validate.scalafmtTarget.getOrElse("mill.scalalib.scalafmt/checkFormatAll"),
                     disableProperty = scalafmtDisableProperty
                 )
             )

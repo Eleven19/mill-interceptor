@@ -26,8 +26,8 @@ import scala.jdk.CollectionConverters.*
 
 /** Shared Mojo base for lifecycle-forwarding Maven goals.
   *
-  * Concrete lifecycle and operational Mojos only need to identify the request they represent. This base class
-  * handles config loading, plan resolution, execution, inspect-plan rendering, and failure translation.
+  * Concrete lifecycle and operational Mojos only need to identify the request they represent. This base class handles
+  * config loading, plan resolution, execution, inspect-plan rendering, and failure translation.
   */
 abstract class AbstractForwardingMojo extends AbstractMojo:
 
@@ -55,20 +55,30 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
 
     protected def inspectOnly: Boolean = false
 
+    private def normalizedPath(file: File | Null, fallback: => File): Path =
+        Path(Option(file).getOrElse(fallback).getAbsolutePath)
+
     protected def executionContext: MavenExecutionContext =
+        val moduleRootFile = Option(moduleRootDirectory).getOrElse(File("."))
+        val repoRootFile   = Option(repoRootDirectory).getOrElse(moduleRootFile)
         MavenExecutionContext(
             kind = executionKind,
             requestedName = requestedName,
-            repoRoot = Path(repoRootDirectory.getAbsolutePath),
-            moduleRoot = Path(moduleRootDirectory.getAbsolutePath),
+            repoRoot = normalizedPath(repoRootFile, moduleRootFile),
+            moduleRoot = normalizedPath(moduleRootFile, repoRootFile),
             module = ModuleRef(
                 artifactId = artifactId,
                 packaging = packaging,
                 groupId = Option(groupId).filter(_.nonEmpty)
             ),
-            userProperties = sessionUserProperties.stringPropertyNames().asScala.iterator.map { name =>
-                name -> sessionUserProperties.getProperty(name)
-            }.toMap
+            userProperties = sessionUserProperties
+                .stringPropertyNames()
+                .asScala
+                .iterator
+                .map { name =>
+                    name -> sessionUserProperties.getProperty(name)
+                }
+                .toMap
         )
 
     final protected def executionRequest: ExecutionRequest =
@@ -76,9 +86,12 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
 
     protected def loadEffectiveConfig(): EffectiveConfig =
         given AllowUnsafe = AllowUnsafe.embrace.danger
-        Sync
-            .Unsafe
-            .evalOrThrow(Abort.run[ConfigLoadException](ConfigLoader.load(executionContext.repoRoot, executionContext.moduleRoot))) match
+        Sync.Unsafe
+            .evalOrThrow(
+                Abort.run[ConfigLoadException](
+                    ConfigLoader.load(executionContext.repoRoot, executionContext.moduleRoot)
+                )
+            ) match
             case Result.Success(config) => config
             case Result.Error(error) =>
                 throw MojoExecutionException(error.getMessage, error)
@@ -95,12 +108,11 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
     protected def inspectResolvedPlan(plan: MillExecutionPlan, config: EffectiveConfig): DryRunResult =
         MillRunner.dryRun(plan, config)
 
-    override final def execute(): Unit =
+    final override def execute(): Unit =
         val config = loadEffectiveConfig()
-        val plan = resolvePlan(config)
+        val plan   = resolvePlan(config)
 
-        if inspectOnly then
-            renderInspectPlan(inspectResolvedPlan(plan, config))
+        if inspectOnly then renderInspectPlan(inspectResolvedPlan(plan, config))
         else
             executeResolvedPlan(plan, config) match
                 case _: RunnerResult.Success =>
@@ -128,7 +140,7 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
                 )
             case RunnerStepKind.Fail =>
                 Seq(s"$prefix fail: ${step.message.getOrElse("Execution plan failed")}") ++
-                step.guidance.map(guidance => s"$prefix guidance: $guidance")
+                    step.guidance.map(guidance => s"$prefix guidance: $guidance")
 
     private def mapFailure(failure: RunnerFailure): Exception =
         failure match

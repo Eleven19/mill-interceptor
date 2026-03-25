@@ -121,6 +121,114 @@ object MillRunnerSpec extends KyoSpecDefault:
             ))
         },
         suite("execute")(
+            test("prefers a module-local mill launcher when the repo root does not provide one") {
+                val root = Path("out", "mill-runner-tests", "module-local-launcher")
+                val moduleRoot = Path(root, "module-a")
+                val launcher = Path(moduleRoot, "mill")
+                val executor = new RecordingExecutor(Seq(0))
+                val plan = MillExecutionPlan(
+                    request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(root, "repo-root-without-launcher")),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
+                )
+
+                for
+                    _ <- root.removeAll
+                    _ <- moduleRoot.mkDir
+                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
+                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
+                    _ <- root.removeAll
+                yield result match
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (
+                                Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
+                                moduleRoot,
+                                Map.empty[String, String]
+                            )
+                        ))
+                    case _ =>
+                        assertTrue(false)
+            },
+            test("prefers a module-local mill launcher for absolute module roots") {
+                val root = Path("out", "mill-runner-tests", "absolute-module-local-launcher")
+                val absoluteRoot = Path(root.toJava.toAbsolutePath.normalize.toString)
+                val moduleRoot = Path(absoluteRoot, "module-a")
+                val launcher = Path(moduleRoot, "mill")
+                val executor = new RecordingExecutor(Seq(0))
+                val plan = MillExecutionPlan(
+                    request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(absoluteRoot, "repo-root-without-launcher")),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
+                )
+
+                for
+                    _ <- absoluteRoot.removeAll
+                    _ <- moduleRoot.mkDir
+                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
+                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
+                    _ <- absoluteRoot.removeAll
+                yield result match
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (
+                                Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
+                                moduleRoot,
+                                Map.empty[String, String]
+                            )
+                        ))
+                    case _ =>
+                        assertTrue(false)
+            },
+            test("prefers a repo-local mill launcher when no executable override is configured") {
+                val root = Path("out", "mill-runner-tests", "local-launcher")
+                val launcher = Path(root, "mill")
+                val executor = new RecordingExecutor(Seq(0))
+                val plan = MillExecutionPlan(
+                    request = request(moduleRoot = Path(root, "module-a")).copy(repoRoot = root),
+                    executionMode = ExecutionMode.Strict,
+                    steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
+                )
+
+                for
+                    _ <- root.removeAll
+                    _ <- root.mkDir
+                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
+                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
+                    _ <- root.removeAll
+                yield result match
+                    case RunnerResult.Success(stepResults) =>
+                        assertTrue(stepResults == Seq(
+                            StepResult(
+                                kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq(root.toJava.resolve("mill").toString, "__.compile")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(executor.calls == Seq(
+                            (
+                                Seq(root.toJava.resolve("mill").toString, "__.compile"),
+                                Path(root, "module-a"),
+                                Map.empty[String, String]
+                            )
+                        ))
+                    case other =>
+                        assertTrue(false)
+            },
             test("short-circuits on fail steps without invoking subprocesses") {
                 val executor = new RecordingExecutor()
                 val plan = MillExecutionPlan(

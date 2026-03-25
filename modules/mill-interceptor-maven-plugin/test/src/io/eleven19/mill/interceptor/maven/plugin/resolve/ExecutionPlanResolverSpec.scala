@@ -110,8 +110,8 @@ object ExecutionPlanResolverSpec extends KyoSpecDefault:
 
             assertTrue(
                 plan.steps == Seq(
-                    PlanStep.ProbeTarget("checkFormat"),
-                    PlanStep.InvokeMill(Seq("checkFormat")),
+                    PlanStep.ProbeTarget("mill.scalalib.scalafmt/checkFormatAll"),
+                    PlanStep.InvokeMill(Seq("mill.scalalib.scalafmt/checkFormatAll")),
                     PlanStep.InvokeMill(Seq("app.validate"))
                 )
             )

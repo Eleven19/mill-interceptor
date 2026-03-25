@@ -7,6 +7,7 @@ import io.eleven19.mill.interceptor.maven.plugin.exec.MillRunner
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerResult
 import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
 import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
+import java.io.File
 import kyo.Path
 import kyo.test.KyoSpecDefault
 import org.apache.maven.plugin.logging.Log
@@ -51,6 +52,22 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
             assertTrue(log.infoMessages.exists(_.contains("invoke: millw __.checkFormat"))) &&
             assertTrue(log.infoMessages.exists(_.contains("invoke: millw app.validate"))) &&
             assertTrue(log.infoMessages.count(_.contains("cwd: /repo/modules/app")) == 3)
+        },
+        test("falls back to the module root when Maven does not provide an execution root directory") {
+            val mojo = new DerivedContextInspectPlanMojo
+            mojo.configure(
+                repoRoot = null,
+                moduleRoot = File("/repo/modules/app"),
+                artifactId = "app",
+                packaging = "jar",
+                groupId = "io.eleven19"
+            )
+
+            val executionContext = mojo.derivedExecutionContext()
+
+            assertTrue(executionContext.repoRoot == Path("/repo/modules/app")) &&
+            assertTrue(executionContext.moduleRoot == Path("/repo/modules/app")) &&
+            assertTrue(executionContext.requestedName == "inspect-plan")
         }
     )
 
@@ -70,6 +87,23 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
         ): RunnerResult =
             executedPlan = true
             throw new AssertionError("inspect-plan should not execute subprocesses")
+
+    private final class DerivedContextInspectPlanMojo extends InspectPlanMojo:
+        def configure(
+            repoRoot: File | Null,
+            moduleRoot: File,
+            artifactId: String,
+            packaging: String,
+            groupId: String
+        ): Unit =
+            this.repoRootDirectory = repoRoot
+            this.moduleRootDirectory = moduleRoot
+            this.artifactId = artifactId
+            this.packaging = packaging
+            this.groupId = groupId
+
+        def derivedExecutionContext(): MavenExecutionContext =
+            executionContext
 
     private final class RecordingLog extends Log:
         val infoMessages = scala.collection.mutable.ArrayBuffer.empty[String]

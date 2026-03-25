@@ -26,7 +26,7 @@ object LifecycleBaselineSpec extends KyoSpecDefault:
             assertTrue(
                 baseline.validate.scalafmt == Some(
                     ValidateScalafmtHook(
-                        target = "checkFormat",
+                        target = "mill.scalalib.scalafmt/checkFormatAll",
                         disableProperty = "mill.interceptor.scalafmt"
                     )
                 )

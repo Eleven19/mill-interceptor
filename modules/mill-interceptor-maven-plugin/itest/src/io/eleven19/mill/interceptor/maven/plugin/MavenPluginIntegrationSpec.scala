@@ -20,6 +20,61 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
         path.toJava.toAbsolutePath.normalize.toString
 
     def spec: Spec[Any, Any] = suite("MavenPluginIntegrationSpec")(
+        test("executes the common lifecycle through extension-only activation with no config") {
+            val tempDir    = tempPath(s"minimal-${JSystem.nanoTime()}")
+            val localRepo  = Path(tempDir, "m2-repository")
+            val fixtureDir = Path(tempDir, "fixture")
+            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
+            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
+
+            for
+                _ <- tempDir.removeAll
+                _ <- tempDir.mkDir
+                mavenCmd <- resolveMavenExecutable(tempDir)
+                _ <- copyFixtureDirectory("fixtures/minimal-lifecycle", fixtureDir)
+                _ <- installRepoMillLauncher(fixtureDir)
+                install <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                        s"-Dfile=$pluginJar",
+                        s"-DpomFile=$pluginPom"
+                    ),
+                    tempDir
+                )
+                validate <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "validate"
+                    ),
+                    fixtureDir
+                )
+                compile <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "compile"
+                    ),
+                    fixtureDir
+                )
+                inspectPlan <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "mill-interceptor:inspect-plan"
+                    ),
+                    fixtureDir
+                )
+                _ <- tempDir.removeAll
+            yield
+                assertTrue(install.exitCode == 0) &&
+                assertTrue(validate.exitCode == 0) &&
+                assertTrue(compile.exitCode == 0) &&
+                assertTrue(inspectPlan.exitCode == 0) &&
+                assertTrue(inspectPlan.output.contains("Resolved Mill execution plan"))
+        },
         test("publishes locally and executes the placeholder goal through Maven") {
             val tempDir    = tempPath(s"run-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
@@ -115,6 +170,16 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             output <- Sync.defer(new String(process.stdout.readAllBytes()))
             exitCode <- process.waitFor
         yield CommandResult(exitCode, output)
+
+    private def installRepoMillLauncher(targetDir: Path): Unit < Sync =
+        Sync.defer {
+            val pluginJar = Paths.get(requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR"))
+            val source = pluginJar.getParent.getParent.getParent.getParent.getParent.resolve("mill")
+            val target = targetDir.toJava.resolve("mill")
+            val _ = Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+            val _ = target.toFile.setExecutable(true, false)
+            ()
+        }
 
     private def copyFixtureDirectory(resourceDir: String, targetDir: Path): Unit < Sync =
         Sync.defer {
