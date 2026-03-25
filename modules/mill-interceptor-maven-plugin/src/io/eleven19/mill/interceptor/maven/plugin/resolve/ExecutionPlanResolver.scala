@@ -34,7 +34,7 @@ object ExecutionPlanResolver:
             case None =>
                 Seq(
                     PlanStep.Fail(
-                        message = s"No mapping found for lifecycle phase '${request.requestedName}' in strict mode",
+                        message = s"No mapping found for lifecycle phase '${request.requestedName}'",
                         guidance = Seq(
                             "Add a lifecycle mapping in mill-interceptor.yaml or mill-interceptor.pkl"
                         )
@@ -55,7 +55,7 @@ object ExecutionPlanResolver:
             case None =>
                 Seq(
                     PlanStep.Fail(
-                        message = s"No mapping found for explicit goal '${request.requestedName}' in strict mode",
+                        message = s"No mapping found for explicit goal '${request.requestedName}'",
                         guidance = Seq(
                             "Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl"
                         )

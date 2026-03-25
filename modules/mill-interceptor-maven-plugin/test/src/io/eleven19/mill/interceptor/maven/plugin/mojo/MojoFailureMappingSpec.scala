@@ -38,7 +38,7 @@ object MojoFailureMappingSpec extends KyoSpecDefault:
                 result0 = RunnerResult.Failure(
                     stepResults = Seq.empty,
                     failure = RunnerFailure.FailStep(
-                        message = "No mapping found for lifecycle phase 'compile' in strict mode",
+                        message = "No mapping found for lifecycle phase 'compile'",
                         guidance = Seq("Add a lifecycle mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                     )
                 )
@@ -47,7 +47,7 @@ object MojoFailureMappingSpec extends KyoSpecDefault:
             val thrown = Try(mojo.execute()).failed.toOption.collect { case ex: MojoFailureException => ex }
 
             assertTrue(thrown.nonEmpty) &&
-            assertTrue(thrown.exists(_.getMessage.contains("No mapping found for lifecycle phase 'compile' in strict mode"))) &&
+            assertTrue(thrown.exists(_.getMessage.contains("No mapping found for lifecycle phase 'compile'"))) &&
             assertTrue(thrown.exists(_.getMessage.contains("Add a lifecycle mapping in mill-interceptor.yaml or mill-interceptor.pkl")))
         },
         test("maps probe failures to MojoFailureException and preserves guidance") {

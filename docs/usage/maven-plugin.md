@@ -28,7 +28,7 @@ With only `.mvn/extensions.xml`, the conventional baseline supports:
 - `mvn verify`
 - `mvn mill-interceptor:inspect-plan`
 
-The fixture at [minimal-lifecycle](/home/damian/code/repos/github/Eleven19/mill-interceptor/.worktrees/mi-okw-8-fixtures-docs/modules/mill-interceptor-maven-plugin/itest/resources/fixtures/minimal-lifecycle) is the reference example for that path.
+The fixture at [minimal-lifecycle](../../modules/mill-interceptor-maven-plugin/itest/resources/fixtures/minimal-lifecycle) is the reference example for that path.
 
 ## Conventional baseline
 
@@ -38,16 +38,16 @@ Current defaults:
 
 - `clean` -> `mill clean`
 - `validate` -> optional Scalafmt verification via `__.checkFormat`
-- `compile` -> `__.compile`
-- `test` -> `__.test`
-- `package` -> `compile test jar`
-- `verify` -> validate hook plus `test`
-- `install` -> `compile test jar publishM2Local`
-- `deploy` -> `compile test jar publish`
+- `compile` -> `mill compile`
+- `test` -> `mill compile test`
+- `package` -> `mill compile test jar`
+- `verify` -> validate hook plus `mill compile test`
+- `install` -> `mill compile test jar publishM2Local`
+- `deploy` -> `mill compile test jar publish`
 
 `install` and `deploy` assume the Mill build exposes a publish-capable surface. In practice that means a module that mixes in `PublishModule` or an equivalent publish task surface.
 
-The fixture at [publish-lifecycle](/home/damian/code/repos/github/Eleven19/mill-interceptor/.worktrees/mi-okw-8-fixtures-docs/modules/mill-interceptor-maven-plugin/itest/resources/fixtures/publish-lifecycle) is the reference example for the publish path.
+The fixture at [publish-lifecycle](../../modules/mill-interceptor-maven-plugin/itest/resources/fixtures/publish-lifecycle) is the reference example for the publish path.
 
 ## When config is needed
 
@@ -88,10 +88,10 @@ lifecycle:
     - app.compile
 ```
 
-The fixture at [multi-module-overrides](/home/damian/code/repos/github/Eleven19/mill-interceptor/.worktrees/mi-okw-8-fixtures-docs/modules/mill-interceptor-maven-plugin/itest/resources/fixtures/multi-module-overrides) demonstrates repo defaults overridden by a module-local config file.
+The fixture at [multi-module-overrides](../../modules/mill-interceptor-maven-plugin/itest/resources/fixtures/multi-module-overrides) demonstrates repo defaults overridden by a module-local config file.
 
 ## Failure behavior
 
 Strict mode is the default. If a configured target is wrong or unavailable, Maven fails with the forwarded Mill command and exit code instead of silently falling back.
 
-The fixture at [strict-failure](/home/damian/code/repos/github/Eleven19/mill-interceptor/.worktrees/mi-okw-8-fixtures-docs/modules/mill-interceptor-maven-plugin/itest/resources/fixtures/strict-failure) demonstrates that failure path.
+The fixture at [strict-failure](../../modules/mill-interceptor-maven-plugin/itest/resources/fixtures/strict-failure) demonstrates that failure path.

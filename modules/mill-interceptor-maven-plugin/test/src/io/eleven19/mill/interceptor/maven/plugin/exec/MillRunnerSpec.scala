@@ -148,7 +148,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 executionMode = ExecutionMode.Strict,
                 steps = Seq(
                     PlanStep.Fail(
-                        message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                        message = "No mapping found for explicit goal 'deploy-site'",
                         guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                     )
                 )
@@ -161,7 +161,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     kind = RunnerStepKind.Fail,
                     command = None,
                     workingDirectory = Path("/repo", "module-a"),
-                    message = Some("No mapping found for explicit goal 'deploy-site' in strict mode"),
+                    message = Some("No mapping found for explicit goal 'deploy-site'"),
                     guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                 )
             ))
@@ -282,7 +282,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     executionMode = ExecutionMode.Strict,
                     steps = Seq(
                         PlanStep.Fail(
-                            message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                            message = "No mapping found for explicit goal 'deploy-site'",
                             guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                         ),
                         PlanStep.InvokeMill(Seq("compile"))
@@ -293,7 +293,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
                         assertTrue(failure == RunnerFailure.FailStep(
-                            message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                            message = "No mapping found for explicit goal 'deploy-site'",
                             guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                         )) &&
                         assertTrue(executor.calls.isEmpty)

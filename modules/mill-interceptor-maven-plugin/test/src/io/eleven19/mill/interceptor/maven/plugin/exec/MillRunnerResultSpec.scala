@@ -19,7 +19,7 @@ object MillRunnerResultSpec extends KyoSpecDefault:
         },
         test("models typed fail-step failures with guidance") {
             val failure = RunnerFailure.FailStep(
-                message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                message = "No mapping found for explicit goal 'deploy-site'",
                 guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
             )
 

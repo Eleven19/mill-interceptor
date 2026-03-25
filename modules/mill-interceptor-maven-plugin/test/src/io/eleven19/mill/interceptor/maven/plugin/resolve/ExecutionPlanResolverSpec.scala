@@ -61,7 +61,7 @@ object ExecutionPlanResolverSpec extends KyoSpecDefault:
             assertTrue(
                 plan.steps == Seq(
                     PlanStep.Fail(
-                        message = "No mapping found for explicit goal 'deploy-site' in strict mode",
+                        message = "No mapping found for explicit goal 'deploy-site'",
                         guidance = Seq(
                             "Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl"
                         )
@@ -78,7 +78,7 @@ object ExecutionPlanResolverSpec extends KyoSpecDefault:
             assertTrue(
                 plan.steps == Seq(
                     PlanStep.Fail(
-                        message = "No mapping found for lifecycle phase 'site' in strict mode",
+                        message = "No mapping found for lifecycle phase 'site'",
                         guidance = Seq(
                             "Add a lifecycle mapping in mill-interceptor.yaml or mill-interceptor.pkl"
                         )
