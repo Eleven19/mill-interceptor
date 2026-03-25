@@ -3,6 +3,7 @@ package io.eleven19.mill.interceptor
 import kyo.*
 import kyo.test.KyoSpecDefault
 import zio.test.*
+import maven.{MavenSetupFormat, MavenSetupOptions}
 import shim.{BuildTool, ShimGenerateOptions}
 
 object CliSpec extends KyoSpecDefault:
@@ -73,8 +74,8 @@ object CliSpec extends KyoSpecDefault:
                 }
             },
             test("unknown top-level command fails with Abort") {
-                parseError("maven", "clean").map { msg =>
-                    assertTrue(msg == "Unsupported command: maven")
+                parseError("foo", "clean").map { msg =>
+                    assertTrue(msg == "Unsupported command: foo")
                 }
             },
             test("unknown intercept tool fails with Abort") {
@@ -215,6 +216,72 @@ object CliSpec extends KyoSpecDefault:
             test("shim generate --version without value fails with Abort") {
                 parseError("shim", "generate", "--version").map { msg =>
                     assertTrue(msg == "Missing value for --version")
+                }
+            }
+        ),
+        suite("maven setup - success cases")(
+            test("maven setup with no options uses defaults") {
+                parseSuccess("maven", "setup").map { result =>
+                    assertTrue(result == CliResult.MavenSetup(MavenSetupOptions()))
+                }
+            },
+            test("maven setup --dry-run enables dry run") {
+                parseSuccess("maven", "setup", "--dry-run").map { result =>
+                    assertTrue(result match
+                        case CliResult.MavenSetup(opts) => opts.dryRun
+                        case _                          => false
+                    )
+                }
+            },
+            test("maven setup --format yaml selects yaml") {
+                parseSuccess("maven", "setup", "--format", "yaml").map { result =>
+                    assertTrue(result match
+                        case CliResult.MavenSetup(opts) => opts.format == MavenSetupFormat.Yaml
+                        case _                          => false
+                    )
+                }
+            },
+            test("maven setup --format pkl selects pkl") {
+                parseSuccess("maven", "setup", "--format", "pkl").map { result =>
+                    assertTrue(result match
+                        case CliResult.MavenSetup(opts) => opts.format == MavenSetupFormat.Pkl
+                        case _                          => false
+                    )
+                }
+            },
+            test("maven setup --force enables overwrite mode") {
+                parseSuccess("maven", "setup", "--force").map { result =>
+                    assertTrue(result match
+                        case CliResult.MavenSetup(opts) => opts.force
+                        case _                          => false
+                    )
+                }
+            },
+            test("maven setup with multiple options") {
+                parseSuccess("maven", "setup", "--dry-run", "--format", "pkl", "--force").map { result =>
+                    assertTrue(result == CliResult.MavenSetup(MavenSetupOptions(dryRun = true, format = MavenSetupFormat.Pkl, force = true)))
+                }
+            },
+            test("maven setup --help returns help") {
+                parseSuccess("maven", "setup", "--help").map { result =>
+                    assertTrue(result == CliResult.Help(None))
+                }
+            }
+        ),
+        suite("maven setup - error cases")(
+            test("maven setup with unsupported format fails with Abort") {
+                parseError("maven", "setup", "--format", "json").map { msg =>
+                    assertTrue(msg.contains("Unsupported format"))
+                }
+            },
+            test("maven setup --format without value fails with Abort") {
+                parseError("maven", "setup", "--format").map { msg =>
+                    assertTrue(msg == "Missing value for --format")
+                }
+            },
+            test("maven setup with unknown flag fails with Abort") {
+                parseError("maven", "setup", "--bogus").map { msg =>
+                    assertTrue(msg.contains("Unknown maven setup option"))
                 }
             }
         )

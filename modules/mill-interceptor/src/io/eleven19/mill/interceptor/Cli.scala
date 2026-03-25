@@ -1,6 +1,7 @@
 package io.eleven19.mill.interceptor
 
 import kyo.*
+import maven.{MavenSetupFormat, MavenSetupOptions}
 import shim.{BuildTool, ShimGenerateOptions}
 
 enum InterceptTool derives CanEqual:
@@ -9,6 +10,7 @@ enum InterceptTool derives CanEqual:
 enum CliResult derives CanEqual:
     case Run(tool: InterceptTool, forwardedArgs: Chunk[String])
     case ShimGenerate(options: ShimGenerateOptions)
+    case MavenSetup(options: MavenSetupOptions)
     case Help(error: Option[String])
 
 object Cli:
@@ -16,11 +18,18 @@ object Cli:
     val usage: String =
         """Usage:
           |  mill-interceptor intercept <maven|mvn|sbt|gradle> [args...]
+          |  mill-interceptor maven setup [options]
           |  mill-interceptor shim generate [options]
           |
           |Commands:
           |  intercept       Run the selected tool interceptor
+          |  maven setup     Generate Maven plugin setup files
           |  shim generate   Generate platform-specific shim scripts
+          |
+          |Maven setup options:
+          |  --dry-run                 Preview generated files without writing
+          |  --format <yaml|pkl>       Starter config format (default: yaml)
+          |  --force                   Overwrite existing generated files
           |
           |Shim generate options:
           |  -t, --tool <tool>         Build tool: maven, gradle, sbt, or all (default: all)
@@ -50,6 +59,8 @@ object Cli:
                         CliResult.Run(InterceptTool.Gradle, Chunk.from(rest))
                     case other =>
                         Abort.fail(new IllegalArgumentException(s"Unsupported intercept tool: $other"))
+            case "maven" :: "setup" :: rest =>
+                parseMavenSetup(rest)
             case "shim" :: "generate" :: rest =>
                 parseShimGenerate(rest)
             case "shim" :: Nil =>
@@ -58,6 +69,37 @@ object Cli:
                 Abort.fail(new IllegalArgumentException(s"Unknown shim subcommand: $sub"))
             case command :: _ =>
                 Abort.fail(new IllegalArgumentException(s"Unsupported command: $command"))
+
+    private def parseMavenSetup(args: List[String]): CliResult < Abort[IllegalArgumentException] =
+        parseMavenSetupOpts(args, MavenSetupOptions())
+
+    private def parseMavenSetupOpts(
+        args: List[String],
+        opts: MavenSetupOptions
+    ): CliResult < Abort[IllegalArgumentException] =
+        args match
+            case Nil =>
+                CliResult.MavenSetup(opts)
+            case ("-h" | "--help") :: _ =>
+                CliResult.Help(None)
+            case "--dry-run" :: rest =>
+                parseMavenSetupOpts(rest, opts.copy(dryRun = true))
+            case "--force" :: rest =>
+                parseMavenSetupOpts(rest, opts.copy(force = true))
+            case "--format" :: value :: rest =>
+                MavenSetupFormat.fromString(value) match
+                    case Some(format) =>
+                        parseMavenSetupOpts(rest, opts.copy(format = format))
+                    case None =>
+                        Abort.fail(
+                            new IllegalArgumentException(
+                                s"Unsupported format: $value. Use yaml or pkl"
+                            )
+                        )
+            case "--format" :: Nil =>
+                Abort.fail(new IllegalArgumentException("Missing value for --format"))
+            case unknown :: _ =>
+                Abort.fail(new IllegalArgumentException(s"Unknown maven setup option: $unknown"))
 
     private def parseShimGenerate(args: List[String]): CliResult < Abort[IllegalArgumentException] =
         parseShimOpts(args, ShimGenerateOptions.default)
