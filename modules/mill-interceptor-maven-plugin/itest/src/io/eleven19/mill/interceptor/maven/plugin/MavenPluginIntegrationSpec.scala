@@ -24,8 +24,6 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             val tempDir    = tempPath(s"minimal-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
             val fixtureDir = Path(tempDir, "fixture")
-            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
-            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
 
             for
                 _ <- tempDir.removeAll
@@ -33,16 +31,7 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 mavenCmd <- resolveMavenExecutable(tempDir)
                 _ <- copyFixtureDirectory("fixtures/minimal-lifecycle", fixtureDir)
                 _ <- installRepoMillLauncher(fixtureDir)
-                install <- runCommand(
-                    Seq(
-                        mavenCmd,
-                        s"-Dmaven.repo.local=${absolute(localRepo)}",
-                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
-                        s"-Dfile=$pluginJar",
-                        s"-DpomFile=$pluginPom"
-                    ),
-                    tempDir
-                )
+                install <- installRequiredArtifacts(mavenCmd, tempDir, localRepo)
                 validate <- runCommand(
                     Seq(
                         mavenCmd,
@@ -115,8 +104,6 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             val tempDir    = tempPath(s"publish-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
             val fixtureDir = Path(tempDir, "fixture")
-            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
-            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
             val installedPom = Path(
                 localRepo,
                 "io",
@@ -148,16 +135,7 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 mavenCmd <- resolveMavenExecutable(tempDir)
                 _ <- copyFixtureDirectory("fixtures/publish-lifecycle", fixtureDir)
                 _ <- installRepoMillLauncher(fixtureDir)
-                install <- runCommand(
-                    Seq(
-                        mavenCmd,
-                        s"-Dmaven.repo.local=${absolute(localRepo)}",
-                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
-                        s"-Dfile=$pluginJar",
-                        s"-DpomFile=$pluginPom"
-                    ),
-                    tempDir
-                )
+                install <- installRequiredArtifacts(mavenCmd, tempDir, localRepo)
                 installPhase <- runCommand(
                     Seq(
                         mavenCmd,
@@ -192,8 +170,6 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             val tempDir    = tempPath(s"override-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
             val fixtureDir = Path(tempDir, "fixture")
-            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
-            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
 
             for
                 _ <- tempDir.removeAll
@@ -201,16 +177,7 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 mavenCmd <- resolveMavenExecutable(tempDir)
                 _ <- copyFixtureDirectory("fixtures/multi-module-overrides", fixtureDir)
                 _ <- installRepoMillLauncher(fixtureDir)
-                install <- runCommand(
-                    Seq(
-                        mavenCmd,
-                        s"-Dmaven.repo.local=${absolute(localRepo)}",
-                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
-                        s"-Dfile=$pluginJar",
-                        s"-DpomFile=$pluginPom"
-                    ),
-                    tempDir
-                )
+                install <- installRequiredArtifacts(mavenCmd, tempDir, localRepo)
                 compileApp <- runCommand(
                     Seq(
                         mavenCmd,
@@ -232,8 +199,6 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             val tempDir    = tempPath(s"strict-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
             val fixtureDir = Path(tempDir, "fixture")
-            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
-            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
 
             for
                 _ <- tempDir.removeAll
@@ -241,16 +206,7 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 mavenCmd <- resolveMavenExecutable(tempDir)
                 _ <- copyFixtureDirectory("fixtures/strict-failure", fixtureDir)
                 _ <- installRepoMillLauncher(fixtureDir)
-                install <- runCommand(
-                    Seq(
-                        mavenCmd,
-                        s"-Dmaven.repo.local=${absolute(localRepo)}",
-                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
-                        s"-Dfile=$pluginJar",
-                        s"-DpomFile=$pluginPom"
-                    ),
-                    tempDir
-                )
+                install <- installRequiredArtifacts(mavenCmd, tempDir, localRepo)
                 compilePhase <- runCommand(
                     Seq(
                         mavenCmd,
@@ -269,24 +225,13 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
             val tempDir    = tempPath(s"run-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")
             val fixtureDir = Path(tempDir, "fixture")
-            val pluginJar  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
-            val pluginPom  = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
 
             for
                 _ <- tempDir.removeAll
                 _ <- tempDir.mkDir
                 mavenCmd <- resolveMavenExecutable(tempDir)
                 _ <- copyFixtureDirectory("fixtures/placeholder-goal", fixtureDir)
-                install <- runCommand(
-                    Seq(
-                        mavenCmd,
-                        s"-Dmaven.repo.local=${absolute(localRepo)}",
-                        "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
-                        s"-Dfile=$pluginJar",
-                        s"-DpomFile=$pluginPom"
-                    ),
-                    tempDir
-                )
+                install <- installRequiredArtifacts(mavenCmd, tempDir, localRepo)
                 validate <- runCommand(
                     Seq(
                         mavenCmd,
@@ -316,6 +261,45 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
 
     private def requiredPathEnv(name: String): String =
         sys.env.getOrElse(name, throw IllegalStateException(s"Missing required env var: $name"))
+
+    private def installRequiredArtifacts(
+        mavenCmd: String,
+        tempDir: Path,
+        localRepo: Path
+    ): CommandResult < Sync =
+        val pluginJar = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR")
+        val pluginPom = requiredPathEnv("MILL_INTERCEPTOR_MAVEN_PLUGIN_POM")
+        val sharedJar = requiredPathEnv("MILL_INTERCEPTOR_SHARED_JAR")
+        val sharedPom = requiredPathEnv("MILL_INTERCEPTOR_SHARED_POM")
+
+        for
+            installShared <- runCommand(
+                Seq(
+                    mavenCmd,
+                    s"-Dmaven.repo.local=${absolute(localRepo)}",
+                    "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                    s"-Dfile=$sharedJar",
+                    s"-DpomFile=$sharedPom"
+                ),
+                tempDir
+            )
+            installPlugin <- runCommand(
+                Seq(
+                    mavenCmd,
+                    s"-Dmaven.repo.local=${absolute(localRepo)}",
+                    "org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file",
+                    s"-Dfile=$pluginJar",
+                    s"-DpomFile=$pluginPom"
+                ),
+                tempDir
+            )
+        yield
+            CommandResult(
+                installShared.exitCode match
+                    case 0 => installPlugin.exitCode
+                    case code => code,
+                s"${installShared.output}\n${installPlugin.output}".trim
+            )
 
     private def findOnPath(command: String): Option[String] < Sync =
         Sync.defer {
