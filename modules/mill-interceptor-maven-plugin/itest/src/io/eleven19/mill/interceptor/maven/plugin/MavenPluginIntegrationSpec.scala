@@ -59,6 +59,38 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                     ),
                     fixtureDir
                 )
+                testPhase <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "test"
+                    ),
+                    fixtureDir
+                )
+                packagePhase <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "package"
+                    ),
+                    fixtureDir
+                )
+                verifyPhase <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "verify"
+                    ),
+                    fixtureDir
+                )
+                clean <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "clean"
+                    ),
+                    fixtureDir
+                )
                 inspectPlan <- runCommand(
                     Seq(
                         mavenCmd,
@@ -72,6 +104,10 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 assertTrue(install.exitCode == 0) &&
                 assertTrue(validate.exitCode == 0) &&
                 assertTrue(compile.exitCode == 0) &&
+                assertTrue(testPhase.exitCode == 0) &&
+                assertTrue(packagePhase.exitCode == 0) &&
+                assertTrue(verifyPhase.exitCode == 0) &&
+                assertTrue(clean.exitCode == 0) &&
                 assertTrue(inspectPlan.exitCode == 0) &&
                 assertTrue(inspectPlan.output.contains("Resolved Mill execution plan"))
         },
