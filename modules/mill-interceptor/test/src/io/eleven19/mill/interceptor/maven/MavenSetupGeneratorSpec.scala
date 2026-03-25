@@ -4,11 +4,18 @@ import kyo.*
 import kyo.test.KyoSpecDefault
 import zio.test.*
 import java.lang.System as JSystem
+import java.io.StringReader
+import java.nio.file.{Files, Paths}
+import javax.xml.parsers.DocumentBuilderFactory
+import org.xml.sax.InputSource
 
 object MavenSetupGeneratorSpec extends KyoSpecDefault:
 
     private def tempPath(name: String): Path =
         Path("out", "mill-interceptor-tests", name)
+
+    private def fsPath(path: Path): java.nio.file.Path =
+        path.toJava.toAbsolutePath.normalize
 
     private def generateSuccess(
         startPath: Path,
@@ -24,17 +31,31 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
         suite("render")(
             test("extensions xml uses published coordinates") {
                 val xml = MavenSetupGenerator.renderExtensionsXml("1.2.3")
-                Sync.defer(
+                Sync.defer {
+                    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    builder.parse(InputSource(StringReader(xml)))
                     assertTrue(xml.contains("io.eleven19.mill-interceptor")) &&
                     assertTrue(xml.contains("mill-interceptor-maven-plugin")) &&
-                    assertTrue(xml.contains("1.2.3"))
-                )
+                    assertTrue(xml.contains("1.2.3")) &&
+                    assertTrue(!xml.contains("\\\""))
+                }
             },
             test("yaml starter is the default file content") {
                 val yaml = MavenSetupGenerator.renderStarterConfig(MavenSetupFormat.Yaml)
                 Sync.defer(
                     assertTrue(yaml.contains("# Optional overrides for the Maven extension baseline")) &&
-                    assertTrue(yaml.contains("scalafmt:"))
+                    assertTrue(yaml.contains("validate:")) &&
+                    assertTrue(yaml.contains("scalafmtEnabled: true")) &&
+                    assertTrue(yaml.contains("#   compile:")) &&
+                    assertTrue(yaml.contains("#     - __.compile"))
+                )
+            },
+            test("pkl starter uses the plugin config schema") {
+                val pkl = MavenSetupGenerator.renderStarterConfig(MavenSetupFormat.Pkl)
+                Sync.defer(
+                    assertTrue(pkl.contains("validate {")) &&
+                    assertTrue(pkl.contains("scalafmtEnabled = true")) &&
+                    assertTrue(pkl.contains("""//   compile = List("__.compile")"""))
                 )
             }
         ),
@@ -42,8 +63,8 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
             test("writes extensions xml and yaml starter config into the repo root") {
                 val repoRoot = tempPath(s"maven-setup-${JSystem.nanoTime()}")
                 val nested   = Path(repoRoot, "modules", "app")
-                val xmlPath  = Path(repoRoot, ".mvn", "extensions.xml")
-                val yamlPath = Path(repoRoot, "mill-interceptor.yaml")
+                val xmlPath  = fsPath(repoRoot).resolve(".mvn").resolve("extensions.xml")
+                val yamlPath = fsPath(repoRoot).resolve("mill-interceptor.yaml")
 
                 for
                     _ <- repoRoot.removeAll
@@ -53,23 +74,23 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
                         nested,
                         MavenSetupOptions()
                     )
-                    xmlExists <- xmlPath.exists
-                    yamlExists <- yamlPath.exists
-                    xml <- xmlPath.read
-                    yaml <- yamlPath.read
+                    xmlExists <- Sync.defer(Files.exists(xmlPath))
+                    yamlExists <- Sync.defer(Files.exists(yamlPath))
+                    xml <- Sync.defer(Files.readString(xmlPath))
+                    yaml <- Sync.defer(Files.readString(yamlPath))
                     _ <- repoRoot.removeAll
                 yield
-                    assertTrue(generated.map(_.path).toSet == Set(xmlPath, yamlPath)) &&
+                    assertTrue(generated.map(_.path).toSet == Set(Path(".mvn", "extensions.xml"), Path("mill-interceptor.yaml"))) &&
                     assertTrue(xmlExists) &&
                     assertTrue(yamlExists) &&
                     assertTrue(xml.contains("1.2.3")) &&
-                    assertTrue(yaml.contains("scalafmt:"))
+                    assertTrue(yaml.contains("scalafmtEnabled: true"))
             },
             test("dry run reports planned files without writing them") {
                 val repoRoot = tempPath(s"maven-setup-dry-run-${JSystem.nanoTime()}")
                 val nested   = Path(repoRoot, "modules", "app")
-                val xmlPath  = Path(repoRoot, ".mvn", "extensions.xml")
-                val yamlPath = Path(repoRoot, "mill-interceptor.yaml")
+                val xmlPath  = fsPath(repoRoot).resolve(".mvn").resolve("extensions.xml")
+                val yamlPath = fsPath(repoRoot).resolve("mill-interceptor.yaml")
 
                 for
                     _ <- repoRoot.removeAll
@@ -79,25 +100,25 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
                         nested,
                         MavenSetupOptions(dryRun = true)
                     )
-                    xmlExists <- xmlPath.exists
-                    yamlExists <- yamlPath.exists
+                    xmlExists <- Sync.defer(Files.exists(xmlPath))
+                    yamlExists <- Sync.defer(Files.exists(yamlPath))
                     _ <- repoRoot.removeAll
                 yield
-                    assertTrue(generated.map(_.path).toSet == Set(xmlPath, yamlPath)) &&
+                    assertTrue(generated.map(_.path).toSet == Set(Path(".mvn", "extensions.xml"), Path("mill-interceptor.yaml"))) &&
                     assertTrue(!xmlExists) &&
                     assertTrue(!yamlExists)
             },
             test("existing files fail without force") {
                 val repoRoot = tempPath(s"maven-setup-existing-${JSystem.nanoTime()}")
                 val nested   = Path(repoRoot, "modules", "app")
-                val xmlPath  = Path(repoRoot, ".mvn", "extensions.xml")
+                val xmlPath  = fsPath(repoRoot).resolve(".mvn").resolve("extensions.xml")
 
                 for
                     _ <- repoRoot.removeAll
                     _ <- nested.mkDir
                     _ <- Path(repoRoot, ".git").mkDir
-                    _ <- Path(repoRoot, ".mvn").mkDir
-                    _ <- xmlPath.write("existing")
+                    _ <- Sync.defer(Files.createDirectories(xmlPath.getParent))
+                    _ <- Sync.defer(Files.writeString(xmlPath, "existing"))
                     result <- Abort.run[IllegalArgumentException](
                         MavenSetupGenerator.generate(nested, MavenSetupOptions(), extensionVersion = "1.2.3")
                     )
@@ -110,19 +131,19 @@ object MavenSetupGeneratorSpec extends KyoSpecDefault:
             test("force overwrites existing files") {
                 val repoRoot = tempPath(s"maven-setup-force-${JSystem.nanoTime()}")
                 val nested   = Path(repoRoot, "modules", "app")
-                val xmlPath  = Path(repoRoot, ".mvn", "extensions.xml")
+                val xmlPath  = fsPath(repoRoot).resolve(".mvn").resolve("extensions.xml")
 
                 for
                     _ <- repoRoot.removeAll
                     _ <- nested.mkDir
                     _ <- Path(repoRoot, ".git").mkDir
-                    _ <- Path(repoRoot, ".mvn").mkDir
-                    _ <- xmlPath.write("existing")
+                    _ <- Sync.defer(Files.createDirectories(xmlPath.getParent))
+                    _ <- Sync.defer(Files.writeString(xmlPath, "existing"))
                     _ <- generateSuccess(
                         nested,
                         MavenSetupOptions(force = true)
                     )
-                    xml <- xmlPath.read
+                    xml <- Sync.defer(Files.readString(xmlPath))
                     _ <- repoRoot.removeAll
                 yield assertTrue(xml.contains("1.2.3"))
             }

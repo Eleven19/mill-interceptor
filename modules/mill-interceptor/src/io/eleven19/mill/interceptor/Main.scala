@@ -27,7 +27,17 @@ object Main extends KyoApp:
                             .now
                         Console.printLine(s"Generated ${generated.size} shim script(s)").now
                     case Result.Success(CliResult.MavenSetup(options)) =>
-                        val generated = MavenSetupGenerator.generate(Path("."), options, RuntimeVersion.current).now
+                        val extensionVersion = options.extensionVersion.orElse(RuntimeVersion.current) match
+                            case Some(version) => version
+                            case None =>
+                                Abort
+                                    .fail(
+                                        new IllegalArgumentException(
+                                            "Could not determine the mill-interceptor version for .mvn/extensions.xml. Re-run with --extension-version <version>."
+                                        )
+                                    )
+                                    .now
+                        val generated = MavenSetupGenerator.generate(Path("."), options, extensionVersion).now
                         val action    = if options.dryRun then "Would write" else "Wrote"
                         val _         = Kyo.foreach(generated)(file => Log.info(s"$action ${file.path}")).now
                         val message =

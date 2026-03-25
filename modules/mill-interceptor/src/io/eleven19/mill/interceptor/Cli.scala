@@ -29,6 +29,7 @@ object Cli:
           |Maven setup options:
           |  --dry-run                 Preview generated files without writing
           |  --format <yaml|pkl>       Starter config format (default: yaml)
+          |  --extension-version <v>   Use an explicit Maven extension version
           |  --force                   Overwrite existing generated files
           |
           |Shim generate options:
@@ -86,6 +87,10 @@ object Cli:
                 parseMavenSetupOpts(rest, opts.copy(dryRun = true))
             case "--force" :: rest =>
                 parseMavenSetupOpts(rest, opts.copy(force = true))
+            case "--extension-version" :: value :: rest =>
+                parseMavenSetupOpts(rest, opts.copy(extensionVersion = Some(value)))
+            case "--extension-version" :: Nil =>
+                Abort.fail(new IllegalArgumentException("Missing value for --extension-version"))
             case "--format" :: value :: rest =>
                 MavenSetupFormat.fromString(value) match
                     case Some(format) =>

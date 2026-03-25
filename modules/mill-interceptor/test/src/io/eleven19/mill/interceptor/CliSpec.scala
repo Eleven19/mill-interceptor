@@ -257,9 +257,17 @@ object CliSpec extends KyoSpecDefault:
                     )
                 }
             },
+            test("maven setup --extension-version sets the extension version override") {
+                parseSuccess("maven", "setup", "--extension-version", "0.3.1").map { result =>
+                    assertTrue(result match
+                        case CliResult.MavenSetup(opts) => opts.extensionVersion.contains("0.3.1")
+                        case _                          => false
+                    )
+                }
+            },
             test("maven setup with multiple options") {
-                parseSuccess("maven", "setup", "--dry-run", "--format", "pkl", "--force").map { result =>
-                    assertTrue(result == CliResult.MavenSetup(MavenSetupOptions(dryRun = true, format = MavenSetupFormat.Pkl, force = true)))
+                parseSuccess("maven", "setup", "--dry-run", "--format", "pkl", "--force", "--extension-version", "0.3.1").map { result =>
+                    assertTrue(result == CliResult.MavenSetup(MavenSetupOptions(dryRun = true, format = MavenSetupFormat.Pkl, force = true, extensionVersion = Some("0.3.1"))))
                 }
             },
             test("maven setup --help returns help") {
@@ -277,6 +285,11 @@ object CliSpec extends KyoSpecDefault:
             test("maven setup --format without value fails with Abort") {
                 parseError("maven", "setup", "--format").map { msg =>
                     assertTrue(msg == "Missing value for --format")
+                }
+            },
+            test("maven setup --extension-version without value fails with Abort") {
+                parseError("maven", "setup", "--extension-version").map { msg =>
+                    assertTrue(msg == "Missing value for --extension-version")
                 }
             },
             test("maven setup with unknown flag fails with Abort") {

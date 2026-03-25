@@ -17,5 +17,6 @@ object MavenSetupFormat:
 final case class MavenSetupOptions(
     dryRun: Boolean = false,
     format: MavenSetupFormat = MavenSetupFormat.Yaml,
-    force: Boolean = false
+    force: Boolean = false,
+    extensionVersion: Option[String] = None
 ) derives CanEqual
