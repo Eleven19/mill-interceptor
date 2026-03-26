@@ -1,10 +1,10 @@
 package io.eleven19.mill.interceptor.maven.plugin.exec
 
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequest
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan
-import io.eleven19.mill.interceptor.maven.plugin.model.PlanStep
+import io.eleven19.mill.interceptor.model.ExecutionRequest
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.MillExecutionPlan
+import io.eleven19.mill.interceptor.model.PlanStep
 import kyo.*
 
 /** A rendered command and its working directory for dry-run inspection. */
@@ -192,24 +192,27 @@ object MillRunner:
     private def resolveWorkingDirectory(base: Path, overridePath: Option[String]): Path =
         overridePath match
             case Some(value) if value.nonEmpty =>
-                val overrideJava = java.nio.file.Paths.get(value)
-                if overrideJava.isAbsolute then Path(overrideJava.toString)
-                else Path(base.toJava.resolve(overrideJava).toString)
+                val configured = Path(value)
+                if configured.toJava.isAbsolute then configured
+                else Path(base.toJava.resolve(configured.toJava).toString)
             case _ => base
 
     private def resolveExecutable(request: ExecutionRequest, config: EffectiveConfig): String < Sync =
         if config.mill.executable != "mill" then Sync.defer(config.mill.executable)
         else
             val launcherCandidates = Seq(
-                request.moduleRoot.toJava.resolve("mill"),
-                request.moduleRoot.toJava.resolve("millw"),
-                request.repoRoot.toJava.resolve("mill"),
-                request.repoRoot.toJava.resolve("millw")
+                childPath(request.moduleRoot, "mill"),
+                childPath(request.moduleRoot, "millw"),
+                childPath(request.repoRoot, "mill"),
+                childPath(request.repoRoot, "millw")
             )
             for candidates <- Kyo.foreach(launcherCandidates) { candidate =>
-                    Sync.defer(candidate.toFile.exists()).map(exists => candidate -> exists)
+                    candidate.exists.map(exists => candidate -> exists)
                 }
-            yield candidates.collectFirst { case (candidate, true) => candidate.toString }.getOrElse("mill")
+            yield candidates.collectFirst { case (candidate, true) => candidate.toJava.toString }.getOrElse("mill")
+
+    private def childPath(base: Path, child: String): Path =
+        Path(base.toJava.resolve(child).toString)
 
     private def forwardedPropertyArgs(request: ExecutionRequest): Seq[String] =
         request.properties.get("maven.repo.local").toSeq.map(value => s"-Dmaven.repo.local=$value")

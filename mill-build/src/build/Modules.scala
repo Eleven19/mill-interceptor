@@ -236,10 +236,14 @@ $mojos
   override def pomPackagingType = "maven-plugin"
 
   trait MavenPluginItestModule extends ScalaTests with CommonScalaTestModule with TestModule.ZioTest {
+    private lazy val sharedCliModule = _root_.build_.package_.modules.`mill-interceptor`
+
     override def forkEnv = Task {
       super.forkEnv() ++ Map(
         "MILL_INTERCEPTOR_MAVEN_PLUGIN_JAR" -> MavenPluginSupport.this.publishedPluginJar().path.toString,
-        "MILL_INTERCEPTOR_MAVEN_PLUGIN_POM" -> MavenPluginSupport.this.publishedPluginPom().path.toString
+        "MILL_INTERCEPTOR_MAVEN_PLUGIN_POM" -> MavenPluginSupport.this.publishedPluginPom().path.toString,
+        "MILL_INTERCEPTOR_SHARED_JAR" -> sharedCliModule.jar().path.toString,
+        "MILL_INTERCEPTOR_SHARED_POM" -> sharedCliModule.pom().path.toString
       )
     }
   }

@@ -1,13 +1,12 @@
-package io.eleven19.mill.interceptor.maven.plugin.model
+package io.eleven19.mill.interceptor.model
 
-import io.eleven19.mill.interceptor.model.*
 import kyo.Path
 import kyo.test.KyoSpecDefault
 import zio.test.*
 
-object MillExecutionPlanSpec extends KyoSpecDefault:
+object SharedExecutionPlanSpec extends KyoSpecDefault:
 
-    def spec: Spec[Any, Any] = suite("MillExecutionPlan")(
+    def spec: Spec[Any, Any] = suite("SharedExecutionPlan")(
         test("models lifecycle requests as ordered execution plans") {
             val request = ExecutionRequest(
                 kind = ExecutionRequestKind.LifecyclePhase,
@@ -53,40 +52,9 @@ object MillExecutionPlanSpec extends KyoSpecDefault:
             assertTrue(request.requestedName == "inspect-plan") &&
             assertTrue(request.module.packaging == "pom")
         },
-        test("captures strict failures as first-class plan steps with guidance") {
-            val plan = MillExecutionPlan(
-                request = ExecutionRequest(
-                    kind = ExecutionRequestKind.ExplicitGoal,
-                    requestedName = "deploy-site",
-                    repoRoot = Path("/repo"),
-                    moduleRoot = Path("/repo", "module-c"),
-                    module = ModuleRef(
-                        artifactId = "module-c",
-                        packaging = "jar"
-                    )
-                ),
-                executionMode = ExecutionMode.Strict,
-                steps = Seq(
-                    PlanStep.Fail(
-                        message = "No mapping found for explicit goal 'deploy-site'",
-                        guidance = Seq(
-                            "Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl",
-                            "Run mill resolve __ to inspect available Mill targets"
-                        )
-                    )
-                )
-            )
-
-            assertTrue(
-                plan.steps == Seq(
-                    PlanStep.Fail(
-                        message = "No mapping found for explicit goal 'deploy-site'",
-                        guidance = Seq(
-                            "Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl",
-                            "Run mill resolve __ to inspect available Mill targets"
-                        )
-                    )
-                )
-            )
+        test("parses execution modes from persisted config") {
+            assertTrue(ExecutionMode.fromString("strict") == ExecutionMode.Strict) &&
+            assertTrue(ExecutionMode.fromString("hybrid") == ExecutionMode.Hybrid) &&
+            assertTrue(ExecutionMode.fromString("unknown") == ExecutionMode.Strict)
         }
     )

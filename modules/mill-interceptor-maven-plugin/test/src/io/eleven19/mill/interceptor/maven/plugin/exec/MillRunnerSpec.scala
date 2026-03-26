@@ -1,12 +1,12 @@
 package io.eleven19.mill.interceptor.maven.plugin.exec
 
 import io.eleven19.mill.interceptor.maven.plugin.config.{EffectiveConfig, MillConfig}
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionMode
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequest
-import io.eleven19.mill.interceptor.maven.plugin.model.ExecutionRequestKind
-import io.eleven19.mill.interceptor.maven.plugin.model.MillExecutionPlan
-import io.eleven19.mill.interceptor.maven.plugin.model.ModuleRef
-import io.eleven19.mill.interceptor.maven.plugin.model.PlanStep
+import io.eleven19.mill.interceptor.model.ExecutionMode
+import io.eleven19.mill.interceptor.model.ExecutionRequest
+import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.MillExecutionPlan
+import io.eleven19.mill.interceptor.model.ModuleRef
+import io.eleven19.mill.interceptor.model.PlanStep
 import kyo.*
 import kyo.Path
 import kyo.test.KyoSpecDefault
@@ -170,7 +170,7 @@ object MillRunnerSpec extends KyoSpecDefault:
             test("prefers a module-local mill launcher when the repo root does not provide one") {
                 val root = Path("out", "mill-runner-tests", "module-local-launcher")
                 val moduleRoot = Path(root, "module-a")
-                val launcher = Path(moduleRoot, "mill")
+                val launcher = childPath(moduleRoot, "mill")
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
                     request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(root, "repo-root-without-launcher")),
@@ -207,7 +207,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 val root = Path("out", "mill-runner-tests", "absolute-module-local-launcher")
                 val absoluteRoot = Path(root.toJava.toAbsolutePath.normalize.toString)
                 val moduleRoot = Path(absoluteRoot, "module-a")
-                val launcher = Path(moduleRoot, "mill")
+                val launcher = childPath(moduleRoot, "mill")
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
                     request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(absoluteRoot, "repo-root-without-launcher")),
@@ -242,7 +242,7 @@ object MillRunnerSpec extends KyoSpecDefault:
             },
             test("prefers a repo-local mill launcher when no executable override is configured") {
                 val root = Path("out", "mill-runner-tests", "local-launcher")
-                val launcher = Path(root, "mill")
+                val launcher = childPath(root, "mill")
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
                     request = request(moduleRoot = Path(root, "module-a")).copy(repoRoot = root),
@@ -441,6 +441,9 @@ object MillRunnerSpec extends KyoSpecDefault:
             }
         )
     )
+
+    private def childPath(base: Path, child: String): Path =
+        Path(base.toJava.resolve(child).toString)
 
     private final class RecordingExecutor(exitCodes: Seq[Int] = Seq.empty) extends MillRunner.SubprocessExecutor:
         private val callsBuffer = scala.collection.mutable.ArrayBuffer.empty[(Seq[String], Path, Map[String, String])]
