@@ -201,15 +201,18 @@ object MillRunner:
         if config.mill.executable != "mill" then Sync.defer(config.mill.executable)
         else
             val launcherCandidates = Seq(
-                Path(request.moduleRoot, "mill"),
-                Path(request.moduleRoot, "millw"),
-                Path(request.repoRoot, "mill"),
-                Path(request.repoRoot, "millw")
+                childPath(request.moduleRoot, "mill"),
+                childPath(request.moduleRoot, "millw"),
+                childPath(request.repoRoot, "mill"),
+                childPath(request.repoRoot, "millw")
             )
             for candidates <- Kyo.foreach(launcherCandidates) { candidate =>
                     candidate.exists.map(exists => candidate -> exists)
                 }
             yield candidates.collectFirst { case (candidate, true) => candidate.toJava.toString }.getOrElse("mill")
+
+    private def childPath(base: Path, child: String): Path =
+        Path(base.toJava.resolve(child).toString)
 
     private def forwardedPropertyArgs(request: ExecutionRequest): Seq[String] =
         request.properties.get("maven.repo.local").toSeq.map(value => s"-Dmaven.repo.local=$value")
