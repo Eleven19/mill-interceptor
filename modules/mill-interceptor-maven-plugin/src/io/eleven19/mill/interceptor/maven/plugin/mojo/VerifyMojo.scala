@@ -3,6 +3,7 @@ package io.eleven19.mill.interceptor.maven.plugin.mojo
 import io.eleven19.mill.interceptor.model.ExecutionRequestKind
 import org.apache.maven.plugins.annotations.Mojo
 
+/** Forwards Maven `verify` requests into the resolved Mill execution plan. */
 @Mojo(name = "verify", threadSafe = true)
 class VerifyMojo extends AbstractForwardingMojo:
 

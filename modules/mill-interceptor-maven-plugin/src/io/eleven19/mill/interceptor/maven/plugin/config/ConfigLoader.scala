@@ -3,8 +3,10 @@ package io.eleven19.mill.interceptor.maven.plugin.config
 import kyo.*
 import org.virtuslab.yaml.*
 
+/** Loads effective interceptor configuration from discovered YAML and PKL sources. */
 object ConfigLoader:
 
+    /** Discover, merge, and finalize repo and module config into one effective view. */
     def load(repoRoot: Path, moduleRoot: Path): EffectiveConfig < (Abort[ConfigLoadException] & Sync) =
         for
             discovered <- ConfigDiscovery.discover(repoRoot, moduleRoot)

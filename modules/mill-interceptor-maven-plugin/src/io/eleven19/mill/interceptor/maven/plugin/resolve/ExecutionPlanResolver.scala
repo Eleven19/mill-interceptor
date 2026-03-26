@@ -4,8 +4,10 @@ import io.eleven19.mill.interceptor.model.*
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 import io.eleven19.mill.interceptor.maven.plugin.model.LifecycleBaseline
 
+/** Resolves neutral execution requests into ordered Mill execution plans for the Maven plugin. */
 object ExecutionPlanResolver:
 
+    /** Build the final execution plan from the request, baseline lifecycle mapping, and config. */
     def resolve(
         request: ExecutionRequest,
         config: EffectiveConfig

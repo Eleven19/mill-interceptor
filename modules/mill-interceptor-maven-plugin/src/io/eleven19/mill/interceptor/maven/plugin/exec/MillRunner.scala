@@ -27,6 +27,7 @@ final case class DryRunResult(
     steps: Seq[DryRunStep]
 ) derives CanEqual
 
+/** Executes resolved Mill plans or renders them for inspect-only flows. */
 object MillRunner:
 
     /** Small injectable subprocess boundary for plan execution. */
@@ -49,11 +50,13 @@ object MillRunner:
                         .now
                 }
 
+    /** Render a plan without running subprocesses. */
     def dryRun(plan: MillExecutionPlan, config: EffectiveConfig): DryRunResult =
         DryRunResult(
             steps = plan.steps.map(renderStep(_, plan.request, config))
         )
 
+    /** Execute a plan step-by-step and stop on the first terminal failure. */
     def execute(
         plan: MillExecutionPlan,
         config: EffectiveConfig,
