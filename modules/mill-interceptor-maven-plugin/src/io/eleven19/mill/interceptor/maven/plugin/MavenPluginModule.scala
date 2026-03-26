@@ -2,8 +2,10 @@ package io.eleven19.mill.interceptor.maven.plugin
 
 import scala.util.Using
 
+/** Static Maven plugin metadata and goal registry loading. */
 object MavenPluginModule:
 
+    /** One declared Maven goal exposed by the generated plugin descriptor. */
     final case class GoalDescriptor(
         goal: String,
         implementationClass: String,

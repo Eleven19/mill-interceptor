@@ -3,6 +3,7 @@ package io.eleven19.mill.interceptor.maven.plugin.mojo
 import io.eleven19.mill.interceptor.model.ExecutionRequestKind
 import org.apache.maven.plugins.annotations.Mojo
 
+/** Renders the resolved plan for a Maven invocation without executing Mill. */
 @Mojo(name = "inspect-plan", threadSafe = true)
 class InspectPlanMojo extends AbstractForwardingMojo:
 

@@ -5,8 +5,10 @@ import org.pkl.core.{Evaluator, ModuleSource, PModule, PObject}
 
 import scala.jdk.CollectionConverters.*
 
+/** Evaluates PKL config modules and converts them into the overlay model used by the plugin. */
 object PklConfigEvaluator:
 
+    /** Load one PKL file and normalize its module properties into a `ConfigOverlay`. */
     def load(path: Path): ConfigOverlay < (Abort[ConfigLoadException] & Sync) =
         Abort.catching[ConfigLoadException] {
             Sync.defer {

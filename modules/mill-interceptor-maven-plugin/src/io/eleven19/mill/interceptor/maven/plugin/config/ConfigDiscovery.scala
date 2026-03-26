@@ -2,22 +2,27 @@ package io.eleven19.mill.interceptor.maven.plugin.config
 
 import kyo.*
 
+/** Whether a discovered config file came from the repository root or a module root. */
 enum ConfigScope derives CanEqual:
     case Repository
     case Module
 
+/** Supported source formats for interceptor configuration discovery. */
 enum ConfigFormat derives CanEqual:
     case Yaml
     case Pkl
 
+/** One config file discovered during precedence-ordered config lookup. */
 final case class DiscoveredConfigSource(
     scope: ConfigScope,
     format: ConfigFormat,
     path: Path
 ) derives CanEqual
 
+/** Deterministic config discovery for repository-level and module-level interceptor inputs. */
 object ConfigDiscovery:
 
+    /** Discover existing config files in the order they should be merged. */
     def discover(repoRoot: Path, moduleRoot: Path): Seq[DiscoveredConfigSource] < Sync =
         val candidates = Seq(
             DiscoveredConfigSource(
