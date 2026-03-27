@@ -126,6 +126,19 @@ jobs:
         shell: bash
         run: scripts/ci/stage-release-extra.sh "out/modules/mill-interceptor/releaseLauncher.dest/${{ steps.windows-launcher-name.outputs.windows_launcher_name }}" release-extras/releaseLauncher.dest
 
+      - name: Compute Node.js launcher name
+        id: nodejs-launcher-name
+        shell: bash
+        run: scripts/ci/compute-launcher-name.sh nodejs nodejs_launcher_name
+
+      - name: Build Node.js launcher
+        shell: bash
+        run: scripts/ci/build-release-launcher.sh "${{ needs.metadata.outputs.version }}" nodejs "${{ steps.nodejs-launcher-name.outputs.nodejs_launcher_name }}"
+
+      - name: Stage Node.js launcher
+        shell: bash
+        run: scripts/ci/stage-release-extra.sh "out/modules/mill-interceptor/releaseLauncher.dest/${{ steps.nodejs-launcher-name.outputs.nodejs_launcher_name }}" release-extras/releaseLauncher.dest
+
       - name: Upload release extras
         uses: actions/upload-artifact@v4
         with:
