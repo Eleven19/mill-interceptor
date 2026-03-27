@@ -50,6 +50,7 @@ trait InterceptorModule
     extends CommonScalaModule
     with mill.contrib.scoverage.ScoverageModule
     with NativeImageModule
+    with DocSiteSupport
     with ReleaseSupport
     with PublishSupport {
   override def scoverageVersion = Task {

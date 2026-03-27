@@ -1,0 +1,12 @@
+index: index.md
+subsection:
+  - title: Getting Started
+    page: getting-started.md
+  - title: Usage
+    page: usage.md
+  - title: Guides
+    subsection:
+      - title: Maven Plugin
+        page: guides/maven-plugin.md
+      - title: Release Artifacts
+        page: guides/release-artifacts.md

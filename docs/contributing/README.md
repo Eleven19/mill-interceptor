@@ -19,3 +19,14 @@ express the need.
 - **[Maintaining the Changelog](changelog.md)** — How `CHANGELOG.md` is structured, how `[Unreleased]` is maintained, and what has to exist before a release can be published.
 - **[Logging with Scribe](logging-with-scribe.md)** — How Kyo’s logging works and how we switched this app to use Scribe as the backend (implementing `Log.Unsafe`, wiring with `Log.let`).
 - **[Releasing Native Archives](releasing.md)** — How the GitHub release workflow builds native archives, how versioning works, and how the assets are named for `mise`.
+
+## Documentation Site
+
+User-facing docs are published at:
+
+- <https://eleven19.github.io/mill-interceptor/>
+
+Local generation and preview:
+
+- `./mill modules.mill-interceptor.docJar`
+- `./mill modules.mill-interceptor.docSiteServe`

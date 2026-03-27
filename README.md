@@ -4,16 +4,9 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.eleven19.mill-interceptor/milli_3)](https://central.sonatype.com/artifact/io.eleven19.mill-interceptor/milli_3)
 [![GitHub Release](https://img.shields.io/github/v/release/Eleven19/mill-interceptor)](https://github.com/Eleven19/mill-interceptor/releases/latest)
 
-A tool for intercepting other build tools using mill.
-The idea is to use mill to "impersonate" other build tools.
+A tool for intercepting other build tools with Mill.
 
-## What does it do?
-
-This tool serves as a replacement* for:
-
-- mvn
-- gradle
-- sbt 
+**Documentation:** <https://eleven19.github.io/mill-interceptor/>
 
 ## Usage
 
@@ -44,7 +37,7 @@ Minimal setup:
 </extensions>
 ```
 
-With only that extension file, the current conventional baseline supports:
+With only that extension file, the conventional baseline supports:
 
 - `mvn clean`
 - `mvn validate`
@@ -56,25 +49,20 @@ With only that extension file, the current conventional baseline supports:
 
 `mvn install` and `mvn deploy` are supported when the Mill build exposes a publish-capable surface such as `PublishModule`.
 
-Add `mill-interceptor.yaml` or `mill-interceptor.pkl` only when you need overrides:
+Detailed setup and lifecycle/configuration behavior:
 
-- custom lifecycle mappings
-- module-local overrides
-- disabling the validate Scalafmt hook
-- custom Mill executable, working directory, or environment
+- <https://eleven19.github.io/mill-interceptor/docs/guides/maven-plugin.html>
 
-Config discovery:
+## Configuration discovery
 
 - `mill-interceptor.yaml`
 - `mill-interceptor.pkl`
 - `.config/mill-interceptor/config.yaml`
 - `.config/mill-interceptor/config.pkl`
 
-Detailed plugin setup, override examples, and fixture-backed behavior live in [docs/usage/maven-plugin.md](/home/damian/code/repos/github/Eleven19/mill-interceptor/.worktrees/mi-okw-8-fixtures-docs/docs/usage/maven-plugin.md).
+## Launcher behavior
 
-## Launcher scripts
-
-Releases also publish `milli` and `milli.bat` launchers. By default they prefer platform-native artifacts, fall back to the published assembly jar artifact (`milli-dist`) when native artifacts are unavailable, prefer Maven Central as the source, and fall back to GitHub Releases automatically.
+Releases publish `milli` and `milli.bat` launchers. By default they prefer platform-native artifacts, fall back to the `milli-dist` assembly when native artifacts are unavailable, prefer Maven Central as the source, and fall back to GitHub Releases automatically.
 
 Launcher controls:
 
@@ -84,12 +72,6 @@ Launcher controls:
 - `MILLI_LAUNCHER_MODE` with `native` or `dist`
 - `MILLI_LAUNCHER_SOURCE` with `maven` or `github`
 - `MILLI_LAUNCHER_USE_NETRC=1` to enable `.netrc` for `curl` or `wget`
-
-## Should I use this?
-
-Sure, if you find it useful.
-I had a very particular use-case involving integration with certain build pipelines that were
-setup to work with common tools like maven, gradle, and sbt, but with no native support for mill.
 
 ## Release artifacts
 
@@ -105,5 +87,6 @@ Maven Central publishes the `milli` artifact family under `io.eleven19.mill-inte
 - `milli`
 - `milli-dist`
 - platform-specific `milli-native-*` artifacts
+- `mill-interceptor-maven-plugin`
 
 Stable releases use tags like `v1.2.3`; prereleases use semantic prerelease tags like `v1.2.3-rc.1`. Maintainer details live in `docs/contributing/releasing.md`.

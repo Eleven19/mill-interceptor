@@ -34,6 +34,18 @@ This design does not cover:
 
 ## Recommended Approach
 
+Use the `ascribe` documentation-site setup as the primary reference and keep
+the result aligned with Scala docs-site conventions.
+
+Chosen stack and structure:
+
+- Scala 3 Scaladoc-generated site (no MkDocs/Docusaurus)
+- prose pages under `docs/_docs`
+- optional posts under `docs/_blog`
+- static assets under `docs/_assets`
+- navigation defined in `docs/sidebar.yml`
+- GitHub Pages deployment from `scalaDocGenerated` output
+
 Use one narrow issue for the immediate prerelease preparation and one separate
 epic for the documentation site needed before the final `0.4.0` release.
 

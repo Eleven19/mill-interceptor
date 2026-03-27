@@ -8,6 +8,10 @@ This repository publishes:
 - the `milli` artifact family through Maven Central
 - the `mill-interceptor-maven-plugin` artifact through Maven Central
 
+Public documentation site:
+
+- <https://eleven19.github.io/mill-interceptor/>
+
 ## Overview
 
 The release automation has four goals:

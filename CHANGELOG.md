@@ -17,10 +17,12 @@ leading `v`.
 ### Documentation
 
 - Documented the shared manual release flow that dispatches GitHub Releases and Maven Central publication together for the same version.
+- Introduced a generated documentation site with Scala 3 Scaladoc prose pages under `docs/_docs` and `docs/sidebar.yml`, and migrated core README/plugin guidance into the published site.
 
 ### CI
 
 - Added a helper-based manual release trigger path so `release.yml` and `publish-central.yml` can be dispatched together in parallel.
+- Added docs build validation to CI and a dedicated GitHub Pages deployment workflow for the generated documentation site.
 
 ## [0.4.0-rc.1] - 2026-03-27
 
