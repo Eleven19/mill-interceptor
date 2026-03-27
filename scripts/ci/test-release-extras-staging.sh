@@ -31,10 +31,20 @@ bash "$repo_root/scripts/ci/stage-release-extra.sh" \
   "$workspace/out/modules/mill-interceptor/releaseLauncher.dest/milli.bat" \
   "$staging_dir/releaseLauncher.dest"
 
+rm -rf "$workspace/out/modules/mill-interceptor/releaseLauncher.dest"
+mkdir -p "$workspace/out/modules/mill-interceptor/releaseLauncher.dest"
+printf 'nodejs launcher\n' >"$workspace/out/modules/mill-interceptor/releaseLauncher.dest/milli.mjs"
+
+bash "$repo_root/scripts/ci/stage-release-extra.sh" \
+  "$workspace/out/modules/mill-interceptor/releaseLauncher.dest/milli.mjs" \
+  "$staging_dir/releaseLauncher.dest"
+
 test -f "$staging_dir/releaseAssembly.dest/mill-interceptor-dist-v0.3.0.jar"
 test -f "$staging_dir/releaseLauncher.dest/milli"
 test -f "$staging_dir/releaseLauncher.dest/milli.bat"
+test -f "$staging_dir/releaseLauncher.dest/milli.mjs"
 
 rg -F 'assembly jar' "$staging_dir/releaseAssembly.dest/mill-interceptor-dist-v0.3.0.jar"
 rg -F 'unix launcher' "$staging_dir/releaseLauncher.dest/milli"
 rg -F 'windows launcher' "$staging_dir/releaseLauncher.dest/milli.bat"
+rg -F 'nodejs launcher' "$staging_dir/releaseLauncher.dest/milli.mjs"

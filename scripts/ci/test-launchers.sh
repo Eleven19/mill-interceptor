@@ -30,6 +30,7 @@ assert_contains() {
 
 test -f launcher/milli
 test -f launcher/milli.bat
+test -f launcher/milli.mjs
 
 rg -F '.mill-interceptor-version' launcher/milli
 rg -F '.config/mill-interceptor-version' launcher/milli
@@ -53,6 +54,15 @@ rg -F 'curl_netrc_flag=' launcher/milli.bat
 rg -F 'milli-dist' launcher/milli.bat
 rg -F 'github.com/Eleven19/mill-interceptor/releases/download' launcher/milli.bat
 rg -F 'mill-interceptor-v%MILLI_VERSION_VALUE%-x86_64-pc-windows-msvc.zip' launcher/milli.bat
+
+rg -F '.mill-interceptor-version' launcher/milli.mjs
+rg -F '.config/mill-interceptor-version' launcher/milli.mjs
+rg -F 'MILLI_LAUNCHER_MODE' launcher/milli.mjs
+rg -F 'MILLI_LAUNCHER_SOURCE' launcher/milli.mjs
+rg -F 'MILLI_LAUNCHER_USE_NETRC' launcher/milli.mjs
+rg -F 'MILLI_LAUNCHER_DRY_RUN' launcher/milli.mjs
+rg -F 'milli-dist' launcher/milli.mjs
+rg -F 'github.com/Eleven19/mill-interceptor/releases/download' launcher/milli.mjs
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
