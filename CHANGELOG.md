@@ -24,6 +24,7 @@ leading `v`.
 ### Documentation
 
 - Documented real Maven plugin setup, minimal extension-only usage, config discovery, publish requirements, and override examples in the README and a dedicated usage guide.
+- Documented the planned `0.4.0-rc.1` prerelease track and the follow-up documentation-site work required before the final `0.4.0` release.
 
 ### CI
 
