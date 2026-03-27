@@ -60,13 +60,14 @@ trait ReleaseSupport extends mill.Module { this: NativeImageModule & JavaModule 
 
   private def validatedLauncherOs(launcherOs: String): String =
     launcherOs match
-      case "unix" | "windows" => launcherOs
+      case "unix" | "windows" | "nodejs" => launcherOs
       case other => throw new IllegalArgumentException(s"Unsupported launcher OS: $other")
 
   private def launcherFileNameFor(launcherOs: String): String =
     validatedLauncherOs(launcherOs) match
       case "unix" => "milli"
       case "windows" => "milli.bat"
+      case "nodejs" => "milli.mjs"
 
   private def launcherTemplatePath(taskDest: os.Path, launcherOs: String): os.Path =
     taskDest / os.up / os.up / os.up / os.up / "launcher" / launcherFileNameFor(launcherOs)
