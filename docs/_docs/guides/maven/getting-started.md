@@ -28,7 +28,7 @@ Create the file `.mvn/extensions.xml` in your project root:
   <extension>
     <groupId>io.eleven19.mill-interceptor</groupId>
     <artifactId>mill-interceptor-maven-plugin</artifactId>
-    <version>0.4.0</version>
+    <version>${mill.interceptor.version}</version>
   </extension>
 </extensions>
 ```
@@ -62,8 +62,10 @@ mapping:
 | `mvn install` | `mill compile test jar publishM2Local` |
 | `mvn deploy` | `mill compile test jar publish` |
 
-The `validate` phase is special — it runs an optional scalafmt format check
-if your Mill build includes scalafmt support. If not, it silently passes.
+The `validate` phase is special — it probes for a scalafmt format-check
+target. If your Mill build includes scalafmt, the check runs automatically.
+If not, disable the probe to avoid failures (see the
+[Maven Plugin Reference](../maven-plugin.md#scalafmt-validation) for details).
 
 Maven executes phases sequentially, so `mvn package` also runs validate,
 compile, and test before package.
