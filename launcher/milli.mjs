@@ -74,6 +74,23 @@ export class MilliLauncher {
   get nativeInfo() {
     return PLATFORM_MAP[this.platformKey] ?? null;
   }
+
+  resolveVersion() {
+    if (this.env.MILLI_VERSION) {
+      return this.env.MILLI_VERSION;
+    }
+    const versionPath = this._join(this.cwd, VERSION_FILE);
+    if (this.fs.existsSync(versionPath)) {
+      const content = this.fs.readFileSync(versionPath, 'utf-8');
+      return content.split(/\r?\n/)[0].trim();
+    }
+    const configPath = this._join(this.cwd, CONFIG_VERSION_FILE);
+    if (this.fs.existsSync(configPath)) {
+      const content = this.fs.readFileSync(configPath, 'utf-8');
+      return content.split(/\r?\n/)[0].trim();
+    }
+    return DEFAULT_VERSION;
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

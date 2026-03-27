@@ -38,6 +38,62 @@ describe('MilliLauncher', () => {
     assert.ok(launcher);
   });
 
+  describe('version resolution', () => {
+    it('uses MILLI_VERSION env var when set', () => {
+      const launcher = createLauncher({ env: { MILLI_VERSION: '1.2.3' } });
+      assert.equal(launcher.resolveVersion(), '1.2.3');
+    });
+
+    it('reads .mill-interceptor-version file when env var is not set', () => {
+      const launcher = createLauncher({
+        cwd: '/project',
+        fs: createMockFs({ '/project/.mill-interceptor-version': '2.0.0\n' }),
+      });
+      assert.equal(launcher.resolveVersion(), '2.0.0');
+    });
+
+    it('reads .config/mill-interceptor-version when primary file is missing', () => {
+      const launcher = createLauncher({
+        cwd: '/project',
+        fs: createMockFs({ '/project/.config/mill-interceptor-version': '3.0.0\n' }),
+      });
+      assert.equal(launcher.resolveVersion(), '3.0.0');
+    });
+
+    it('falls back to default version when no source is available', () => {
+      const launcher = createLauncher();
+      assert.equal(launcher.resolveVersion(), DEFAULT_VERSION);
+    });
+
+    it('env var takes priority over version file', () => {
+      const launcher = createLauncher({
+        cwd: '/project',
+        env: { MILLI_VERSION: '1.0.0' },
+        fs: createMockFs({ '/project/.mill-interceptor-version': '9.9.9\n' }),
+      });
+      assert.equal(launcher.resolveVersion(), '1.0.0');
+    });
+
+    it('primary version file takes priority over config version file', () => {
+      const launcher = createLauncher({
+        cwd: '/project',
+        fs: createMockFs({
+          '/project/.mill-interceptor-version': '2.0.0\n',
+          '/project/.config/mill-interceptor-version': '3.0.0\n',
+        }),
+      });
+      assert.equal(launcher.resolveVersion(), '2.0.0');
+    });
+
+    it('trims whitespace and handles CRLF line endings', () => {
+      const launcher = createLauncher({
+        cwd: '/project',
+        fs: createMockFs({ '/project/.mill-interceptor-version': '4.0.0\r\nextra\n' }),
+      });
+      assert.equal(launcher.resolveVersion(), '4.0.0');
+    });
+  });
+
   describe('platform detection', () => {
     it('detects linux x64', () => {
       const launcher = createLauncher({ platform: 'linux', arch: 'x64' });
