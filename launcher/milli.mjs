@@ -231,6 +231,47 @@ export class MilliLauncher {
     );
     return lines.join('\n') + '\n';
   }
+
+  _netrcPath() {
+    if (this.platform === 'win32') {
+      const home = this.env.USERPROFILE ?? homedir();
+      return this._join(home, '_netrc');
+    }
+    const home = this.env.HOME ?? homedir();
+    return this._join(home, '.netrc');
+  }
+
+  getNetrcCredentials(hostname) {
+    const netrcPath = this._netrcPath();
+    if (!this.fs.existsSync(netrcPath)) return null;
+
+    const content = this.fs.readFileSync(netrcPath, 'utf-8');
+    const lines = content.split(/\r?\n/);
+    let currentMachine = null;
+    let login = null;
+    let password = null;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('machine ')) {
+        if (currentMachine === hostname && login && password) {
+          return { login, password };
+        }
+        currentMachine = trimmed.slice('machine '.length).trim();
+        login = null;
+        password = null;
+      } else if (trimmed.startsWith('login ')) {
+        login = trimmed.slice('login '.length).trim();
+      } else if (trimmed.startsWith('password ')) {
+        password = trimmed.slice('password '.length).trim();
+      }
+    }
+
+    if (currentMachine === hostname && login && password) {
+      return { login, password };
+    }
+    return null;
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -94,6 +94,60 @@ describe('MilliLauncher', () => {
     });
   });
 
+  describe('netrc parsing', () => {
+    const netrcContent = [
+      'machine repo1.maven.org',
+      '  login myuser',
+      '  password mypass',
+      '',
+      'machine github.com',
+      '  login ghuser',
+      '  password ghtoken',
+    ].join('\n');
+
+    it('parses credentials for a matching host', () => {
+      const launcher = createLauncher({
+        env: { HOME: '/home/user', MILLI_LAUNCHER_USE_NETRC: '1' },
+        fs: createMockFs({ '/home/user/.netrc': netrcContent }),
+      });
+      const creds = launcher.getNetrcCredentials('repo1.maven.org');
+      assert.deepEqual(creds, { login: 'myuser', password: 'mypass' });
+    });
+
+    it('returns null for non-matching host', () => {
+      const launcher = createLauncher({
+        env: { HOME: '/home/user', MILLI_LAUNCHER_USE_NETRC: '1' },
+        fs: createMockFs({ '/home/user/.netrc': netrcContent }),
+      });
+      const creds = launcher.getNetrcCredentials('example.com');
+      assert.equal(creds, null);
+    });
+
+    it('returns null when netrc file does not exist', () => {
+      const launcher = createLauncher({
+        env: { HOME: '/home/user', MILLI_LAUNCHER_USE_NETRC: '1' },
+      });
+      const creds = launcher.getNetrcCredentials('repo1.maven.org');
+      assert.equal(creds, null);
+    });
+
+    it('uses _netrc on windows', () => {
+      const launcher = createLauncher({
+        platform: 'win32',
+        arch: 'x64',
+        env: {
+          USERPROFILE: 'C:\\Users\\user',
+          MILLI_LAUNCHER_USE_NETRC: '1',
+        },
+        fs: createMockFs({
+          'C:\\Users\\user\\_netrc': netrcContent,
+        }),
+      });
+      const creds = launcher.getNetrcCredentials('repo1.maven.org');
+      assert.deepEqual(creds, { login: 'myuser', password: 'mypass' });
+    });
+  });
+
   describe('dry run output', () => {
     it('formats dry-run output for linux x64 with defaults', () => {
       const launcher = createLauncher({
