@@ -8,5 +8,17 @@ subsection:
     subsection:
       - title: Maven Plugin
         page: guides/maven-plugin.md
+      - title: Maven Walkthroughs
+        subsection:
+          - title: Getting Started
+            page: guides/maven/getting-started.md
+          - title: Package and Deploy
+            page: guides/maven/package-and-deploy.md
+          - title: Multi-Module Projects
+            page: guides/maven/multi-module.md
+          - title: Debugging with inspect-plan
+            page: guides/maven/debugging-with-inspect.md
+          - title: Pkl Configuration
+            page: guides/maven/pkl-configuration.md
       - title: Release Artifacts
         page: guides/release-artifacts.md
