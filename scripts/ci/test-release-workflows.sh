@@ -31,6 +31,7 @@ rg -F 'name: release-extras' .github/workflows/release.yml
 rg -F 'name: Stage release assembly jar' .github/workflows/release.yml
 rg -F 'name: Stage Unix launcher' .github/workflows/release.yml
 rg -F 'name: Stage Windows launcher' .github/workflows/release.yml
+rg -F 'Compute Node.js launcher name' .github/workflows/release.yml
 rg -F 'path: |' .github/workflows/release.yml
 rg -x '            release-extras/releaseAssembly.dest' .github/workflows/release.yml
 rg -x '            release-extras/releaseLauncher.dest' .github/workflows/release.yml
@@ -66,6 +67,7 @@ test -f scripts/ci/test-recommend-prerelease.sh
 test -f scripts/ci/test-multi-module-layout.sh
 test -f scripts/ci/stage-release-extra.sh
 test -f scripts/ci/test-release-extras-staging.sh
+test -f scripts/ci/test-milli-mjs.sh
 
 rg -F 'scripts/ci/stage-release-extra.sh' .github/workflows/release.yml
 rg -F 'release-extras/releaseAssembly.dest' .github/workflows/release.yml
