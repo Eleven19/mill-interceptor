@@ -126,6 +126,24 @@ export class MilliLauncher {
     }
     return source === 'maven' ? ['maven', 'github'] : ['github', 'maven'];
   }
+
+  resolveCacheRoot() {
+    if (this.env.MILLI_CACHE_DIR) {
+      return this.env.MILLI_CACHE_DIR;
+    }
+    if (this.platform === 'win32') {
+      if (this.env.LOCALAPPDATA) {
+        return this._join(this.env.LOCALAPPDATA, 'milli');
+      }
+      return this._join(
+        this.env.USERPROFILE ?? homedir(), '.cache', 'milli',
+      );
+    }
+    if (this.env.XDG_CACHE_HOME) {
+      return this._join(this.env.XDG_CACHE_HOME, 'milli');
+    }
+    return this._join(this.env.HOME ?? homedir(), '.cache', 'milli');
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

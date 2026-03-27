@@ -94,6 +94,55 @@ describe('MilliLauncher', () => {
     });
   });
 
+  describe('cache path construction', () => {
+    it('uses MILLI_CACHE_DIR when set', () => {
+      const launcher = createLauncher({
+        env: { MILLI_CACHE_DIR: '/custom/cache' },
+      });
+      assert.equal(launcher.resolveCacheRoot(), '/custom/cache');
+    });
+
+    it('uses XDG_CACHE_HOME on unix', () => {
+      const launcher = createLauncher({
+        platform: 'linux',
+        env: { XDG_CACHE_HOME: '/xdg/cache' },
+      });
+      assert.equal(launcher.resolveCacheRoot(), '/xdg/cache/milli');
+    });
+
+    it('falls back to HOME/.cache on unix', () => {
+      const launcher = createLauncher({
+        platform: 'linux',
+        env: { HOME: '/home/user' },
+      });
+      assert.equal(launcher.resolveCacheRoot(), '/home/user/.cache/milli');
+    });
+
+    it('uses LOCALAPPDATA on windows', () => {
+      const launcher = createLauncher({
+        platform: 'win32',
+        arch: 'x64',
+        env: { LOCALAPPDATA: 'C:\\Users\\user\\AppData\\Local' },
+      });
+      assert.equal(
+        launcher.resolveCacheRoot(),
+        'C:\\Users\\user\\AppData\\Local\\milli',
+      );
+    });
+
+    it('falls back to USERPROFILE on windows when LOCALAPPDATA is unset', () => {
+      const launcher = createLauncher({
+        platform: 'win32',
+        arch: 'x64',
+        env: { USERPROFILE: 'C:\\Users\\user' },
+      });
+      assert.equal(
+        launcher.resolveCacheRoot(),
+        'C:\\Users\\user\\.cache\\milli',
+      );
+    });
+  });
+
   describe('mode resolution', () => {
     it('auto mode with native support returns [native, dist]', () => {
       const launcher = createLauncher({ platform: 'linux', arch: 'x64' });
