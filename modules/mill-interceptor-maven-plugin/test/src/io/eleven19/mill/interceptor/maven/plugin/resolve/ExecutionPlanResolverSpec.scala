@@ -2,6 +2,8 @@ package io.eleven19.mill.interceptor.maven.plugin.resolve
 
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 import io.eleven19.mill.interceptor.model.*
+import io.eleven19.mill.interceptor.model.{ExecutionEvent as ModelExecutionEvent}
+import io.eleven19.mill.interceptor.model.{ExecutionEventSink as ModelExecutionEventSink}
 import kyo.Path
 import kyo.test.KyoSpecDefault
 import zio.test.*
@@ -27,16 +29,19 @@ object ExecutionPlanResolverSpec extends KyoSpecDefault:
 
     def spec: Spec[Any, Any] = suite("ExecutionPlanResolver")(
         test("resolves lifecycle phases from the conventional baseline") {
+            val sink = ModelExecutionEventSink.recording()
             val plan = ExecutionPlanResolver.resolve(
                 request = request(ExecutionRequestKind.LifecyclePhase, "compile"),
-                config = EffectiveConfig()
+                config = EffectiveConfig(),
+                sink = sink
             )
 
             assertTrue(
                 plan.steps == Seq(
                     PlanStep.InvokeMill(Seq("compile"))
                 )
-            )
+            ) &&
+            assertTrue(sink.events == Seq(ModelExecutionEvent.PlanResolved(plan)))
         },
         test("resolves explicit goals from goal mappings") {
             val plan = ExecutionPlanResolver.resolve(
@@ -133,5 +138,17 @@ object ExecutionPlanResolverSpec extends KyoSpecDefault:
                     PlanStep.InvokeMill(Seq("app.validate"))
                 )
             )
+        },
+        test("emits a plan resolved event for explicit goals") {
+            val sink = ModelExecutionEventSink.recording()
+            val plan = ExecutionPlanResolver.resolve(
+                request = request(ExecutionRequestKind.ExplicitGoal, "inspect-plan"),
+                config = EffectiveConfig(
+                    goals = Map("inspect-plan" -> Seq("interceptor.inspect"))
+                ),
+                sink = sink
+            )
+
+            assertTrue(sink.events == Seq(ModelExecutionEvent.PlanResolved(plan)))
         }
     )

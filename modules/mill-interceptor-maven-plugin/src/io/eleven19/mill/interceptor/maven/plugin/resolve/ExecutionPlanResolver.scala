@@ -10,7 +10,8 @@ object ExecutionPlanResolver:
     /** Build the final execution plan from the request, baseline lifecycle mapping, and config. */
     def resolve(
         request: ExecutionRequest,
-        config: EffectiveConfig
+        config: EffectiveConfig,
+        sink: ExecutionEventSink = ExecutionEventSink.noop
     ): MillExecutionPlan =
         val baseline = LifecycleBaseline.resolve(config, properties = request.properties)
         val steps = request.kind match
@@ -19,11 +20,13 @@ object ExecutionPlanResolver:
             case ExecutionRequestKind.ExplicitGoal =>
                 resolveExplicitGoal(request, config)
 
-        MillExecutionPlan(
+        val plan = MillExecutionPlan(
             request = request,
             executionMode = baseline.executionMode,
             steps = steps
         )
+        sink.publish(ExecutionEvent.PlanResolved(plan))
+        plan
 
     private def resolveLifecyclePhase(
         request: ExecutionRequest,

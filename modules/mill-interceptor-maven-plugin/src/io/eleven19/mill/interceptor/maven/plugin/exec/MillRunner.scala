@@ -3,6 +3,8 @@ package io.eleven19.mill.interceptor.maven.plugin.exec
 import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 import io.eleven19.mill.interceptor.model.ExecutionRequest
 import io.eleven19.mill.interceptor.model.ExecutionRequestKind
+import io.eleven19.mill.interceptor.model.ExecutionEvent
+import io.eleven19.mill.interceptor.model.ExecutionEventSink
 import io.eleven19.mill.interceptor.model.MillExecutionPlan
 import io.eleven19.mill.interceptor.model.PlanStep
 import kyo.*
@@ -60,7 +62,8 @@ object MillRunner:
     def execute(
         plan: MillExecutionPlan,
         config: EffectiveConfig,
-        executor: SubprocessExecutor = SubprocessExecutor.live
+        executor: SubprocessExecutor = SubprocessExecutor.live,
+        sink: ExecutionEventSink = ExecutionEventSink.noop
     ): RunnerResult < Sync =
         for
             executable <- resolveExecutable(plan.request, config)
@@ -73,7 +76,8 @@ object MillRunner:
                 forwardedArgs,
                 config,
                 executor,
-                config.mill.environment
+                config.mill.environment,
+                sink
             )
         yield result
 
@@ -85,12 +89,20 @@ object MillRunner:
         forwardedArgs: Seq[String],
         config: EffectiveConfig,
         executor: SubprocessExecutor,
-        environment: Map[String, String]
+        environment: Map[String, String],
+        sink: ExecutionEventSink
     ): RunnerResult < Sync =
         remaining.headOption match
             case None =>
                 Sync.defer(RunnerResult.Success(completed.toSeq))
             case Some(PlanStep.Fail(message, guidance)) =>
+                sink.publish(
+                    ExecutionEvent.StepFailed(
+                        step = PlanStep.Fail(message, guidance),
+                        message = message,
+                        guidance = guidance
+                    )
+                )
                 Sync.defer(
                     RunnerResult.Failure(
                         completed.toSeq,
@@ -99,10 +111,19 @@ object MillRunner:
                 )
             case Some(PlanStep.ProbeTarget(target)) =>
                 val command = Seq(executable) ++ forwardedArgs ++ Seq("resolve", target)
+                val step    = PlanStep.ProbeTarget(target)
+                sink.publish(ExecutionEvent.StepStarted(step = step, command = Some(command)))
                 for
                     exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
                         if exitCode == 0 then
+                            sink.publish(
+                                ExecutionEvent.StepFinished(
+                                    step = step,
+                                    command = Some(command),
+                                    exitCode = Some(exitCode)
+                                )
+                            )
                             executeSteps(
                                 remaining.tail,
                                 completed :+ StepResult(
@@ -115,9 +136,19 @@ object MillRunner:
                                 forwardedArgs,
                                 config,
                                 executor,
-                                environment
+                                environment,
+                                sink
                             )
                         else
+                            sink.publish(
+                                ExecutionEvent.StepFailed(
+                                    step = step,
+                                    command = Some(command),
+                                    exitCode = Some(exitCode),
+                                    message = s"Mill target '$target' is unavailable",
+                                    guidance = Seq(s"Run `mill resolve $target` to inspect available targets")
+                                )
+                            )
                             Sync.defer(
                                 RunnerResult.Failure(
                                     completed.toSeq,
@@ -133,10 +164,19 @@ object MillRunner:
                 yield result
             case Some(PlanStep.InvokeMill(targets)) =>
                 val command = Seq(executable) ++ forwardedArgs ++ targets
+                val step    = PlanStep.InvokeMill(targets)
+                sink.publish(ExecutionEvent.StepStarted(step = step, command = Some(command)))
                 for
                     exitCode <- executor.run(command, workingDirectory, environment)
                     result <-
                         if exitCode == 0 then
+                            sink.publish(
+                                ExecutionEvent.StepFinished(
+                                    step = step,
+                                    command = Some(command),
+                                    exitCode = Some(exitCode)
+                                )
+                            )
                             executeSteps(
                                 remaining.tail,
                                 completed :+ StepResult(
@@ -149,9 +189,18 @@ object MillRunner:
                                 forwardedArgs,
                                 config,
                                 executor,
-                                environment
+                                environment,
+                                sink
                             )
                         else
+                            sink.publish(
+                                ExecutionEvent.StepFailed(
+                                    step = step,
+                                    command = Some(command),
+                                    exitCode = Some(exitCode),
+                                    message = s"Mill exited with code $exitCode"
+                                )
+                            )
                             Sync.defer(
                                 RunnerResult.Failure(
                                     completed.toSeq,
