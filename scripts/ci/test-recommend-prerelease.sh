@@ -36,6 +36,7 @@ patch_json="$(OUTPUT=json "$script_path")"
 assert_json_contains "$patch_json" '"recommended_bump": "patch"'
 assert_json_contains "$patch_json" '"recommended_version": "0.1.1-rc.1"'
 assert_json_contains "$patch_json" '"branch": "0.1.1-feature-prerelease-helper.1"'
+assert_json_contains "$patch_json" '"dispatch_command": "scripts/ci/dispatch-release-suite.sh --ref feature/prerelease-helper --version 0.1.1-rc.1"'
 
 echo "feature" >>README.md
 git add README.md

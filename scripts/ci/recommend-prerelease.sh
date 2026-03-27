@@ -10,9 +10,9 @@ Recommend the next prerelease version based on:
 - conventional commits since that tag
 - existing prerelease tags on the recommended base version
 
-The script prints a human-readable summary and an exact `gh workflow run`
-command for the recommended prerelease. Set OUTPUT=json for machine-readable
-output.
+The script prints a human-readable summary and an exact helper command for
+dispatching both release workflows for the recommended prerelease. Set
+OUTPUT=json for machine-readable output.
 EOF
 }
 
@@ -193,7 +193,7 @@ patch_rc_version="$(build_version "$patch_base_version" rc)"
 minor_rc_version="$(build_version "$minor_base_version" rc)"
 major_rc_version="$(build_version "$major_base_version" rc)"
 
-recommended_command="gh workflow run release.yml --ref ${current_branch} -f version=${recommended_rc_version}"
+recommended_command="scripts/ci/dispatch-release-suite.sh --ref ${current_branch} --version ${recommended_rc_version}"
 
 if [[ "$output_format" == "json" ]]; then
   escaped_reason="$(printf '%s' "$recommended_reason" | sed 's/"/\\"/g')"

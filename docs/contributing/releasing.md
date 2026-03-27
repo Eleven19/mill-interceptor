@@ -138,10 +138,11 @@ Alternative channels on 0.2.0:
 ```
 
 After reviewing the recommendation, ask the user which channel or exact version
-to use and dispatch the existing release workflow:
+to use and dispatch the shared release helper so GitHub Releases and Maven
+Central publication start together:
 
 ```bash
-gh workflow run release.yml --ref <branch> -f version=<chosen-version>
+scripts/ci/dispatch-release-suite.sh --ref <branch> --version <chosen-version>
 ```
 
 ## Versioning rules
@@ -159,6 +160,27 @@ Examples:
 - Version input: `1.2.3-rc.1`
 
 The release metadata action normalizes the version by stripping any leading `v`, rebuilding the tag as `v<version>`, and detecting prereleases from semantic version syntax.
+
+## Shared manual dispatch helper
+
+For manual releases, use:
+
+```bash
+scripts/ci/dispatch-release-suite.sh --ref <branch> --version <version>
+```
+
+The helper dispatches both:
+
+- `release.yml`
+- `publish-central.yml`
+
+with the same `--ref` and `version` values so both workflows begin in parallel.
+For recovery runs, the helper also supports:
+
+- `--github-only`
+- `--maven-central-only`
+
+Use those when one workflow needs to be rerun without restarting the other.
 
 ## Workflow structure
 
@@ -465,16 +487,24 @@ These are organization-provided secrets already used by other Eleven19 repositor
 
 To cut a manual prerelease or stable release:
 
-1. Open the `Release` workflow in GitHub Actions.
-2. Run `workflow_dispatch`.
-3. Enter `version` without the leading `v`.
+1. Prepare the exact changelog section for the target version.
+2. Run the shared dispatch helper from the release branch or pass the target ref explicitly.
 
 Examples:
 
 - `1.2.3`
 - `1.2.3-rc.1`
 
-The workflow will:
+```bash
+scripts/ci/dispatch-release-suite.sh --ref main --version 1.2.3-rc.1
+```
+
+The helper will start both workflows in parallel:
+
+- `release.yml`
+- `publish-central.yml`
+
+`release.yml` will:
 
 1. Normalize the version and prerelease state.
 2. Ensure the corresponding tag is `v<version>`.
@@ -485,6 +515,16 @@ The workflow will:
 7. Create or update the GitHub release.
 8. Upload the archives and checksums.
 
+`publish-central.yml` will:
+
+1. Normalize the same version value.
+2. Publish `milli`, `milli-dist`, and `mill-interceptor-maven-plugin`.
+3. Publish the platform-specific native artifacts on their matching runners.
+
+The workflows are intentionally separate so a Central publication failure does
+not block GitHub asset publication, but the maintained manual entrypoint is now
+shared.
+
 ## Tag-driven stable release flow
 
 To cut a stable release from a tag:
@@ -494,7 +534,19 @@ git tag v1.2.3
 git push origin v1.2.3
 ```
 
-That path skips manual tag creation because the pushed tag is already the source of truth for the release.
+That tag push is the shared trigger for both workflows, so GitHub Release
+publication and Maven Central publication start independently from the same tag.
+
+## Recovering a partial manual release
+
+If one workflow succeeds and the other does not start or fails, rerun only the
+missing workflow with the same version.
+
+Example for a missing Central publication on an already-created prerelease:
+
+```bash
+scripts/ci/dispatch-release-suite.sh --ref main --version 1.2.3-rc.1 --maven-central-only
+```
 
 ## Missing changelog section
 

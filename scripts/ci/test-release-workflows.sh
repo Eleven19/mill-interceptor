@@ -59,6 +59,8 @@ rg -F '_root_.build.MavenPluginSupport' modules/mill-interceptor-maven-plugin/pa
 
 test -f scripts/ci/test-namespace-rename.sh
 test -f scripts/ci/test-publish-central.sh
+test -f scripts/ci/dispatch-release-suite.sh
+test -f scripts/ci/test-dispatch-release-suite.sh
 test -f scripts/ci/recommend-prerelease.sh
 test -f scripts/ci/test-recommend-prerelease.sh
 test -f scripts/ci/test-multi-module-layout.sh
@@ -68,3 +70,8 @@ test -f scripts/ci/test-release-extras-staging.sh
 rg -F 'scripts/ci/stage-release-extra.sh' .github/workflows/release.yml
 rg -F 'release-extras/releaseAssembly.dest' .github/workflows/release.yml
 rg -F 'release-extras/releaseLauncher.dest' .github/workflows/release.yml
+rg -F 'scripts/ci/dispatch-release-suite.sh' scripts/ci/recommend-prerelease.sh
+rg -F 'publish-central.yml' scripts/ci/dispatch-release-suite.sh
+rg -F 'release.yml' scripts/ci/dispatch-release-suite.sh
+rg -F 'dispatch-release-suite.sh' docs/contributing/releasing.md
+rg -F 'publish-central.yml' docs/contributing/releasing.md

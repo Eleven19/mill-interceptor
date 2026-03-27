@@ -16,7 +16,11 @@ leading `v`.
 
 ### Documentation
 
+- Documented the shared manual release flow that dispatches GitHub Releases and Maven Central publication together for the same version.
+
 ### CI
+
+- Added a helper-based manual release trigger path so `release.yml` and `publish-central.yml` can be dispatched together in parallel.
 
 ## [0.4.0-rc.1] - 2026-03-27
 
