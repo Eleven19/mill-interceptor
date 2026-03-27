@@ -197,6 +197,40 @@ export class MilliLauncher {
     if (!info) return null;
     return `${GITHUB_RELEASE_BASE}/v${version}/mill-interceptor-v${version}-${info.releaseTarget}.${info.archiveExtension}`;
   }
+
+  formatDryRun(version) {
+    const mode = this.rawMode;
+    const modeOrder = this.resolveModeOrder();
+    const preferredSource = this.rawSource;
+    const sourceOrder = this.resolveSourceOrder();
+    const lines = [
+      `version=${version}`,
+      `mode=${mode}`,
+      `mode_order=${modeOrder.join(',')}`,
+      `preferred_source=${preferredSource}`,
+      `source_order=${sourceOrder.join(',')}`,
+      `use_netrc=${this.useNetrc ? '1' : '0'}`,
+      `curl_netrc_flag=${this.useNetrc ? '--netrc' : ''}`,
+      `native_supported=${this.nativeSupported ? '1' : '0'}`,
+    ];
+    if (this.nativeSupported) {
+      const info = this.nativeInfo;
+      lines.push(
+        `native_artifact=${info.nativeArtifact}`,
+        `native_release_target=${info.releaseTarget}`,
+        `native_maven_url=${this.computeNativeMavenUrl(version)}`,
+        `native_github_url=${this.computeNativeGithubUrl(version)}`,
+        `native_path=${this.computeNativePath(version)}`,
+      );
+    }
+    lines.push(
+      `dist_artifact=${DIST_ARTIFACT}`,
+      `dist_maven_url=${this.computeDistMavenUrl(version)}`,
+      `dist_github_url=${this.computeDistGithubUrl(version)}`,
+      `dist_path=${this.computeDistPath(version)}`,
+    );
+    return lines.join('\n') + '\n';
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

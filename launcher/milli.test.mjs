@@ -94,6 +94,73 @@ describe('MilliLauncher', () => {
     });
   });
 
+  describe('dry run output', () => {
+    it('formats dry-run output for linux x64 with defaults', () => {
+      const launcher = createLauncher({
+        platform: 'linux',
+        arch: 'x64',
+        env: { HOME: '/home/user' },
+      });
+      const output = launcher.formatDryRun('1.2.3');
+      const lines = output.split('\n').filter(Boolean);
+
+      assert.ok(lines.includes('version=1.2.3'));
+      assert.ok(lines.includes('mode=auto'));
+      assert.ok(lines.includes('mode_order=native,dist'));
+      assert.ok(lines.includes('preferred_source=maven'));
+      assert.ok(lines.includes('source_order=maven,github'));
+      assert.ok(lines.includes('use_netrc=0'));
+      assert.ok(lines.includes('curl_netrc_flag='));
+      assert.ok(lines.includes('native_supported=1'));
+      assert.ok(lines.includes('native_artifact=milli-native-linux-amd64'));
+      assert.ok(lines.includes('native_release_target=x86_64-unknown-linux-gnu'));
+      assert.ok(lines.some(l => l.startsWith('native_maven_url=')));
+      assert.ok(lines.some(l => l.startsWith('native_github_url=')));
+      assert.ok(lines.some(l => l.startsWith('native_path=')));
+      assert.ok(lines.includes('dist_artifact=milli-dist'));
+      assert.ok(lines.some(l => l.startsWith('dist_maven_url=')));
+      assert.ok(lines.some(l => l.startsWith('dist_github_url=')));
+      assert.ok(lines.some(l => l.startsWith('dist_path=')));
+    });
+
+    it('omits native fields when native is not supported', () => {
+      const launcher = createLauncher({
+        platform: 'freebsd',
+        arch: 'x64',
+        env: { HOME: '/home/user' },
+      });
+      const output = launcher.formatDryRun('1.2.3');
+      const lines = output.split('\n').filter(Boolean);
+
+      assert.ok(lines.includes('native_supported=0'));
+      assert.ok(!lines.some(l => l.startsWith('native_artifact=')));
+      assert.ok(!lines.some(l => l.startsWith('native_release_target=')));
+      assert.ok(lines.includes('mode_order=dist'));
+    });
+
+    it('shows netrc flags when enabled', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_USE_NETRC: '1', HOME: '/home/user' },
+      });
+      const output = launcher.formatDryRun('1.2.3');
+      const lines = output.split('\n').filter(Boolean);
+
+      assert.ok(lines.includes('use_netrc=1'));
+      assert.ok(lines.includes('curl_netrc_flag=--netrc'));
+    });
+
+    it('shows explicit mode in output', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_MODE: 'dist', HOME: '/home/user' },
+      });
+      const output = launcher.formatDryRun('1.2.3');
+      const lines = output.split('\n').filter(Boolean);
+
+      assert.ok(lines.includes('mode=dist'));
+      assert.ok(lines.includes('mode_order=dist'));
+    });
+  });
+
   describe('URL and path computation', () => {
     const baseLauncher = () => createLauncher({
       platform: 'linux',
