@@ -1,6 +1,8 @@
 package io.eleven19.mill.interceptor.maven.plugin.exec
 
 import io.eleven19.mill.interceptor.maven.plugin.config.{EffectiveConfig, MillConfig}
+import io.eleven19.mill.interceptor.model.{ExecutionEvent as ModelExecutionEvent}
+import io.eleven19.mill.interceptor.model.{ExecutionEventSink as ModelExecutionEventSink}
 import io.eleven19.mill.interceptor.model.ExecutionMode
 import io.eleven19.mill.interceptor.model.ExecutionRequest
 import io.eleven19.mill.interceptor.model.ExecutionRequestKind
@@ -277,6 +279,7 @@ object MillRunnerSpec extends KyoSpecDefault:
             },
             test("short-circuits on fail steps without invoking subprocesses") {
                 val executor = new RecordingExecutor()
+                val sink = ModelExecutionEventSink.recording()
                 val plan = MillExecutionPlan(
                     request = request(),
                     executionMode = ExecutionMode.Strict,
@@ -289,12 +292,27 @@ object MillRunnerSpec extends KyoSpecDefault:
                     )
                 )
 
-                MillRunner.execute(plan, EffectiveConfig(mill = MillConfig(executable = "millw")), executor).map {
+                MillRunner.execute(
+                    plan,
+                    EffectiveConfig(mill = MillConfig(executable = "millw")),
+                    executor,
+                    sink
+                ).map {
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
                         assertTrue(failure == RunnerFailure.FailStep(
                             message = "No mapping found for explicit goal 'deploy-site'",
                             guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
+                        )) &&
+                        assertTrue(sink.events == Seq(
+                            ModelExecutionEvent.StepFailed(
+                                step = PlanStep.Fail(
+                                    message = "No mapping found for explicit goal 'deploy-site'",
+                                    guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
+                                ),
+                                message = "No mapping found for explicit goal 'deploy-site'",
+                                guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
+                            )
                         )) &&
                         assertTrue(executor.calls.isEmpty)
                     case other =>
@@ -303,6 +321,7 @@ object MillRunnerSpec extends KyoSpecDefault:
             },
             test("returns probe failures with the probe command and exit code") {
                 val executor = new RecordingExecutor(Seq(17))
+                val sink = ModelExecutionEventSink.recording()
                 val plan = MillExecutionPlan(
                     request = request(),
                     executionMode = ExecutionMode.Strict,
@@ -317,7 +336,8 @@ object MillRunnerSpec extends KyoSpecDefault:
                             environment = Map("JAVA_HOME" -> "/opt/java")
                         )
                     ),
-                    executor
+                    executor,
+                    sink
                 ).map {
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
@@ -327,6 +347,19 @@ object MillRunnerSpec extends KyoSpecDefault:
                             exitCode = Some(17),
                             message = "Mill target 'checkFormat' is unavailable",
                             guidance = Seq("Run `mill resolve checkFormat` to inspect available targets")
+                        )) &&
+                        assertTrue(sink.events == Seq(
+                            ModelExecutionEvent.StepStarted(
+                                step = PlanStep.ProbeTarget("checkFormat"),
+                                command = Some(Seq("millw", "resolve", "checkFormat"))
+                            ),
+                            ModelExecutionEvent.StepFailed(
+                                step = PlanStep.ProbeTarget("checkFormat"),
+                                command = Some(Seq("millw", "resolve", "checkFormat")),
+                                exitCode = Some(17),
+                                message = "Mill target 'checkFormat' is unavailable",
+                                guidance = Seq("Run `mill resolve checkFormat` to inspect available targets")
+                            )
                         )) &&
                         assertTrue(executor.calls == Seq(
                             (
@@ -341,6 +374,7 @@ object MillRunnerSpec extends KyoSpecDefault:
             },
             test("returns invocation failures with the invocation command and exit code") {
                 val executor = new RecordingExecutor(Seq(0, 9))
+                val sink = ModelExecutionEventSink.recording()
                 val plan = MillExecutionPlan(
                     request = request(),
                     executionMode = ExecutionMode.Strict,
@@ -358,7 +392,8 @@ object MillRunnerSpec extends KyoSpecDefault:
                             environment = Map("MILL_OPTS" -> "--jobs 4")
                         )
                     ),
-                    executor
+                    executor,
+                    sink
                 ).map {
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults == Seq(
@@ -372,6 +407,27 @@ object MillRunnerSpec extends KyoSpecDefault:
                             command = Seq("millw", "compile", "test"),
                             exitCode = Some(9),
                             message = "Mill exited with code 9"
+                        )) &&
+                        assertTrue(sink.events == Seq(
+                            ModelExecutionEvent.StepStarted(
+                                step = PlanStep.ProbeTarget("checkFormat"),
+                                command = Some(Seq("millw", "resolve", "checkFormat"))
+                            ),
+                            ModelExecutionEvent.StepFinished(
+                                step = PlanStep.ProbeTarget("checkFormat"),
+                                command = Some(Seq("millw", "resolve", "checkFormat")),
+                                exitCode = Some(0)
+                            ),
+                            ModelExecutionEvent.StepStarted(
+                                step = PlanStep.InvokeMill(Seq("compile", "test")),
+                                command = Some(Seq("millw", "compile", "test"))
+                            ),
+                            ModelExecutionEvent.StepFailed(
+                                step = PlanStep.InvokeMill(Seq("compile", "test")),
+                                command = Some(Seq("millw", "compile", "test")),
+                                exitCode = Some(9),
+                                message = "Mill exited with code 9"
+                            )
                         )) &&
                         assertTrue(executor.calls == Seq(
                             (
@@ -391,6 +447,7 @@ object MillRunnerSpec extends KyoSpecDefault:
             },
             test("accumulates ordered step results for successful execution") {
                 val executor = new RecordingExecutor(Seq(0, 0))
+                val sink = ModelExecutionEventSink.recording()
                 val plan = MillExecutionPlan(
                     request = request(),
                     executionMode = ExecutionMode.Strict,
@@ -408,7 +465,8 @@ object MillRunnerSpec extends KyoSpecDefault:
                             environment = Map("CI" -> "true")
                         )
                     ),
-                    executor
+                    executor,
+                    sink
                 ).map {
                     case RunnerResult.Success(stepResults) =>
                         assertTrue(stepResults == Seq(
@@ -419,6 +477,26 @@ object MillRunnerSpec extends KyoSpecDefault:
                             ),
                             StepResult(
                                 kind = RunnerStepKind.InvokeMill,
+                                command = Some(Seq("millw", "compile", "test")),
+                                exitCode = Some(0)
+                            )
+                        )) &&
+                        assertTrue(sink.events == Seq(
+                            ModelExecutionEvent.StepStarted(
+                                step = PlanStep.ProbeTarget("checkFormat"),
+                                command = Some(Seq("millw", "resolve", "checkFormat"))
+                            ),
+                            ModelExecutionEvent.StepFinished(
+                                step = PlanStep.ProbeTarget("checkFormat"),
+                                command = Some(Seq("millw", "resolve", "checkFormat")),
+                                exitCode = Some(0)
+                            ),
+                            ModelExecutionEvent.StepStarted(
+                                step = PlanStep.InvokeMill(Seq("compile", "test")),
+                                command = Some(Seq("millw", "compile", "test"))
+                            ),
+                            ModelExecutionEvent.StepFinished(
+                                step = PlanStep.InvokeMill(Seq("compile", "test")),
                                 command = Some(Seq("millw", "compile", "test")),
                                 exitCode = Some(0)
                             )

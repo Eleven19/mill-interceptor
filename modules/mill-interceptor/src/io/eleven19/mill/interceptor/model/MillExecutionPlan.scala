@@ -1,6 +1,7 @@
 package io.eleven19.mill.interceptor.model
 
 import kyo.Path
+import scala.collection.mutable.ArrayBuffer
 
 /** Identifies whether the incoming request came from a lifecycle phase or an explicit goal. */
 enum ExecutionRequestKind derives CanEqual:
@@ -49,3 +50,39 @@ final case class MillExecutionPlan(
     executionMode: ExecutionMode,
     steps: Seq[PlanStep]
 ) derives CanEqual
+
+/** Shared execution lifecycle event stream for resolvers and runners. */
+enum ExecutionEvent derives CanEqual:
+    case PlanResolved(plan: MillExecutionPlan)
+    case StepStarted(step: PlanStep, command: Option[Seq[String]] = None)
+    case StepFinished(step: PlanStep, command: Option[Seq[String]] = None, exitCode: Option[Int] = None)
+
+    case StepFailed(
+        step: PlanStep,
+        command: Option[Seq[String]] = None,
+        exitCode: Option[Int] = None,
+        message: String = "",
+        guidance: Seq[String] = Seq.empty
+    )
+
+/** Minimal sink for publishing execution lifecycle events without introducing an event bus. */
+trait ExecutionEventSink:
+    def publish(event: ExecutionEvent): Unit
+
+object ExecutionEventSink:
+
+    /** Default sink that drops all events. */
+    val noop: ExecutionEventSink = new ExecutionEventSink:
+        def publish(event: ExecutionEvent): Unit = ()
+
+    /** Mutable recording sink for tests and local diagnostics. */
+    final class Recording(buffer: ArrayBuffer[ExecutionEvent]) extends ExecutionEventSink:
+
+        def publish(event: ExecutionEvent): Unit =
+            buffer.append(event)
+
+        def events: Seq[ExecutionEvent] =
+            buffer.toSeq
+
+    def recording(): Recording =
+        new Recording(ArrayBuffer.empty)
