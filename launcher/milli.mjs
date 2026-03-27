@@ -272,6 +272,167 @@ export class MilliLauncher {
     }
     return null;
   }
+
+  async downloadFile(url, destination) {
+    const tempFile = `${destination}.tmp`;
+    const dirnameFn = this.platform === 'win32'
+      ? path.win32.dirname : path.posix.dirname;
+    this.fs.mkdirSync(dirnameFn(destination), { recursive: true });
+
+    const headers = {};
+    if (this.useNetrc) {
+      const hostname = new URL(url).hostname;
+      const creds = this.getNetrcCredentials(hostname);
+      if (creds) {
+        headers['Authorization'] =
+          `Basic ${Buffer.from(`${creds.login}:${creds.password}`).toString('base64')}`;
+      }
+    }
+
+    const response = await this.fetchFn(url, { headers });
+    if (!response.ok) {
+      throw new Error(
+        `Download failed: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    this.fs.writeFileSync(tempFile, buffer);
+    this.fs.renameSync(tempFile, destination);
+  }
+
+  extractArchive(archivePath, destDir) {
+    this.fs.rmSync(destDir, { recursive: true, force: true });
+    this.fs.mkdirSync(destDir, { recursive: true });
+
+    if (this.platform === 'win32') {
+      try {
+        this.execFileSyncFn('tar', ['-xf', archivePath, '-C', destDir], {
+          stdio: 'pipe',
+        });
+      } catch {
+        this.execFileSyncFn(
+          'powershell',
+          [
+            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+            `Expand-Archive -Force '${archivePath}' '${destDir}'`,
+          ],
+          { stdio: 'pipe' },
+        );
+      }
+    } else {
+      this.execFileSyncFn('tar', ['-xzf', archivePath, '-C', destDir], {
+        stdio: 'pipe',
+      });
+    }
+  }
+
+  async ensureNative(source, version) {
+    if (!this.nativeSupported) return false;
+
+    const nativePath = this.computeNativePath(version);
+    if (this.fs.existsSync(nativePath)) return true;
+
+    const url = source === 'maven'
+      ? this.computeNativeMavenUrl(version)
+      : this.computeNativeGithubUrl(version);
+    const archivePath = this.computeNativeArchivePath(version);
+    const extractDir = this._join(
+      this.resolveCacheRoot(), version, this.nativeInfo.nativeArtifact,
+    );
+
+    try {
+      await this.downloadFile(url, archivePath);
+      this.extractArchive(archivePath, extractDir);
+
+      if (this.platform !== 'win32') {
+        this.fs.chmodSync(nativePath, 0o755);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async ensureDist(source, version) {
+    const distPath = this.computeDistPath(version);
+    if (this.fs.existsSync(distPath)) return true;
+
+    const url = source === 'maven'
+      ? this.computeDistMavenUrl(version)
+      : this.computeDistGithubUrl(version);
+
+    try {
+      await this.downloadFile(url, distPath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async run(args) {
+    const version = this.resolveVersion();
+
+    let modeOrder;
+    try {
+      modeOrder = this.resolveModeOrder();
+    } catch (err) {
+      process.stderr.write(`${err.message}\n`);
+      process.exit(1);
+    }
+
+    let sourceOrder;
+    try {
+      sourceOrder = this.resolveSourceOrder();
+    } catch (err) {
+      process.stderr.write(`${err.message}\n`);
+      process.exit(1);
+    }
+
+    if (this.dryRunEnabled) {
+      process.stdout.write(this.formatDryRun(version));
+      process.exit(0);
+    }
+
+    if (this.rawMode === 'native' && !this.nativeSupported) {
+      process.stderr.write(
+        'No native milli artifact is available for this platform\n',
+      );
+      process.exit(1);
+    }
+
+    for (const candidateMode of modeOrder) {
+      if (candidateMode === 'native') {
+        for (const source of sourceOrder) {
+          if (await this.ensureNative(source, version)) {
+            return this._exec(this.computeNativePath(version), args);
+          }
+        }
+      } else {
+        for (const source of sourceOrder) {
+          if (await this.ensureDist(source, version)) {
+            return this._exec(
+              'java', ['-jar', this.computeDistPath(version), ...args],
+            );
+          }
+        }
+      }
+    }
+
+    process.stderr.write(
+      `Unable to download milli artifact for version ${version} from Maven Central or GitHub Releases\n`,
+    );
+    process.exit(1);
+  }
+
+  _exec(command, args) {
+    try {
+      this.execFileSyncFn(command, args, { stdio: 'inherit' });
+      process.exit(0);
+    } catch (err) {
+      process.exit(err.status ?? 1);
+    }
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
