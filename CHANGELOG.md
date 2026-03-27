@@ -10,6 +10,18 @@ leading `v`.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Documentation
+
+### CI
+
+## [0.4.0-rc.1] - 2026-03-27
+
+### Added
+
 - Added a real Maven core-extension activation path so `.mvn/extensions.xml` can drive the common Maven lifecycle through Mill without a POM plugin declaration.
 - Added end-to-end Maven fixture coverage for extension-only lifecycle forwarding, publish-capable `install` and `deploy`, multi-module overrides, and strict-failure diagnostics.
 
