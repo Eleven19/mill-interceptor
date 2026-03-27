@@ -62,6 +62,18 @@ export class MilliLauncher {
     this.execFileSyncFn = options.execFileSync ?? execFileSync;
     this._join = this.platform === 'win32' ? path.win32.join : path.posix.join;
   }
+
+  get platformKey() {
+    return `${this.platform}:${this.arch}`;
+  }
+
+  get nativeSupported() {
+    return this.platformKey in PLATFORM_MAP;
+  }
+
+  get nativeInfo() {
+    return PLATFORM_MAP[this.platformKey] ?? null;
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
