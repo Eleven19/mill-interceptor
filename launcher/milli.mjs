@@ -144,6 +144,59 @@ export class MilliLauncher {
     }
     return this._join(this.env.HOME ?? homedir(), '.cache', 'milli');
   }
+
+  computeDistName(version) {
+    return `${DIST_ARTIFACT}-${version}.jar`;
+  }
+
+  computeDistPath(version) {
+    return this._join(
+      this.resolveCacheRoot(), version, this.computeDistName(version),
+    );
+  }
+
+  computeDistMavenUrl(version) {
+    return `${MAVEN_BASE}/${DIST_ARTIFACT}/${version}/${this.computeDistName(version)}`;
+  }
+
+  computeDistGithubUrl(version) {
+    return `${GITHUB_RELEASE_BASE}/v${version}/${DIST_RELEASE_NAME}-v${version}.jar`;
+  }
+
+  computeNativeArchiveName(version) {
+    const info = this.nativeInfo;
+    if (!info) return null;
+    return `${info.nativeArtifact}-${version}.${info.archiveExtension}`;
+  }
+
+  computeNativeArchivePath(version) {
+    const name = this.computeNativeArchiveName(version);
+    if (!name) return null;
+    return this._join(this.resolveCacheRoot(), version, name);
+  }
+
+  computeNativePath(version) {
+    const info = this.nativeInfo;
+    if (!info) return null;
+    const executable =
+      this.platform === 'win32' ? 'mill-interceptor.exe' : 'mill-interceptor';
+    return this._join(
+      this.resolveCacheRoot(), version, info.nativeArtifact, executable,
+    );
+  }
+
+  computeNativeMavenUrl(version) {
+    const info = this.nativeInfo;
+    if (!info) return null;
+    const archiveName = this.computeNativeArchiveName(version);
+    return `${MAVEN_BASE}/${info.nativeArtifact}/${version}/${archiveName}`;
+  }
+
+  computeNativeGithubUrl(version) {
+    const info = this.nativeInfo;
+    if (!info) return null;
+    return `${GITHUB_RELEASE_BASE}/v${version}/mill-interceptor-v${version}-${info.releaseTarget}.${info.archiveExtension}`;
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

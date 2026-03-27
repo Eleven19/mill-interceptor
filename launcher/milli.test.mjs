@@ -94,6 +94,115 @@ describe('MilliLauncher', () => {
     });
   });
 
+  describe('URL and path computation', () => {
+    const baseLauncher = () => createLauncher({
+      platform: 'linux',
+      arch: 'x64',
+      env: { HOME: '/home/user' },
+    });
+
+    it('computes dist name', () => {
+      const launcher = baseLauncher();
+      assert.equal(launcher.computeDistName('1.2.3'), 'milli-dist-1.2.3.jar');
+    });
+
+    it('computes dist path', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeDistPath('1.2.3'),
+        '/home/user/.cache/milli/1.2.3/milli-dist-1.2.3.jar',
+      );
+    });
+
+    it('computes dist maven URL', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeDistMavenUrl('1.2.3'),
+        'https://repo1.maven.org/maven2/io/github/eleven19/mill-interceptor/milli-dist/1.2.3/milli-dist-1.2.3.jar',
+      );
+    });
+
+    it('computes dist github URL', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeDistGithubUrl('1.2.3'),
+        'https://github.com/Eleven19/mill-interceptor/releases/download/v1.2.3/mill-interceptor-dist-v1.2.3.jar',
+      );
+    });
+
+    it('computes native archive name', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeNativeArchiveName('1.2.3'),
+        'milli-native-linux-amd64-1.2.3.tar.gz',
+      );
+    });
+
+    it('computes native archive path', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeNativeArchivePath('1.2.3'),
+        '/home/user/.cache/milli/1.2.3/milli-native-linux-amd64-1.2.3.tar.gz',
+      );
+    });
+
+    it('computes native executable path on unix', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeNativePath('1.2.3'),
+        '/home/user/.cache/milli/1.2.3/milli-native-linux-amd64/mill-interceptor',
+      );
+    });
+
+    it('computes native executable path on windows', () => {
+      const launcher = createLauncher({
+        platform: 'win32',
+        arch: 'x64',
+        env: { LOCALAPPDATA: 'C:\\Users\\user\\AppData\\Local' },
+      });
+      assert.equal(
+        launcher.computeNativePath('1.2.3'),
+        'C:\\Users\\user\\AppData\\Local\\milli\\1.2.3\\milli-native-windows-amd64\\mill-interceptor.exe',
+      );
+    });
+
+    it('computes native maven URL', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeNativeMavenUrl('1.2.3'),
+        'https://repo1.maven.org/maven2/io/github/eleven19/mill-interceptor/milli-native-linux-amd64/1.2.3/milli-native-linux-amd64-1.2.3.tar.gz',
+      );
+    });
+
+    it('computes native github URL', () => {
+      const launcher = baseLauncher();
+      assert.equal(
+        launcher.computeNativeGithubUrl('1.2.3'),
+        'https://github.com/Eleven19/mill-interceptor/releases/download/v1.2.3/mill-interceptor-v1.2.3-x86_64-unknown-linux-gnu.tar.gz',
+      );
+    });
+
+    it('computes native github URL for windows (zip)', () => {
+      const launcher = createLauncher({
+        platform: 'win32',
+        arch: 'x64',
+        env: { LOCALAPPDATA: 'C:\\cache' },
+      });
+      assert.equal(
+        launcher.computeNativeGithubUrl('1.2.3'),
+        'https://github.com/Eleven19/mill-interceptor/releases/download/v1.2.3/mill-interceptor-v1.2.3-x86_64-pc-windows-msvc.zip',
+      );
+    });
+
+    it('returns null for native methods on unsupported platform', () => {
+      const launcher = createLauncher({ platform: 'freebsd', arch: 'x64' });
+      assert.equal(launcher.computeNativeArchiveName('1.2.3'), null);
+      assert.equal(launcher.computeNativePath('1.2.3'), null);
+      assert.equal(launcher.computeNativeMavenUrl('1.2.3'), null);
+      assert.equal(launcher.computeNativeGithubUrl('1.2.3'), null);
+    });
+  });
+
   describe('cache path construction', () => {
     it('uses MILLI_CACHE_DIR when set', () => {
       const launcher = createLauncher({
