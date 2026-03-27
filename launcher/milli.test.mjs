@@ -94,6 +94,107 @@ describe('MilliLauncher', () => {
     });
   });
 
+  describe('mode resolution', () => {
+    it('auto mode with native support returns [native, dist]', () => {
+      const launcher = createLauncher({ platform: 'linux', arch: 'x64' });
+      assert.deepEqual(launcher.resolveModeOrder(), ['native', 'dist']);
+    });
+
+    it('auto mode without native support returns [dist]', () => {
+      const launcher = createLauncher({ platform: 'freebsd', arch: 'x64' });
+      assert.deepEqual(launcher.resolveModeOrder(), ['dist']);
+    });
+
+    it('explicit native mode returns [native]', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_MODE: 'native' },
+      });
+      assert.deepEqual(launcher.resolveModeOrder(), ['native']);
+    });
+
+    it('explicit dist mode returns [dist]', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_MODE: 'dist' },
+      });
+      assert.deepEqual(launcher.resolveModeOrder(), ['dist']);
+    });
+
+    it('invalid mode throws', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_MODE: 'invalid' },
+      });
+      assert.throws(() => launcher.resolveModeOrder(), {
+        message: 'Unsupported MILLI_LAUNCHER_MODE: invalid',
+      });
+    });
+
+    it('rawMode returns the raw env value', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_MODE: 'native' },
+      });
+      assert.equal(launcher.rawMode, 'native');
+    });
+
+    it('rawMode defaults to auto', () => {
+      const launcher = createLauncher();
+      assert.equal(launcher.rawMode, 'auto');
+    });
+  });
+
+  describe('source resolution', () => {
+    it('maven source returns [maven, github]', () => {
+      const launcher = createLauncher();
+      assert.deepEqual(launcher.resolveSourceOrder(), ['maven', 'github']);
+    });
+
+    it('github source returns [github, maven]', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_SOURCE: 'github' },
+      });
+      assert.deepEqual(launcher.resolveSourceOrder(), ['github', 'maven']);
+    });
+
+    it('invalid source throws', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_SOURCE: 'invalid' },
+      });
+      assert.throws(() => launcher.resolveSourceOrder(), {
+        message: 'Unsupported MILLI_LAUNCHER_SOURCE: invalid',
+      });
+    });
+
+    it('rawSource defaults to maven', () => {
+      const launcher = createLauncher();
+      assert.equal(launcher.rawSource, 'maven');
+    });
+  });
+
+  describe('netrc and dry-run flags', () => {
+    it('useNetrc is false by default', () => {
+      const launcher = createLauncher();
+      assert.equal(launcher.useNetrc, false);
+    });
+
+    it('useNetrc is true when MILLI_LAUNCHER_USE_NETRC=1', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_USE_NETRC: '1' },
+      });
+      assert.equal(launcher.useNetrc, true);
+    });
+
+    it('dryRunEnabled is false by default', () => {
+      const launcher = createLauncher();
+      assert.equal(launcher.dryRunEnabled, false);
+    });
+
+    it('dryRunEnabled is true when MILLI_LAUNCHER_DRY_RUN=1', () => {
+      const launcher = createLauncher({
+        env: { MILLI_LAUNCHER_DRY_RUN: '1' },
+      });
+      assert.equal(launcher.dryRunEnabled, true);
+    });
+  });
+
   describe('platform detection', () => {
     it('detects linux x64', () => {
       const launcher = createLauncher({ platform: 'linux', arch: 'x64' });

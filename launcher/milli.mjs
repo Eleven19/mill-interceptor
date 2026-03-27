@@ -91,6 +91,41 @@ export class MilliLauncher {
     }
     return DEFAULT_VERSION;
   }
+
+  get rawMode() {
+    return this.env.MILLI_LAUNCHER_MODE ?? 'auto';
+  }
+
+  get rawSource() {
+    return this.env.MILLI_LAUNCHER_SOURCE ?? 'maven';
+  }
+
+  get useNetrc() {
+    return this.env.MILLI_LAUNCHER_USE_NETRC === '1';
+  }
+
+  get dryRunEnabled() {
+    return this.env.MILLI_LAUNCHER_DRY_RUN === '1';
+  }
+
+  resolveModeOrder() {
+    const mode = this.rawMode;
+    if (mode !== 'auto' && mode !== 'native' && mode !== 'dist') {
+      throw new Error(`Unsupported MILLI_LAUNCHER_MODE: ${mode}`);
+    }
+    if (mode === 'auto') {
+      return this.nativeSupported ? ['native', 'dist'] : ['dist'];
+    }
+    return [mode];
+  }
+
+  resolveSourceOrder() {
+    const source = this.rawSource;
+    if (source !== 'maven' && source !== 'github') {
+      throw new Error(`Unsupported MILLI_LAUNCHER_SOURCE: ${source}`);
+    }
+    return source === 'maven' ? ['maven', 'github'] : ['github', 'maven'];
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
