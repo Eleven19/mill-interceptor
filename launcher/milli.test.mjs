@@ -28,6 +28,9 @@ function createLauncher(overrides = {}) {
     fs: createMockFs(),
     fetch: async () => { throw new Error('fetch not mocked'); },
     execFileSync: () => { throw new Error('execFileSync not mocked'); },
+    exit: (code) => { throw Object.assign(new Error(`exit: ${code}`), { exitCode: code }); },
+    stdout: { write: () => {} },
+    stderr: { write: () => {} },
     ...overrides,
   });
 }

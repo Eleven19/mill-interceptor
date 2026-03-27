@@ -5,7 +5,6 @@ import {
   existsSync, readFileSync, mkdirSync, writeFileSync,
   renameSync, chmodSync, rmSync,
 } from 'node:fs';
-import { join } from 'node:path';
 import path from 'node:path';
 import { platform as osPlatform, arch as osArch, homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -61,6 +60,9 @@ export class MilliLauncher {
     this.fetchFn = options.fetch ?? globalThis.fetch;
     this.execFileSyncFn = options.execFileSync ?? execFileSync;
     this._join = this.platform === 'win32' ? path.win32.join : path.posix.join;
+    this.exit = options.exit ?? ((code) => process.exit(code));
+    this.stdout = options.stdout ?? process.stdout;
+    this.stderr = options.stderr ?? process.stderr;
   }
 
   get platformKey() {
@@ -289,16 +291,21 @@ export class MilliLauncher {
       }
     }
 
-    const response = await this.fetchFn(url, { headers });
-    if (!response.ok) {
-      throw new Error(
-        `Download failed: ${response.status} ${response.statusText}`,
-      );
-    }
+    try {
+      const response = await this.fetchFn(url, { headers });
+      if (!response.ok) {
+        throw new Error(
+          `Download failed: ${response.status} ${response.statusText}`,
+        );
+      }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    this.fs.writeFileSync(tempFile, buffer);
-    this.fs.renameSync(tempFile, destination);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      this.fs.writeFileSync(tempFile, buffer);
+      this.fs.renameSync(tempFile, destination);
+    } catch (err) {
+      try { this.fs.rmSync(tempFile, { force: true }); } catch {}
+      throw err;
+    }
   }
 
   extractArchive(archivePath, destDir) {
@@ -349,7 +356,8 @@ export class MilliLauncher {
         this.fs.chmodSync(nativePath, 0o755);
       }
       return true;
-    } catch {
+    } catch (err) {
+      this.stderr.write(`Warning: failed to fetch native artifact from ${source}: ${err.message}\n`);
       return false;
     }
   }
@@ -365,7 +373,8 @@ export class MilliLauncher {
     try {
       await this.downloadFile(url, distPath);
       return true;
-    } catch {
+    } catch (err) {
+      this.stderr.write(`Warning: failed to fetch dist artifact from ${source}: ${err.message}\n`);
       return false;
     }
   }
@@ -377,28 +386,28 @@ export class MilliLauncher {
     try {
       modeOrder = this.resolveModeOrder();
     } catch (err) {
-      process.stderr.write(`${err.message}\n`);
-      process.exit(1);
+      this.stderr.write(`${err.message}\n`);
+      this.exit(1);
     }
 
     let sourceOrder;
     try {
       sourceOrder = this.resolveSourceOrder();
     } catch (err) {
-      process.stderr.write(`${err.message}\n`);
-      process.exit(1);
+      this.stderr.write(`${err.message}\n`);
+      this.exit(1);
     }
 
     if (this.dryRunEnabled) {
-      process.stdout.write(this.formatDryRun(version));
-      process.exit(0);
+      this.stdout.write(this.formatDryRun(version));
+      this.exit(0);
     }
 
     if (this.rawMode === 'native' && !this.nativeSupported) {
-      process.stderr.write(
+      this.stderr.write(
         'No native milli artifact is available for this platform\n',
       );
-      process.exit(1);
+      this.exit(1);
     }
 
     for (const candidateMode of modeOrder) {
@@ -419,18 +428,18 @@ export class MilliLauncher {
       }
     }
 
-    process.stderr.write(
+    this.stderr.write(
       `Unable to download milli artifact for version ${version} from Maven Central or GitHub Releases\n`,
     );
-    process.exit(1);
+    this.exit(1);
   }
 
   _exec(command, args) {
     try {
       this.execFileSyncFn(command, args, { stdio: 'inherit' });
-      process.exit(0);
+      this.exit(0);
     } catch (err) {
-      process.exit(err.status ?? 1);
+      this.exit(err.status ?? 1);
     }
   }
 }
