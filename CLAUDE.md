@@ -1,10 +1,22 @@
 # Claude Instructions
 
-When writing Scala in this repo, prefer Scala filesystem libraries over raw
-`java.nio.file` APIs: in module application or library code, use Kyo's file
-capabilities first, then `os-lib`; in `mill-build/`, prefer `os-lib`
-directly. Only drop to Java NIO at interop or platform boundaries or when the
-Scala options are insufficient.
+When writing Scala in this repo, prefer `os-lib` for filesystem operations
+over raw `java.nio.file` APIs. In `mill-build/`, use `os-lib` directly.
+Only drop to Java NIO at interop or platform boundaries.
+
+## Direct-Style Architecture (Ox + PureLogic)
+
+This codebase uses direct-style Scala 3:
+- **Ox** for concurrency and application entry points (`OxApp`)
+- **PureLogic** for typed errors in pure domain logic via context functions
+- **os-lib** for filesystem operations
+- **Scribe** for logging (direct calls, no effect wrapper)
+- **ZIO Test** for unit and integration tests
+
+Do NOT use: Kyo, cats-effect, ZIO effects, Futures, or monadic style.
+Use plain Scala control flow. Blocking I/O is fine (virtual threads).
+Use `Either[E, A]` for typed errors at I/O boundaries.
+Use PureLogic `Abort[E]` for typed errors in pure domain functions.
 
 For changelog or release-related work, consult these repo-local skills first:
 

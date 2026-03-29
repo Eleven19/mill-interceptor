@@ -1,28 +1,24 @@
 package io.eleven19.mill.interceptor
 
-import kyo.*
-import kyo.test.KyoSpecDefault
 import zio.test.*
 
-object MainSpec extends KyoSpecDefault:
+object MainSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("Main")(
         suite("CLI routing")(
             test("routes intercept gradle without environment variables") {
-                Abort.run[IllegalArgumentException](Cli.parse(Chunk("intercept", "gradle", "build"))).map {
-                    case kyo.Result.Success(CliResult.Run(InterceptTool.Gradle, args)) =>
+                Cli.parse(List("intercept", "gradle", "build")) match
+                    case Right(CliResult.Run(InterceptTool.Gradle, args)) =>
                         assertTrue(args.toList == List("build"))
                     case other =>
                         assertTrue(false)
-                }
             },
             test("rejects unsupported direct maven subcommands") {
-                Abort.run[IllegalArgumentException](Cli.parse(Chunk("maven", "clean"))).map {
-                    case kyo.Result.Error(ex) =>
+                Cli.parse(List("maven", "clean")) match
+                    case Left(ex) =>
                         assertTrue(ex.getMessage == "Unknown maven subcommand: clean")
                     case other =>
                         assertTrue(false)
-                }
             }
         )
     )

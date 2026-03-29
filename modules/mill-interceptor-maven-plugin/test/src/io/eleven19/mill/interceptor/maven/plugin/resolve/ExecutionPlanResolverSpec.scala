@@ -4,11 +4,10 @@ import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 import io.eleven19.mill.interceptor.model.*
 import io.eleven19.mill.interceptor.model.{ExecutionEvent as ModelExecutionEvent}
 import io.eleven19.mill.interceptor.model.{ExecutionEventSink as ModelExecutionEventSink}
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import zio.test.*
 
-object ExecutionPlanResolverSpec extends KyoSpecDefault:
+object ExecutionPlanResolverSpec extends ZIOSpecDefault:
 
     private def request(
         kind: ExecutionRequestKind,
@@ -19,7 +18,7 @@ object ExecutionPlanResolverSpec extends KyoSpecDefault:
             kind = kind,
             requestedName = requestedName,
             repoRoot = Path("/repo"),
-            moduleRoot = Path("/repo", "module-a"),
+            moduleRoot = Path("/repo") / "module-a",
             module = ModuleRef(
                 artifactId = "module-a",
                 packaging = "jar"

@@ -2,9 +2,10 @@ package io.eleven19.mill.interceptor.maven.plugin.extension
 
 import io.eleven19.mill.interceptor.model.ExecutionRequestKind
 import io.eleven19.mill.interceptor.model.ModuleRef
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import org.apache.maven.execution.{DefaultMavenExecutionRequest, DefaultMavenExecutionResult, MavenSession}
+
+given canEqualOsPath: CanEqual[os.Path, os.Path] = CanEqual.derived
 import org.apache.maven.model.Model
 import org.apache.maven.project.MavenProject
 import zio.test.*
@@ -12,7 +13,7 @@ import zio.test.*
 import java.io.File
 import java.util.Properties
 
-object LifecycleInterceptionAdapterSpec extends KyoSpecDefault:
+object LifecycleInterceptionAdapterSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("LifecycleInterceptionAdapter")(
         test("expands the default lifecycle chain up to the requested phase") {
@@ -60,7 +61,7 @@ object LifecycleInterceptionAdapterSpec extends KyoSpecDefault:
             assertTrue(context.kind == ExecutionRequestKind.LifecyclePhase) &&
             assertTrue(context.requestedName == "compile") &&
             assertTrue(context.repoRoot == Path("/repo")) &&
-            assertTrue(context.moduleRoot == Path("/repo/modules/demo")) &&
+            assertTrue(context.moduleRoot == Path("/repo") / "modules" / "demo") &&
             assertTrue(
                 context.module == ModuleRef(
                     artifactId = "demo",

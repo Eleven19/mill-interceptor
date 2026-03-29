@@ -1,15 +1,14 @@
 package io.eleven19.mill.interceptor.maven
 
-import kyo.*
-import java.nio.file.Files
+import os.Path
+import purelogic.Abort
 
-final case class GeneratedSetupFile(path: Path, content: String) derives CanEqual
+final case class GeneratedSetupFile(path: os.Path, content: String) derives CanEqual
 
 object MavenSetupGenerator:
 
     final private case class PlannedFile(
-        path: Path,
-        absolutePath: java.nio.file.Path,
+        path: os.Path,
         content: String
     ) derives CanEqual
 
@@ -17,16 +16,17 @@ object MavenSetupGenerator:
     private val extensionArtifactId = "mill-interceptor-maven-plugin"
 
     def generate(
-        startPath: Path,
+        startPath: os.Path,
         options: MavenSetupOptions,
         extensionVersion: String
-    ): List[GeneratedSetupFile] < (Sync & Abort[IllegalArgumentException]) =
-        for
-            repoRoot <- detectRepoRoot(startPath)
-            files = plannedFiles(repoRoot, options.format, extensionVersion)
-            _ <- validateWritable(files, options.force)
-            _ <- if options.dryRun then Kyo.unit else writeFiles(files)
-        yield files.map(file => GeneratedSetupFile(file.path, file.content))
+    ): Either[IllegalArgumentException, List[GeneratedSetupFile]] =
+        Abort {
+            val repoRoot = detectRepoRoot(startPath)
+            val files    = plannedFiles(repoRoot, options.format, extensionVersion)
+            validateWritable(files, options.force)
+            if !options.dryRun then writeFiles(files)
+            files.map(file => GeneratedSetupFile(file.path, file.content))
+        }
 
     def renderExtensionsXml(extensionVersion: String): String =
         val safeVersion = extensionVersion
@@ -92,20 +92,18 @@ object MavenSetupGenerator:
                   |""".stripMargin
 
     private def plannedFiles(
-        repoRoot: java.nio.file.Path,
+        repoRoot: os.Path,
         format: MavenSetupFormat,
         extensionVersion: String
     ): List[PlannedFile] =
         val cfgFile = configFileName(format)
         List(
             PlannedFile(
-                Path(".mvn", "extensions.xml"),
-                repoRoot.resolve(".mvn").resolve("extensions.xml"),
+                repoRoot / ".mvn" / "extensions.xml",
                 renderExtensionsXml(extensionVersion)
             ),
             PlannedFile(
-                Path(cfgFile),
-                repoRoot.resolve(cfgFile),
+                repoRoot / cfgFile,
                 renderStarterConfig(format)
             )
         )
@@ -118,41 +116,29 @@ object MavenSetupGenerator:
     private def validateWritable(
         files: List[PlannedFile],
         force: Boolean
-    ): Unit < (Sync & Abort[IllegalArgumentException]) =
-        Kyo.foreachDiscard(files) { file =>
-            for
-                exists <- Sync.defer(Files.exists(file.absolutePath))
-                _ <-
-                    if !exists || force then Kyo.unit
-                    else Abort.fail(new IllegalArgumentException(s"Refusing to overwrite existing file: ${file.path}"))
-            yield ()
+    )(using abort: Abort[IllegalArgumentException]): Unit =
+        for file <- files do
+            if os.exists(file.path) && !force then
+                abort.fail(new IllegalArgumentException(s"Refusing to overwrite existing file: ${file.path}"))
+
+    private def writeFiles(files: List[PlannedFile]): Unit =
+        files.foreach { file =>
+            os.makeDir.all(file.path / os.up)
+            os.write.over(file.path, file.content)
         }
 
-    private def writeFiles(files: List[PlannedFile]): Unit < Sync =
-        Kyo.foreachDiscard(files) { file =>
-            Sync.defer {
-                val parent = file.absolutePath.getParent
-                if parent != null then
-                    val _ = Files.createDirectories(parent)
-                val _ = Files.writeString(file.absolutePath, file.content)
-                ()
-            }
-        }
+    private def detectRepoRoot(startPath: os.Path)(using abort: Abort[IllegalArgumentException]): os.Path =
+        val normalizedStart = startPath.toNIO.toAbsolutePath.normalize
+        @annotation.tailrec
+        def loop(current: java.nio.file.Path | Null): os.Path =
+            current match
+                case null =>
+                    abort.fail(
+                        new IllegalArgumentException(
+                            s"Could not find repo root from ${startPath}. Expected a parent containing .git"
+                        )
+                    )
+                case path if path.resolve(".git").toFile.exists() => os.Path(path)
+                case path                                         => loop(path.getParent)
 
-    private def detectRepoRoot(startPath: Path): java.nio.file.Path < (Sync & Abort[IllegalArgumentException]) =
-        Abort.catching[IllegalArgumentException] {
-            Sync.defer {
-                val normalizedStart = startPath.toJava.toAbsolutePath.normalize
-                @annotation.tailrec
-                def loop(current: java.nio.file.Path | Null): java.nio.file.Path =
-                    current match
-                        case null =>
-                            throw new IllegalArgumentException(
-                                s"Could not find repo root from ${startPath}. Expected a parent containing .git"
-                            )
-                        case path if path.resolve(".git").toFile.exists() => path
-                        case path                                         => loop(path.getParent)
-
-                loop(normalizedStart)
-            }
-        }
+        loop(normalizedStart)

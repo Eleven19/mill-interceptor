@@ -1,18 +1,19 @@
 package io.eleven19.mill.interceptor.maven.plugin.mojo
 
 import io.eleven19.mill.interceptor.model.*
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import zio.test.*
 
-object AbstractForwardingMojoSpec extends KyoSpecDefault:
+given canEqualPath1: CanEqual[os.Path, os.Path] = CanEqual.derived
+
+object AbstractForwardingMojoSpec extends ZIOSpecDefault:
 
     private def context(kind: ExecutionRequestKind, requestedName: String): MavenExecutionContext =
         MavenExecutionContext(
             kind = kind,
             requestedName = requestedName,
             repoRoot = Path("/repo"),
-            moduleRoot = Path("/repo", "modules", "app"),
+            moduleRoot = Path("/repo") / "modules" / "app",
             module = ModuleRef(
                 artifactId = "app",
                 packaging = "jar",
@@ -34,7 +35,7 @@ object AbstractForwardingMojoSpec extends KyoSpecDefault:
                     kind = ExecutionRequestKind.LifecyclePhase,
                     requestedName = "validate",
                     repoRoot = Path("/repo"),
-                    moduleRoot = Path("/repo", "modules", "app"),
+                    moduleRoot = Path("/repo") / "modules" / "app",
                     module = ModuleRef(
                         artifactId = "app",
                         packaging = "jar",
@@ -66,7 +67,7 @@ object AbstractForwardingMojoSpec extends KyoSpecDefault:
             val executionContext = context(ExecutionRequestKind.ExplicitGoal, "describe")
 
             assertTrue(executionContext.toExecutionRequest.repoRoot == Path("/repo")) &&
-            assertTrue(executionContext.toExecutionRequest.moduleRoot == Path("/repo", "modules", "app")) &&
+            assertTrue(executionContext.toExecutionRequest.moduleRoot == Path("/repo") / "modules" / "app") &&
             assertTrue(executionContext.toExecutionRequest.module.artifactId == "app") &&
             assertTrue(executionContext.toExecutionRequest.module.packaging == "jar") &&
             assertTrue(executionContext.toExecutionRequest.module.groupId.contains("io.eleven19")) &&

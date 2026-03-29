@@ -1,9 +1,8 @@
 package io.eleven19.mill.interceptor.maven.plugin.exec
 
-import kyo.test.KyoSpecDefault
 import zio.test.*
 
-object MillRunnerResultSpec extends KyoSpecDefault:
+object MillRunnerResultSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("MillRunnerResult")(
         test("models step results with rendered command vectors and exit codes") {

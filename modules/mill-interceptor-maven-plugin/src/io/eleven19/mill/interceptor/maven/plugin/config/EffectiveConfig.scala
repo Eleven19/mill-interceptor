@@ -1,6 +1,6 @@
 package io.eleven19.mill.interceptor.maven.plugin.config
 
-import kyo.Path
+import os.Path
 import org.virtuslab.yaml.*
 
 /** Effective Maven plugin configuration after applying defaults and overlays. */

@@ -1,6 +1,6 @@
 package io.eleven19.mill.interceptor.maven.plugin.config
 
-import kyo.*
+import os.Path
 
 /** Whether a discovered config file came from the repository root or a module root. */
 enum ConfigScope derives CanEqual:
@@ -24,10 +24,10 @@ object ConfigDiscovery:
 
     /** Resolve a child path under a parent, preserving absolute path semantics. */
     private def childPath(parent: Path, children: String*): Path =
-        Path(children.foldLeft(parent.toJava)((p, c) => p.resolve(c)).toString)
+        os.Path(children.foldLeft(parent.toNIO)((p, c) => p.resolve(c)))
 
     /** Discover existing config files in the order they should be merged. */
-    def discover(repoRoot: Path, moduleRoot: Path): Seq[DiscoveredConfigSource] < Sync =
+    def discover(repoRoot: os.Path, moduleRoot: os.Path): Seq[DiscoveredConfigSource] =
         val candidates = Seq(
             DiscoveredConfigSource(
                 ConfigScope.Repository,
@@ -71,10 +71,4 @@ object ConfigDiscovery:
             )
         )
 
-        for discovered <- Kyo.foreach(candidates) { candidate =>
-                candidate.path.exists.map {
-                    case true  => Some(candidate)
-                    case false => None
-                }
-            }
-        yield discovered.flatten
+        candidates.filter(c => os.exists(c.path))

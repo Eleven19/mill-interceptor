@@ -4,20 +4,19 @@ import io.eleven19.mill.interceptor.maven.plugin.config.EffectiveConfig
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerFailure
 import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerResult
 import io.eleven19.mill.interceptor.model.*
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugin.MojoFailureException
 import scala.util.Try
 import zio.test.*
 
-object MojoFailureMappingSpec extends KyoSpecDefault:
+object MojoFailureMappingSpec extends ZIOSpecDefault:
 
     private val executionContext = MavenExecutionContext(
         kind = ExecutionRequestKind.LifecyclePhase,
         requestedName = "compile",
         repoRoot = Path("/repo"),
-        moduleRoot = Path("/repo", "modules", "app"),
+        moduleRoot = Path("/repo") / "modules" / "app",
         module = ModuleRef(
             artifactId = "app",
             packaging = "jar",

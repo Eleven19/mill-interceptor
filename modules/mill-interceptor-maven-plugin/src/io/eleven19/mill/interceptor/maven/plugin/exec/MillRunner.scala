@@ -7,19 +7,18 @@ import io.eleven19.mill.interceptor.model.ExecutionEvent
 import io.eleven19.mill.interceptor.model.ExecutionEventSink
 import io.eleven19.mill.interceptor.model.MillExecutionPlan
 import io.eleven19.mill.interceptor.model.PlanStep
-import kyo.*
 
 /** A rendered command and its working directory for dry-run inspection. */
 final case class RenderedCommand(
     command: Seq[String],
-    workingDirectory: Path
+    workingDirectory: os.Path
 ) derives CanEqual
 
 /** A rendered dry-run step that mirrors a `PlanStep` without spawning a process. */
 final case class DryRunStep(
     kind: RunnerStepKind,
     command: Option[Seq[String]] = None,
-    workingDirectory: Path,
+    workingDirectory: os.Path,
     message: Option[String] = None,
     guidance: Seq[String] = Seq.empty
 ) derives CanEqual
@@ -34,23 +33,23 @@ object MillRunner:
 
     /** Small injectable subprocess boundary for plan execution. */
     trait SubprocessExecutor:
-        def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int < Sync
+        def run(command: Seq[String], workingDirectory: os.Path, environment: Map[String, String]): Int
 
     object SubprocessExecutor:
 
         val live: SubprocessExecutor = new SubprocessExecutor:
-            def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int < Sync =
-                direct {
-                    Process
-                        .Command(command*)
-                        .cwd(workingDirectory.toJava)
-                        .env(environment)
-                        .stdin(Process.Input.Inherit)
-                        .stdout(Process.Output.Inherit)
-                        .stderr(Process.Output.Inherit)
-                        .waitFor
-                        .now
-                }
+            def run(command: Seq[String], workingDirectory: os.Path, environment: Map[String, String]): Int =
+                val result = os
+                    .proc(command)
+                    .call(
+                        cwd = workingDirectory,
+                        env = environment,
+                        stdin = os.Inherit,
+                        stdout = os.Inherit,
+                        stderr = os.Inherit,
+                        check = false
+                    )
+                result.exitCode
 
     /** Render a plan without running subprocesses. */
     def dryRun(plan: MillExecutionPlan, config: EffectiveConfig): DryRunResult =
@@ -64,37 +63,35 @@ object MillRunner:
         config: EffectiveConfig,
         executor: SubprocessExecutor = SubprocessExecutor.live,
         sink: ExecutionEventSink = ExecutionEventSink.noop
-    ): RunnerResult < Sync =
-        for
-            executable <- resolveExecutable(plan.request, config)
-            forwardedArgs = forwardedPropertyArgs(plan.request)
-            result <- executeSteps(
-                plan.steps,
-                Vector.empty,
-                resolveWorkingDirectory(plan.request.repoRoot, config.mill.workingDirectory),
-                executable,
-                forwardedArgs,
-                config,
-                executor,
-                config.mill.environment,
-                sink
-            )
-        yield result
+    ): RunnerResult =
+        val executable    = resolveExecutable(plan.request, config)
+        val forwardedArgs = forwardedPropertyArgs(plan.request)
+        executeSteps(
+            plan.steps,
+            Vector.empty,
+            resolveWorkingDirectory(plan.request.repoRoot, config.mill.workingDirectory),
+            executable,
+            forwardedArgs,
+            config,
+            executor,
+            config.mill.environment,
+            sink
+        )
 
     private def executeSteps(
         remaining: Seq[PlanStep],
         completed: Vector[StepResult],
-        workingDirectory: Path,
+        workingDirectory: os.Path,
         executable: String,
         forwardedArgs: Seq[String],
         config: EffectiveConfig,
         executor: SubprocessExecutor,
         environment: Map[String, String],
         sink: ExecutionEventSink
-    ): RunnerResult < Sync =
+    ): RunnerResult =
         remaining.headOption match
             case None =>
-                Sync.defer(RunnerResult.Success(completed.toSeq))
+                RunnerResult.Success(completed.toSeq)
             case Some(PlanStep.Fail(message, guidance)) =>
                 sink.publish(
                     ExecutionEvent.StepFailed(
@@ -103,115 +100,103 @@ object MillRunner:
                         guidance = guidance
                     )
                 )
-                Sync.defer(
-                    RunnerResult.Failure(
-                        completed.toSeq,
-                        RunnerFailure.FailStep(message, guidance)
-                    )
+                RunnerResult.Failure(
+                    completed.toSeq,
+                    RunnerFailure.FailStep(message, guidance)
                 )
             case Some(PlanStep.ProbeTarget(target)) =>
                 val command = Seq(executable) ++ forwardedArgs ++ Seq("resolve", target)
                 val step    = PlanStep.ProbeTarget(target)
                 sink.publish(ExecutionEvent.StepStarted(step = step, command = Some(command)))
-                for
-                    exitCode <- executor.run(command, workingDirectory, environment)
-                    result <-
-                        if exitCode == 0 then
-                            sink.publish(
-                                ExecutionEvent.StepFinished(
-                                    step = step,
-                                    command = Some(command),
-                                    exitCode = Some(exitCode)
-                                )
-                            )
-                            executeSteps(
-                                remaining.tail,
-                                completed :+ StepResult(
-                                    kind = RunnerStepKind.ProbeTarget,
-                                    command = Some(command),
-                                    exitCode = Some(exitCode)
-                                ),
-                                workingDirectory,
-                                executable,
-                                forwardedArgs,
-                                config,
-                                executor,
-                                environment,
-                                sink
-                            )
-                        else
-                            sink.publish(
-                                ExecutionEvent.StepFailed(
-                                    step = step,
-                                    command = Some(command),
-                                    exitCode = Some(exitCode),
-                                    message = s"Mill target '$target' is unavailable",
-                                    guidance = Seq(s"Run `mill resolve $target` to inspect available targets")
-                                )
-                            )
-                            Sync.defer(
-                                RunnerResult.Failure(
-                                    completed.toSeq,
-                                    RunnerFailure.ProbeFailure(
-                                        target = target,
-                                        command = command,
-                                        exitCode = Some(exitCode),
-                                        message = s"Mill target '$target' is unavailable",
-                                        guidance = Seq(s"Run `mill resolve $target` to inspect available targets")
-                                    )
-                                )
-                            )
-                yield result
+                val exitCode = executor.run(command, workingDirectory, environment)
+                if exitCode == 0 then
+                    sink.publish(
+                        ExecutionEvent.StepFinished(
+                            step = step,
+                            command = Some(command),
+                            exitCode = Some(exitCode)
+                        )
+                    )
+                    executeSteps(
+                        remaining.tail,
+                        completed :+ StepResult(
+                            kind = RunnerStepKind.ProbeTarget,
+                            command = Some(command),
+                            exitCode = Some(exitCode)
+                        ),
+                        workingDirectory,
+                        executable,
+                        forwardedArgs,
+                        config,
+                        executor,
+                        environment,
+                        sink
+                    )
+                else
+                    sink.publish(
+                        ExecutionEvent.StepFailed(
+                            step = step,
+                            command = Some(command),
+                            exitCode = Some(exitCode),
+                            message = s"Mill target '$target' is unavailable",
+                            guidance = Seq(s"Run `mill resolve $target` to inspect available targets")
+                        )
+                    )
+                    RunnerResult.Failure(
+                        completed.toSeq,
+                        RunnerFailure.ProbeFailure(
+                            target = target,
+                            command = command,
+                            exitCode = Some(exitCode),
+                            message = s"Mill target '$target' is unavailable",
+                            guidance = Seq(s"Run `mill resolve $target` to inspect available targets")
+                        )
+                    )
             case Some(PlanStep.InvokeMill(targets)) =>
                 val command = Seq(executable) ++ forwardedArgs ++ targets
                 val step    = PlanStep.InvokeMill(targets)
                 sink.publish(ExecutionEvent.StepStarted(step = step, command = Some(command)))
-                for
-                    exitCode <- executor.run(command, workingDirectory, environment)
-                    result <-
-                        if exitCode == 0 then
-                            sink.publish(
-                                ExecutionEvent.StepFinished(
-                                    step = step,
-                                    command = Some(command),
-                                    exitCode = Some(exitCode)
-                                )
-                            )
-                            executeSteps(
-                                remaining.tail,
-                                completed :+ StepResult(
-                                    kind = RunnerStepKind.InvokeMill,
-                                    command = Some(command),
-                                    exitCode = Some(exitCode)
-                                ),
-                                workingDirectory,
-                                executable,
-                                forwardedArgs,
-                                config,
-                                executor,
-                                environment,
-                                sink
-                            )
-                        else
-                            sink.publish(
-                                ExecutionEvent.StepFailed(
-                                    step = step,
-                                    command = Some(command),
-                                    exitCode = Some(exitCode),
-                                    message = s"Mill exited with code $exitCode"
-                                )
-                            )
-                            Sync.defer(
-                                RunnerResult.Failure(
-                                    completed.toSeq,
-                                    RunnerFailure.InvocationFailure(
-                                        command = command,
-                                        exitCode = Some(exitCode),
-                                        message = s"Mill exited with code $exitCode"
-                                    )
-                                )
-                            )
-                yield result
+                val exitCode = executor.run(command, workingDirectory, environment)
+                if exitCode == 0 then
+                    sink.publish(
+                        ExecutionEvent.StepFinished(
+                            step = step,
+                            command = Some(command),
+                            exitCode = Some(exitCode)
+                        )
+                    )
+                    executeSteps(
+                        remaining.tail,
+                        completed :+ StepResult(
+                            kind = RunnerStepKind.InvokeMill,
+                            command = Some(command),
+                            exitCode = Some(exitCode)
+                        ),
+                        workingDirectory,
+                        executable,
+                        forwardedArgs,
+                        config,
+                        executor,
+                        environment,
+                        sink
+                    )
+                else
+                    sink.publish(
+                        ExecutionEvent.StepFailed(
+                            step = step,
+                            command = Some(command),
+                            exitCode = Some(exitCode),
+                            message = s"Mill exited with code $exitCode"
+                        )
+                    )
+                    RunnerResult.Failure(
+                        completed.toSeq,
+                        RunnerFailure.InvocationFailure(
+                            command = command,
+                            exitCode = Some(exitCode),
+                            message = s"Mill exited with code $exitCode"
+                        )
+                    )
 
     private def renderStep(
         step: PlanStep,
@@ -241,30 +226,24 @@ object MillRunner:
                     guidance = guidance
                 )
 
-    private def resolveWorkingDirectory(base: Path, overridePath: Option[String]): Path =
+    private def resolveWorkingDirectory(base: os.Path, overridePath: Option[String]): os.Path =
         overridePath match
             case Some(value) if value.nonEmpty =>
-                val configured = Path(value)
-                if configured.toJava.isAbsolute then configured
-                else Path(base.toJava.resolve(configured.toJava).toString)
+                val nio = java.nio.file.Paths.get(value)
+                if nio.isAbsolute then os.Path(nio)
+                else os.Path(base.toNIO.resolve(nio))
             case _ => base
 
-    private def resolveExecutable(request: ExecutionRequest, config: EffectiveConfig): String < Sync =
-        if config.mill.executable != "mill" then Sync.defer(config.mill.executable)
+    private def resolveExecutable(request: ExecutionRequest, config: EffectiveConfig): String =
+        if config.mill.executable != "mill" then config.mill.executable
         else
             val launcherCandidates = Seq(
-                childPath(request.moduleRoot, "mill"),
-                childPath(request.moduleRoot, "millw"),
-                childPath(request.repoRoot, "mill"),
-                childPath(request.repoRoot, "millw")
+                request.moduleRoot / "mill",
+                request.moduleRoot / "millw",
+                request.repoRoot / "mill",
+                request.repoRoot / "millw"
             )
-            for candidates <- Kyo.foreach(launcherCandidates) { candidate =>
-                    candidate.exists.map(exists => candidate -> exists)
-                }
-            yield candidates.collectFirst { case (candidate, true) => candidate.toJava.toString }.getOrElse("mill")
-
-    private def childPath(base: Path, child: String): Path =
-        Path(base.toJava.resolve(child).toString)
+            launcherCandidates.find(os.exists).map(_.toString).getOrElse("mill")
 
     private def forwardedPropertyArgs(request: ExecutionRequest): Seq[String] =
         request.properties.get("maven.repo.local").toSeq.map(value => s"-Dmaven.repo.local=$value")

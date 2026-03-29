@@ -5,10 +5,10 @@ mainClass: io.eleven19.mill.interceptor.Main
 
 mvnDeps:
   - com.github.alexarchambault::case-app::2.1.0
+  - com.lihaoyi::os-lib::0.11.4
   - com.outr::scribe::3.18.0
-  - io.getkyo::kyo-core::1.0-RC1
-  - io.getkyo::kyo-direct:1.0-RC1
-  - io.getkyo::kyo-prelude:1.0-RC1
+  - com.softwaremill.ox::core::1.0.4
+  - com.github.ghostdogpr::purelogic::0.2.0
 
 nativeImageOptions:
   - "--no-fallback"
@@ -22,7 +22,6 @@ object test:
   mvnDeps:
     - dev.zio::zio-test::2.1.24
     - dev.zio::zio-test-sbt::2.1.24
-    - io.getkyo::kyo-zio-test::1.0-RC1
 
 object itest:
   extends:

@@ -1,14 +1,13 @@
 package io.eleven19.mill.interceptor.maven.plugin.extension
 
 import io.eleven19.mill.interceptor.maven.plugin.MavenPluginModule
-import kyo.test.KyoSpecDefault
 import org.apache.maven.execution.{DefaultMavenExecutionRequest, DefaultMavenExecutionResult, MavenSession}
 import org.apache.maven.model.Model
 import org.apache.maven.project.MavenProject
 import scala.jdk.CollectionConverters.*
 import zio.test.*
 
-object MillInterceptorLifecycleParticipantSpec extends KyoSpecDefault:
+object MillInterceptorLifecycleParticipantSpec extends ZIOSpecDefault:
     def spec: Spec[Any, Any] = suite("MillInterceptorLifecycleParticipant")(
         test("injects the interceptor plugin for the requested lifecycle chain after project read") {
             val participant = new MillInterceptorLifecycleParticipant

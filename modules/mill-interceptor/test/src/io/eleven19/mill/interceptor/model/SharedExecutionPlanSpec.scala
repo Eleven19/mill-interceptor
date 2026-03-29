@@ -2,19 +2,17 @@ package io.eleven19.mill.interceptor.model
 
 import io.eleven19.mill.interceptor.model.{ExecutionEvent as ModelExecutionEvent}
 import io.eleven19.mill.interceptor.model.{ExecutionEventSink as ModelExecutionEventSink}
-import kyo.Path
-import kyo.test.KyoSpecDefault
 import zio.test.*
 
-object SharedExecutionPlanSpec extends KyoSpecDefault:
+object SharedExecutionPlanSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("SharedExecutionPlan")(
         test("models lifecycle requests as ordered execution plans") {
             val request = ExecutionRequest(
                 kind = ExecutionRequestKind.LifecyclePhase,
                 requestedName = "validate",
-                repoRoot = Path("/repo"),
-                moduleRoot = Path("/repo", "module-a"),
+                repoRoot = os.Path(java.nio.file.Paths.get("/repo")),
+                moduleRoot = os.Path(java.nio.file.Paths.get("/repo", "module-a")),
                 module = ModuleRef(
                     artifactId = "module-a",
                     packaging = "jar"
@@ -42,8 +40,8 @@ object SharedExecutionPlanSpec extends KyoSpecDefault:
             val request = ExecutionRequest(
                 kind = ExecutionRequestKind.ExplicitGoal,
                 requestedName = "inspect-plan",
-                repoRoot = Path("/repo"),
-                moduleRoot = Path("/repo", "module-b"),
+                repoRoot = os.Path(java.nio.file.Paths.get("/repo")),
+                moduleRoot = os.Path(java.nio.file.Paths.get("/repo", "module-b")),
                 module = ModuleRef(
                     artifactId = "module-b",
                     packaging = "pom"
@@ -63,8 +61,8 @@ object SharedExecutionPlanSpec extends KyoSpecDefault:
             val request = ExecutionRequest(
                 kind = ExecutionRequestKind.LifecyclePhase,
                 requestedName = "compile",
-                repoRoot = Path("/repo"),
-                moduleRoot = Path("/repo", "module-a"),
+                repoRoot = os.Path(java.nio.file.Paths.get("/repo")),
+                moduleRoot = os.Path(java.nio.file.Paths.get("/repo", "module-a")),
                 module = ModuleRef("module-a", "jar")
             )
             val plan = MillExecutionPlan(

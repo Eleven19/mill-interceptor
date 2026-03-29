@@ -1,10 +1,9 @@
 package io.eleven19.mill.interceptor.maven.plugin
 
 import io.eleven19.mill.interceptor.maven.plugin.mojo.AbstractForwardingMojo
-import kyo.test.KyoSpecDefault
 import zio.test.*
 
-object MojoDescriptorMetaSpec extends KyoSpecDefault:
+object MojoDescriptorMetaSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("MojoDescriptorMeta")(
         test("forwardingParameters declares exactly the fields on AbstractForwardingMojo") {

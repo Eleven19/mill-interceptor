@@ -16,7 +16,6 @@ import io.eleven19.mill.interceptor.model.ModuleRef
 import io.eleven19.mill.interceptor.maven.plugin.resolve.ExecutionPlanResolver
 import java.io.File
 import java.util.Properties
-import kyo.*
 import org.apache.maven.execution.MavenSession
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugin.MojoExecutionException
@@ -63,8 +62,8 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
 
     protected def inspectOnly: Boolean = false
 
-    private def normalizedPath(file: File | Null, fallback: => File): Path =
-        Path(Option(file).getOrElse(fallback).getAbsolutePath)
+    private def normalizedPath(file: File | Null, fallback: => File): os.Path =
+        os.Path(Option(file).getOrElse(fallback).toPath.toAbsolutePath.normalize)
 
     protected def executionContext: MavenExecutionContext =
         val moduleRootFile = Option(mavenProject)
@@ -120,25 +119,15 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
         executionContext.toExecutionRequest
 
     protected def loadEffectiveConfig(): EffectiveConfig =
-        given AllowUnsafe = AllowUnsafe.embrace.danger
-        Sync.Unsafe
-            .evalOrThrow(
-                Abort.run[ConfigLoadException](
-                    ConfigLoader.load(executionContext.repoRoot, executionContext.moduleRoot)
-                )
-            ) match
-            case Result.Success(config) => config
-            case Result.Error(error) =>
-                throw MojoExecutionException(error.getMessage, error)
-            case Result.Panic(error) =>
-                throw MojoExecutionException(s"Unexpected config load failure: ${error.getMessage}", error)
+        ConfigLoader.load(executionContext.repoRoot, executionContext.moduleRoot) match
+            case Right(config) => config
+            case Left(error)   => throw MojoExecutionException(error.getMessage, error)
 
     protected def resolvePlan(config: EffectiveConfig): MillExecutionPlan =
         ExecutionPlanResolver.resolve(executionRequest, config)
 
     protected def executeResolvedPlan(plan: MillExecutionPlan, config: EffectiveConfig): RunnerResult =
-        given AllowUnsafe = AllowUnsafe.embrace.danger
-        Sync.Unsafe.evalOrThrow(MillRunner.execute(plan, config))
+        MillRunner.execute(plan, config)
 
     protected def inspectResolvedPlan(plan: MillExecutionPlan, config: EffectiveConfig): DryRunResult =
         MillRunner.dryRun(plan, config)
@@ -171,7 +160,7 @@ abstract class AbstractForwardingMojo extends AbstractMojo:
                     case RunnerStepKind.Fail        => "fail"
                 Seq(
                     s"$prefix $kind: ${step.command.getOrElse(Seq.empty).mkString(" ")}",
-                    s"$prefix cwd: ${step.workingDirectory.toJava}"
+                    s"$prefix cwd: ${step.workingDirectory.toNIO}"
                 )
             case RunnerStepKind.Fail =>
                 Seq(s"$prefix fail: ${step.message.getOrElse("Execution plan failed")}") ++

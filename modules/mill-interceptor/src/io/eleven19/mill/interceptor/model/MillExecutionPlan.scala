@@ -1,6 +1,6 @@
 package io.eleven19.mill.interceptor.model
 
-import kyo.Path
+import os.Path
 import scala.collection.mutable.ArrayBuffer
 
 /** Identifies whether the incoming request came from a lifecycle phase or an explicit goal. */
