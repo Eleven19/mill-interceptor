@@ -159,6 +159,76 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
     Seq(s"${pomSettings().organization}:${artifactId()}:${publishVersion()}")
   }
 
+  private val forwardingMojoParameters: String =
+    """|      <parameters>
+       |        <parameter>
+       |          <name>repoRootDirectory</name>
+       |          <type>java.io.File</type>
+       |          <required>true</required>
+       |          <editable>false</editable>
+       |          <description>Root directory of the repository</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>moduleRootDirectory</name>
+       |          <type>java.io.File</type>
+       |          <required>true</required>
+       |          <editable>false</editable>
+       |          <description>Base directory of the current Maven module</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>mavenSession</name>
+       |          <type>org.apache.maven.execution.MavenSession</type>
+       |          <required>false</required>
+       |          <editable>false</editable>
+       |          <description>The current Maven session</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>mavenProject</name>
+       |          <type>org.apache.maven.project.MavenProject</type>
+       |          <required>false</required>
+       |          <editable>false</editable>
+       |          <description>The current Maven project</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>artifactId</name>
+       |          <type>java.lang.String</type>
+       |          <required>true</required>
+       |          <editable>false</editable>
+       |          <description>The project artifact ID</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>packaging</name>
+       |          <type>java.lang.String</type>
+       |          <required>true</required>
+       |          <editable>false</editable>
+       |          <description>The project packaging type</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>groupId</name>
+       |          <type>java.lang.String</type>
+       |          <required>true</required>
+       |          <editable>false</editable>
+       |          <description>The project group ID</description>
+       |        </parameter>
+       |        <parameter>
+       |          <name>sessionUserProperties</name>
+       |          <type>java.util.Properties</type>
+       |          <required>false</required>
+       |          <editable>false</editable>
+       |          <description>User properties from the Maven session</description>
+       |        </parameter>
+       |      </parameters>
+       |      <configuration>
+       |        <repoRootDirectory implementation="java.io.File" default-value="${session.executionRootDirectory}"/>
+       |        <moduleRootDirectory implementation="java.io.File" default-value="${project.basedir}"/>
+       |        <mavenSession implementation="org.apache.maven.execution.MavenSession" default-value="${session}"/>
+       |        <mavenProject implementation="org.apache.maven.project.MavenProject" default-value="${project}"/>
+       |        <artifactId implementation="java.lang.String" default-value="${project.artifactId}"/>
+       |        <packaging implementation="java.lang.String" default-value="${project.packaging}"/>
+       |        <groupId implementation="java.lang.String" default-value="${project.groupId}"/>
+       |        <sessionUserProperties implementation="java.util.Properties" default-value="${session.userProperties}"/>
+       |      </configuration>""".stripMargin
+
   private def pluginDescriptor(
       organization: String,
       description: String,
@@ -167,6 +237,10 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
   ): String =
     val mojos = supportedGoals
       .map { goal =>
+        val isForwarding = goal._2 != describeImplementation
+        val paramsAndConfig =
+          if isForwarding then forwardingMojoParameters
+          else "      <parameters/>\n      <configuration/>"
         s"""    <mojo>
       <goal>${goal._1}</goal>
       <description>${goal._3}</description>
@@ -175,8 +249,7 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
       <instantiationStrategy>per-lookup</instantiationStrategy>
       <executionStrategy>once-per-session</executionStrategy>
       <threadSafe>true</threadSafe>
-      <parameters/>
-      <configuration/>
+$paramsAndConfig
     </mojo>"""
       }
       .mkString("\n")

@@ -71,7 +71,7 @@ object MillRunner:
             result <- executeSteps(
                 plan.steps,
                 Vector.empty,
-                resolveWorkingDirectory(plan.request.moduleRoot, config.mill.workingDirectory),
+                resolveWorkingDirectory(plan.request.repoRoot, config.mill.workingDirectory),
                 executable,
                 forwardedArgs,
                 config,
