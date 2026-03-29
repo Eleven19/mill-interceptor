@@ -21,7 +21,7 @@ object ShimGenerateOptions:
     val default: ShimGenerateOptions = ShimGenerateOptions(
         tools = BuildTool.all,
         wrapper = false,
-        outputDir = os.Path(java.nio.file.Paths.get(".")),
+        outputDir = os.pwd,
         version = "latest"
     )
 end ShimGenerateOptions

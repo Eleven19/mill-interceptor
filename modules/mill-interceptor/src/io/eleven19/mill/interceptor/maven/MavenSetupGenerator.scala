@@ -126,7 +126,7 @@ object MavenSetupGenerator:
     private def writeFiles(files: List[PlannedFile]): Unit =
         files.foreach { file =>
             os.makeDir.all(file.path / os.up)
-            os.write(file.path, file.content)
+            os.write.over(file.path, file.content)
         }
 
     private def detectRepoRoot(startPath: os.Path): Either[IllegalArgumentException, os.Path] =
