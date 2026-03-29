@@ -1,7 +1,7 @@
 package io.eleven19.mill.interceptor.maven
 
 import os.Path
-import java.nio.file.Files
+import purelogic.Abort
 
 final case class GeneratedSetupFile(path: os.Path, content: String) derives CanEqual
 
@@ -20,12 +20,12 @@ object MavenSetupGenerator:
         options: MavenSetupOptions,
         extensionVersion: String
     ): Either[IllegalArgumentException, List[GeneratedSetupFile]] =
-        for
-            repoRoot <- detectRepoRoot(startPath)
-            files = plannedFiles(repoRoot, options.format, extensionVersion)
-            _ <- validateWritable(files, options.force)
-            _ = if !options.dryRun then writeFiles(files)
-        yield files.map(file => GeneratedSetupFile(file.path, file.content))
+        Abort[IllegalArgumentException]:
+            val repoRoot = detectRepoRoot(startPath)
+            val files    = plannedFiles(repoRoot, options.format, extensionVersion)
+            validateWritable(files, options.force)
+            if !options.dryRun then writeFiles(files)
+            files.map(file => GeneratedSetupFile(file.path, file.content))
 
     def renderExtensionsXml(extensionVersion: String): String =
         val safeVersion = extensionVersion
@@ -115,13 +115,10 @@ object MavenSetupGenerator:
     private def validateWritable(
         files: List[PlannedFile],
         force: Boolean
-    ): Either[IllegalArgumentException, Unit] =
-        files.foldLeft[Either[IllegalArgumentException, Unit]](Right(())) { (acc, file) =>
-            acc.flatMap { _ =>
-                if !os.exists(file.path) || force then Right(())
-                else Left(new IllegalArgumentException(s"Refusing to overwrite existing file: ${file.path}"))
-            }
-        }
+    )(using abort: Abort[IllegalArgumentException]): Unit =
+        for file <- files do
+            if os.exists(file.path) && !force then
+                abort.fail(new IllegalArgumentException(s"Refusing to overwrite existing file: ${file.path}"))
 
     private def writeFiles(files: List[PlannedFile]): Unit =
         files.foreach { file =>
@@ -129,18 +126,18 @@ object MavenSetupGenerator:
             os.write.over(file.path, file.content)
         }
 
-    private def detectRepoRoot(startPath: os.Path): Either[IllegalArgumentException, os.Path] =
+    private def detectRepoRoot(startPath: os.Path)(using abort: Abort[IllegalArgumentException]): os.Path =
         val normalizedStart = startPath.toNIO.toAbsolutePath.normalize
         @annotation.tailrec
-        def loop(current: java.nio.file.Path | Null): Either[IllegalArgumentException, os.Path] =
+        def loop(current: java.nio.file.Path | Null): os.Path =
             current match
                 case null =>
-                    Left(
+                    abort.fail(
                         new IllegalArgumentException(
                             s"Could not find repo root from ${startPath}. Expected a parent containing .git"
                         )
                     )
-                case path if path.resolve(".git").toFile.exists() => Right(os.Path(path))
+                case path if path.resolve(".git").toFile.exists() => os.Path(path)
                 case path                                         => loop(path.getParent)
 
         loop(normalizedStart)
