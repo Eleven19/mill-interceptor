@@ -46,7 +46,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 DryRunStep(
                     kind = RunnerStepKind.ProbeTarget,
                     command = Some(Seq("millw", "resolve", "checkFormat")),
-                    workingDirectory = Path("/repo", "module-a")
+                    workingDirectory = Path("/repo")
                 )
             ))
         },
@@ -71,7 +71,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 DryRunStep(
                     kind = RunnerStepKind.InvokeMill,
                     command = Some(Seq("millw", "compile", "test")),
-                    workingDirectory = Path("/repo", "module-a", "build")
+                    workingDirectory = Path("/repo", "build")
                 )
             ))
         },
@@ -98,7 +98,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 DryRunStep(
                     kind = RunnerStepKind.InvokeMill,
                     command = Some(Seq("millw", "-Dmaven.repo.local=/tmp/m2-repo", "publishM2Local")),
-                    workingDirectory = Path("/repo", "module-a")
+                    workingDirectory = Path("/repo")
                 )
             ))
         },
@@ -115,7 +115,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 DryRunStep(
                     kind = RunnerStepKind.InvokeMill,
                     command = Some(Seq("mill", "-Dmaven.repo.local=/tmp/m2-repo", "publishM2Local")),
-                    workingDirectory = Path("/repo", "module-a")
+                    workingDirectory = Path("/repo")
                 )
             ))
         },
@@ -162,7 +162,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 DryRunStep(
                     kind = RunnerStepKind.Fail,
                     command = None,
-                    workingDirectory = Path("/repo", "module-a"),
+                    workingDirectory = Path("/repo"),
                     message = Some("No mapping found for explicit goal 'deploy-site'"),
                     guidance = Seq("Add a goal mapping in mill-interceptor.yaml or mill-interceptor.pkl")
                 )
@@ -198,7 +198,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls == Seq(
                             (
                                 Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
-                                moduleRoot,
+                                Path(root, "repo-root-without-launcher"),
                                 Map.empty[String, String]
                             )
                         ))
@@ -209,10 +209,11 @@ object MillRunnerSpec extends KyoSpecDefault:
                 val root = Path("out", "mill-runner-tests", "absolute-module-local-launcher")
                 val absoluteRoot = Path(root.toJava.toAbsolutePath.normalize.toString)
                 val moduleRoot = Path(absoluteRoot, "module-a")
+                val repoRoot = Path(absoluteRoot, "repo-root-without-launcher")
                 val launcher = childPath(moduleRoot, "mill")
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
-                    request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(absoluteRoot, "repo-root-without-launcher")),
+                    request = request(moduleRoot = moduleRoot).copy(repoRoot = repoRoot),
                     executionMode = ExecutionMode.Strict,
                     steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
                 )
@@ -235,7 +236,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls == Seq(
                             (
                                 Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
-                                moduleRoot,
+                                repoRoot,
                                 Map.empty[String, String]
                             )
                         ))
@@ -270,7 +271,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls == Seq(
                             (
                                 Seq(root.toJava.resolve("mill").toString, "__.compile"),
-                                Path(root, "module-a"),
+                                root,
                                 Map.empty[String, String]
                             )
                         ))
@@ -364,7 +365,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls == Seq(
                             (
                                 Seq("millw", "resolve", "checkFormat"),
-                                Path("/repo", "module-a"),
+                                Path("/repo"),
                                 Map("JAVA_HOME" -> "/opt/java")
                             )
                         ))
@@ -432,12 +433,12 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls == Seq(
                             (
                                 Seq("millw", "resolve", "checkFormat"),
-                                Path("/repo", "module-a"),
+                                Path("/repo"),
                                 Map("MILL_OPTS" -> "--jobs 4")
                             ),
                             (
                                 Seq("millw", "compile", "test"),
-                                Path("/repo", "module-a"),
+                                Path("/repo"),
                                 Map("MILL_OPTS" -> "--jobs 4")
                             )
                         ))
@@ -504,12 +505,12 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls == Seq(
                             (
                                 Seq("millw", "resolve", "checkFormat"),
-                                Path("/repo", "module-a"),
+                                Path("/repo"),
                                 Map("CI" -> "true")
                             ),
                             (
                                 Seq("millw", "compile", "test"),
-                                Path("/repo", "module-a"),
+                                Path("/repo"),
                                 Map("CI" -> "true")
                             )
                         ))

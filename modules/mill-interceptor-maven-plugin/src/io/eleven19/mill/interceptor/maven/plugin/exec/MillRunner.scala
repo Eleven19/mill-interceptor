@@ -218,7 +218,7 @@ object MillRunner:
         request: ExecutionRequest,
         config: EffectiveConfig
     ): DryRunStep =
-        val workingDirectory = resolveWorkingDirectory(request.moduleRoot, config.mill.workingDirectory)
+        val workingDirectory = resolveWorkingDirectory(request.repoRoot, config.mill.workingDirectory)
         val forwardedArgs    = forwardedPropertyArgs(request)
         step match
             case PlanStep.ProbeTarget(target) =>

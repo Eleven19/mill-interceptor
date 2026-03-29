@@ -24,7 +24,7 @@ object ConfigDiscovery:
 
     /** Resolve a child path under a parent, preserving absolute path semantics. */
     private def childPath(parent: Path, children: String*): Path =
-        Path(children.foldLeft(parent.toJava) { (p, c) => p.resolve(c) }.toString)
+        Path(children.foldLeft(parent.toJava)((p, c) => p.resolve(c)).toString)
 
     /** Discover existing config files in the order they should be merged. */
     def discover(repoRoot: Path, moduleRoot: Path): Seq[DiscoveredConfigSource] < Sync =
