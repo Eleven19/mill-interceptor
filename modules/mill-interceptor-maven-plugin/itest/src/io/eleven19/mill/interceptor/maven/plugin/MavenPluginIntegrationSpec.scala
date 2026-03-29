@@ -21,7 +21,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             val localRepo  = tempDir / "m2-repository"
             val fixtureDir = tempDir / "fixture"
 
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
             os.makeDir.all(tempDir)
             val mavenCmd = resolveMavenExecutable(tempDir)
             copyFixtureDirectory("fixtures/minimal-lifecycle", fixtureDir)
@@ -83,7 +83,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
                 ),
                 fixtureDir
             )
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
 
             assertTrue(install.exitCode == 0) &&
             assertTrue(validate.exitCode == 0) &&
@@ -109,7 +109,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
                 "publish-lifecycle-fixture" / "0.0.1" /
                 "publish-lifecycle-fixture-0.0.1.pom"
 
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
             os.makeDir.all(tempDir)
             val mavenCmd = resolveMavenExecutable(tempDir)
             copyFixtureDirectory("fixtures/publish-lifecycle", fixtureDir)
@@ -134,7 +134,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             )
             val installedExists = os.exists(installedPom)
             val deployedExists = os.exists(deployedPom)
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
 
             assertTrue(install.exitCode == 0) &&
             assertTrue(installPhase.exitCode == 0) &&
@@ -150,7 +150,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             val localRepo  = tempDir / "m2-repository"
             val fixtureDir = tempDir / "fixture"
 
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
             os.makeDir.all(tempDir)
             val mavenCmd = resolveMavenExecutable(tempDir)
             copyFixtureDirectory("fixtures/multi-module-overrides", fixtureDir)
@@ -166,7 +166,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
                 ),
                 fixtureDir
             )
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
 
             assertTrue(install.exitCode == 0) &&
             assertTrue(compileApp.exitCode == 0) &&
@@ -178,7 +178,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             val localRepo  = tempDir / "m2-repository"
             val fixtureDir = tempDir / "fixture"
 
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
             os.makeDir.all(tempDir)
             val mavenCmd = resolveMavenExecutable(tempDir)
             copyFixtureDirectory("fixtures/pkl-module-override", fixtureDir)
@@ -204,7 +204,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
                 ),
                 fixtureDir
             )
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
 
             assertTrue(install.exitCode == 0) &&
             assertTrue(compileLib.exitCode != 0) &&
@@ -218,7 +218,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             val localRepo  = tempDir / "m2-repository"
             val fixtureDir = tempDir / "fixture"
 
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
             os.makeDir.all(tempDir)
             val mavenCmd = resolveMavenExecutable(tempDir)
             copyFixtureDirectory("fixtures/strict-failure", fixtureDir)
@@ -232,7 +232,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
                 ),
                 fixtureDir
             )
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
 
             assertTrue(install.exitCode == 0) &&
             assertTrue(compilePhase.exitCode != 0) &&
@@ -243,7 +243,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             val localRepo  = tempDir / "m2-repository"
             val fixtureDir = tempDir / "fixture"
 
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
             os.makeDir.all(tempDir)
             val mavenCmd = resolveMavenExecutable(tempDir)
             copyFixtureDirectory("fixtures/placeholder-goal", fixtureDir)
@@ -256,7 +256,7 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
                 ),
                 fixtureDir
             )
-            os.remove.all(tempDir)
+            try os.remove.all(tempDir) catch case _: Exception => ()
 
             assertTrue(install.exitCode == 0) &&
             assertTrue(validate.exitCode == 0) &&
