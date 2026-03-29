@@ -8,22 +8,23 @@ import io.eleven19.mill.interceptor.maven.plugin.exec.RunnerResult
 import io.eleven19.mill.interceptor.model.ExecutionRequestKind
 import io.eleven19.mill.interceptor.model.ModuleRef
 import java.io.File
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import org.apache.maven.execution.{DefaultMavenExecutionRequest, DefaultMavenExecutionResult, MavenSession}
+
+given canEqualPath2: CanEqual[os.Path, os.Path] = CanEqual.derived
 import org.apache.maven.plugin.logging.Log
 import org.apache.maven.model.Model
 import org.apache.maven.project.MavenProject
 import zio.test.*
 
-object InspectPlanMojoSpec extends KyoSpecDefault:
+object InspectPlanMojoSpec extends ZIOSpecDefault:
 
     private def context(kind: ExecutionRequestKind, requestedName: String): MavenExecutionContext =
         MavenExecutionContext(
             kind = kind,
             requestedName = requestedName,
             repoRoot = Path("/repo"),
-            moduleRoot = Path("/repo", "modules", "app"),
+            moduleRoot = Path("/repo") / "modules" / "app",
             module = ModuleRef(
                 artifactId = "app",
                 packaging = "jar",
@@ -103,7 +104,7 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
             val executionContext = mojo.derivedExecutionContext()
 
             assertTrue(executionContext.repoRoot == Path("/repo")) &&
-            assertTrue(executionContext.moduleRoot == Path("/repo/modules/app")) &&
+            assertTrue(executionContext.moduleRoot == Path("/repo") / "modules" / "app") &&
             assertTrue(executionContext.module.artifactId == "app") &&
             assertTrue(executionContext.module.packaging == "jar") &&
             assertTrue(executionContext.module.groupId.contains("io.eleven19"))

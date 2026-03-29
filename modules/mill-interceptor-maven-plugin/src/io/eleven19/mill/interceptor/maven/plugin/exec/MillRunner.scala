@@ -227,9 +227,9 @@ object MillRunner:
     private def resolveWorkingDirectory(base: os.Path, overridePath: Option[String]): os.Path =
         overridePath match
             case Some(value) if value.nonEmpty =>
-                val configured = os.Path(java.nio.file.Paths.get(value))
-                if configured.toNIO.isAbsolute then configured
-                else os.Path(base.toNIO.resolve(configured.toNIO))
+                val nio = java.nio.file.Paths.get(value)
+                if nio.isAbsolute then os.Path(nio)
+                else os.Path(base.toNIO.resolve(nio))
             case _ => base
 
     private def resolveExecutable(request: ExecutionRequest, config: EffectiveConfig): String =

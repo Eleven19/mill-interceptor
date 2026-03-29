@@ -2,10 +2,9 @@ package io.eleven19.mill.interceptor.maven.plugin.model
 
 import io.eleven19.mill.interceptor.model.ExecutionMode
 import io.eleven19.mill.interceptor.maven.plugin.config.{EffectiveConfig, ValidateConfig}
-import kyo.test.KyoSpecDefault
 import zio.test.*
 
-object LifecycleBaselineSpec extends KyoSpecDefault:
+object LifecycleBaselineSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("LifecycleBaseline")(
         test("provides the default lifecycle mappings for clean through deploy") {

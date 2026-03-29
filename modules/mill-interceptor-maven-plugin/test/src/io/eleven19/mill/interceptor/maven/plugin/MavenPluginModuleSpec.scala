@@ -10,12 +10,11 @@ import io.eleven19.mill.interceptor.maven.plugin.mojo.PackageMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.TestMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.ValidateMojo
 import io.eleven19.mill.interceptor.maven.plugin.mojo.VerifyMojo
-import kyo.test.KyoSpecDefault
 import org.apache.maven.plugin.AbstractMojo
 import scala.jdk.CollectionConverters.*
 import zio.test.*
 
-object MavenPluginModuleSpec extends KyoSpecDefault:
+object MavenPluginModuleSpec extends ZIOSpecDefault:
 
     private val expectedCoreExtensionParticipant =
       "io.eleven19.mill.interceptor.maven.plugin.extension.MillInterceptorLifecycleParticipant"

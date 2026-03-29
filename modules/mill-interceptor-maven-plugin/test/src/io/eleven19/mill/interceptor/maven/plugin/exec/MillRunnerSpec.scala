@@ -9,15 +9,15 @@ import io.eleven19.mill.interceptor.model.ExecutionRequestKind
 import io.eleven19.mill.interceptor.model.MillExecutionPlan
 import io.eleven19.mill.interceptor.model.ModuleRef
 import io.eleven19.mill.interceptor.model.PlanStep
-import kyo.*
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import zio.test.*
 
-object MillRunnerSpec extends KyoSpecDefault:
+given canEqualOsPath: CanEqual[os.Path, os.Path] = CanEqual.derived
+
+object MillRunnerSpec extends ZIOSpecDefault:
 
     private def request(
-        moduleRoot: Path = Path("/repo", "module-a"),
+        moduleRoot: Path = Path("/repo") / "module-a",
         properties: Map[String, String] = Map.empty
     ): ExecutionRequest =
         ExecutionRequest(
@@ -71,7 +71,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                 DryRunStep(
                     kind = RunnerStepKind.InvokeMill,
                     command = Some(Seq("millw", "compile", "test")),
-                    workingDirectory = Path("/repo", "build")
+                    workingDirectory = Path("/repo") / "build"
                 )
             ))
         },
@@ -170,35 +170,35 @@ object MillRunnerSpec extends KyoSpecDefault:
         },
         suite("execute")(
             test("prefers a module-local mill launcher when the repo root does not provide one") {
-                val root = Path("out", "mill-runner-tests", "module-local-launcher")
-                val moduleRoot = Path(root, "module-a")
-                val launcher = childPath(moduleRoot, "mill")
+                val root = os.Path(java.nio.file.Paths.get("out", "mill-runner-tests", "module-local-launcher").toAbsolutePath)
+                val moduleRoot = root / "module-a"
+                val launcher = moduleRoot / "mill"
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
-                    request = request(moduleRoot = moduleRoot).copy(repoRoot = Path(root, "repo-root-without-launcher")),
+                    request = request(moduleRoot = moduleRoot).copy(repoRoot = root / "repo-root-without-launcher"),
                     executionMode = ExecutionMode.Strict,
                     steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
                 )
 
-                for
-                    _ <- root.removeAll
-                    _ <- moduleRoot.mkDir
-                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
-                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
-                    _ <- root.removeAll
-                yield result match
+                os.remove.all(root)
+                os.makeDir.all(moduleRoot)
+                os.write(launcher, "#!/usr/bin/env bash\nexit 0\n")
+                val result = MillRunner.execute(plan, EffectiveConfig(), executor)
+                os.remove.all(root)
+
+                result match
                     case RunnerResult.Success(stepResults) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
                                 kind = RunnerStepKind.InvokeMill,
-                                command = Some(Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile")),
+                                command = Some(Seq(moduleRoot.toNIO.resolve("mill").toString, "__.compile")),
                                 exitCode = Some(0)
                             )
                         )) &&
                         assertTrue(executor.calls == Seq(
                             (
-                                Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
-                                Path(root, "repo-root-without-launcher"),
+                                Seq(moduleRoot.toNIO.resolve("mill").toString, "__.compile"),
+                                root / "repo-root-without-launcher",
                                 Map.empty[String, String]
                             )
                         ))
@@ -206,11 +206,10 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(false)
             },
             test("prefers a module-local mill launcher for absolute module roots") {
-                val root = Path("out", "mill-runner-tests", "absolute-module-local-launcher")
-                val absoluteRoot = Path(root.toJava.toAbsolutePath.normalize.toString)
-                val moduleRoot = Path(absoluteRoot, "module-a")
-                val repoRoot = Path(absoluteRoot, "repo-root-without-launcher")
-                val launcher = childPath(moduleRoot, "mill")
+                val root = os.Path(java.nio.file.Paths.get("out", "mill-runner-tests", "absolute-module-local-launcher").toAbsolutePath)
+                val moduleRoot = root / "module-a"
+                val repoRoot = root / "repo-root-without-launcher"
+                val launcher = moduleRoot / "mill"
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
                     request = request(moduleRoot = moduleRoot).copy(repoRoot = repoRoot),
@@ -218,24 +217,24 @@ object MillRunnerSpec extends KyoSpecDefault:
                     steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
                 )
 
-                for
-                    _ <- absoluteRoot.removeAll
-                    _ <- moduleRoot.mkDir
-                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
-                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
-                    _ <- absoluteRoot.removeAll
-                yield result match
+                os.remove.all(root)
+                os.makeDir.all(moduleRoot)
+                os.write(launcher, "#!/usr/bin/env bash\nexit 0\n")
+                val result = MillRunner.execute(plan, EffectiveConfig(), executor)
+                os.remove.all(root)
+
+                result match
                     case RunnerResult.Success(stepResults) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
                                 kind = RunnerStepKind.InvokeMill,
-                                command = Some(Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile")),
+                                command = Some(Seq(moduleRoot.toNIO.resolve("mill").toString, "__.compile")),
                                 exitCode = Some(0)
                             )
                         )) &&
                         assertTrue(executor.calls == Seq(
                             (
-                                Seq(moduleRoot.toJava.resolve("mill").toString, "__.compile"),
+                                Seq(moduleRoot.toNIO.resolve("mill").toString, "__.compile"),
                                 repoRoot,
                                 Map.empty[String, String]
                             )
@@ -244,33 +243,33 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(false)
             },
             test("prefers a repo-local mill launcher when no executable override is configured") {
-                val root = Path("out", "mill-runner-tests", "local-launcher")
-                val launcher = childPath(root, "mill")
+                val root = os.Path(java.nio.file.Paths.get("out", "mill-runner-tests", "local-launcher").toAbsolutePath)
+                val launcher = root / "mill"
                 val executor = new RecordingExecutor(Seq(0))
                 val plan = MillExecutionPlan(
-                    request = request(moduleRoot = Path(root, "module-a")).copy(repoRoot = root),
+                    request = request(moduleRoot = root / "module-a").copy(repoRoot = root),
                     executionMode = ExecutionMode.Strict,
                     steps = Seq(PlanStep.InvokeMill(Seq("__.compile")))
                 )
 
-                for
-                    _ <- root.removeAll
-                    _ <- root.mkDir
-                    _ <- launcher.write("#!/usr/bin/env bash\nexit 0\n")
-                    result <- MillRunner.execute(plan, EffectiveConfig(), executor)
-                    _ <- root.removeAll
-                yield result match
+                os.remove.all(root)
+                os.makeDir.all(root)
+                os.write(launcher, "#!/usr/bin/env bash\nexit 0\n")
+                val result = MillRunner.execute(plan, EffectiveConfig(), executor)
+                os.remove.all(root)
+
+                result match
                     case RunnerResult.Success(stepResults) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
                                 kind = RunnerStepKind.InvokeMill,
-                                command = Some(Seq(root.toJava.resolve("mill").toString, "__.compile")),
+                                command = Some(Seq(root.toNIO.resolve("mill").toString, "__.compile")),
                                 exitCode = Some(0)
                             )
                         )) &&
                         assertTrue(executor.calls == Seq(
                             (
-                                Seq(root.toJava.resolve("mill").toString, "__.compile"),
+                                Seq(root.toNIO.resolve("mill").toString, "__.compile"),
                                 root,
                                 Map.empty[String, String]
                             )
@@ -293,12 +292,14 @@ object MillRunnerSpec extends KyoSpecDefault:
                     )
                 )
 
-                MillRunner.execute(
+                val result = MillRunner.execute(
                     plan,
                     EffectiveConfig(mill = MillConfig(executable = "millw")),
                     executor,
                     sink
-                ).map {
+                )
+
+                result match
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
                         assertTrue(failure == RunnerFailure.FailStep(
@@ -318,7 +319,6 @@ object MillRunnerSpec extends KyoSpecDefault:
                         assertTrue(executor.calls.isEmpty)
                     case other =>
                         assertTrue(false)
-                }
             },
             test("returns probe failures with the probe command and exit code") {
                 val executor = new RecordingExecutor(Seq(17))
@@ -329,7 +329,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     steps = Seq(PlanStep.ProbeTarget("checkFormat"))
                 )
 
-                MillRunner.execute(
+                val result = MillRunner.execute(
                     plan,
                     EffectiveConfig(
                         mill = MillConfig(
@@ -339,7 +339,9 @@ object MillRunnerSpec extends KyoSpecDefault:
                     ),
                     executor,
                     sink
-                ).map {
+                )
+
+                result match
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults.isEmpty) &&
                         assertTrue(failure == RunnerFailure.ProbeFailure(
@@ -371,7 +373,6 @@ object MillRunnerSpec extends KyoSpecDefault:
                         ))
                     case other =>
                         assertTrue(false)
-                }
             },
             test("returns invocation failures with the invocation command and exit code") {
                 val executor = new RecordingExecutor(Seq(0, 9))
@@ -385,7 +386,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     )
                 )
 
-                MillRunner.execute(
+                val result = MillRunner.execute(
                     plan,
                     EffectiveConfig(
                         mill = MillConfig(
@@ -395,7 +396,9 @@ object MillRunnerSpec extends KyoSpecDefault:
                     ),
                     executor,
                     sink
-                ).map {
+                )
+
+                result match
                     case RunnerResult.Failure(stepResults, failure) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
@@ -444,7 +447,6 @@ object MillRunnerSpec extends KyoSpecDefault:
                         ))
                     case other =>
                         assertTrue(false)
-                }
             },
             test("accumulates ordered step results for successful execution") {
                 val executor = new RecordingExecutor(Seq(0, 0))
@@ -458,7 +460,7 @@ object MillRunnerSpec extends KyoSpecDefault:
                     )
                 )
 
-                MillRunner.execute(
+                val result = MillRunner.execute(
                     plan,
                     EffectiveConfig(
                         mill = MillConfig(
@@ -468,7 +470,9 @@ object MillRunnerSpec extends KyoSpecDefault:
                     ),
                     executor,
                     sink
-                ).map {
+                )
+
+                result match
                     case RunnerResult.Success(stepResults) =>
                         assertTrue(stepResults == Seq(
                             StepResult(
@@ -516,21 +520,15 @@ object MillRunnerSpec extends KyoSpecDefault:
                         ))
                     case other =>
                         assertTrue(false)
-                }
             }
         )
     )
-
-    private def childPath(base: Path, child: String): Path =
-        Path(base.toJava.resolve(child).toString)
 
     private final class RecordingExecutor(exitCodes: Seq[Int] = Seq.empty) extends MillRunner.SubprocessExecutor:
         private val callsBuffer = scala.collection.mutable.ArrayBuffer.empty[(Seq[String], Path, Map[String, String])]
 
         def calls: Seq[(Seq[String], Path, Map[String, String])] = callsBuffer.toSeq
 
-        def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int < Sync =
-            Sync.defer {
-                callsBuffer.append((command, workingDirectory, environment))
-                exitCodes.lift(callsBuffer.size - 1).getOrElse(0)
-            }
+        def run(command: Seq[String], workingDirectory: Path, environment: Map[String, String]): Int =
+            callsBuffer.append((command, workingDirectory, environment))
+            exitCodes.lift(callsBuffer.size - 1).getOrElse(0)

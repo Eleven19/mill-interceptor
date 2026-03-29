@@ -1,11 +1,10 @@
 package io.eleven19.mill.interceptor.maven.plugin.model
 
 import io.eleven19.mill.interceptor.model.*
-import kyo.Path
-import kyo.test.KyoSpecDefault
+import os.Path
 import zio.test.*
 
-object MillExecutionPlanSpec extends KyoSpecDefault:
+object MillExecutionPlanSpec extends ZIOSpecDefault:
 
     def spec: Spec[Any, Any] = suite("MillExecutionPlan")(
         test("models lifecycle requests as ordered execution plans") {
@@ -13,7 +12,7 @@ object MillExecutionPlanSpec extends KyoSpecDefault:
                 kind = ExecutionRequestKind.LifecyclePhase,
                 requestedName = "validate",
                 repoRoot = Path("/repo"),
-                moduleRoot = Path("/repo", "module-a"),
+                moduleRoot = Path("/repo") / "module-a",
                 module = ModuleRef(
                     artifactId = "module-a",
                     packaging = "jar"
@@ -42,7 +41,7 @@ object MillExecutionPlanSpec extends KyoSpecDefault:
                 kind = ExecutionRequestKind.ExplicitGoal,
                 requestedName = "inspect-plan",
                 repoRoot = Path("/repo"),
-                moduleRoot = Path("/repo", "module-b"),
+                moduleRoot = Path("/repo") / "module-b",
                 module = ModuleRef(
                     artifactId = "module-b",
                     packaging = "pom"
@@ -59,7 +58,7 @@ object MillExecutionPlanSpec extends KyoSpecDefault:
                     kind = ExecutionRequestKind.ExplicitGoal,
                     requestedName = "deploy-site",
                     repoRoot = Path("/repo"),
-                    moduleRoot = Path("/repo", "module-c"),
+                    moduleRoot = Path("/repo") / "module-c",
                     module = ModuleRef(
                         artifactId = "module-c",
                         packaging = "jar"

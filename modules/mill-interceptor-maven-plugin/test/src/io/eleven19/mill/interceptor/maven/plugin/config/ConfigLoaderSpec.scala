@@ -1,22 +1,19 @@
 package io.eleven19.mill.interceptor.maven.plugin.config
 
-import kyo.*
-import kyo.test.KyoSpecDefault
 import zio.test.*
 
 import java.lang.System as JSystem
-import java.nio.file.Files
 
-object ConfigLoaderSpec extends KyoSpecDefault:
+object ConfigLoaderSpec extends ZIOSpecDefault:
 
-    private def tempPath(name: String): Path =
-        Path("out", "maven-plugin-config-loader-tests", name)
+    private def tempPath(name: String): os.Path =
+        os.Path(java.nio.file.Paths.get("out", "maven-plugin-config-loader-tests", name).toAbsolutePath)
 
     def spec: Spec[Any, Any] = suite("ConfigLoader")(
         test("loads YAML-only config") {
             val root       = tempPath(s"yaml-only-${JSystem.nanoTime()}")
-            val moduleRoot = Path(root, "module-a")
-            val repoYaml   = Path(root, "mill-interceptor.yaml")
+            val moduleRoot = root / "module-a"
+            val repoYaml   = root / "mill-interceptor.yaml"
 
             val yaml =
                 """mode: strict
@@ -32,24 +29,24 @@ object ConfigLoaderSpec extends KyoSpecDefault:
                   |  scalafmtTarget: __.checkFormat
                   |""".stripMargin
 
-            for
-                _ <- root.removeAll
-                _ <- writeFile(repoYaml, yaml)
-                loaded <- ConfigLoader.load(repoRoot = root, moduleRoot = moduleRoot)
-                _ <- root.removeAll
-            yield
-                assertTrue(loaded.mode == "strict") &&
-                assertTrue(loaded.mill.executable == "./millw") &&
-                assertTrue(loaded.mill.environment == Map("JAVA_HOME" -> "/opt/java")) &&
-                assertTrue(loaded.lifecycle == Map("compile" -> Seq("app.compile"))) &&
-                assertTrue(loaded.validate.scalafmtEnabled) &&
-                assertTrue(loaded.validate.scalafmtTarget.contains("__.checkFormat"))
+            os.remove.all(root)
+            writeFile(repoYaml, yaml)
+            val loaded = ConfigLoader.load(repoRoot = root, moduleRoot = moduleRoot)
+            os.remove.all(root)
+
+            assertTrue(loaded.isRight) &&
+            assertTrue(loaded.exists(_.mode == "strict")) &&
+            assertTrue(loaded.exists(_.mill.executable == "./millw")) &&
+            assertTrue(loaded.exists(_.mill.environment == Map("JAVA_HOME" -> "/opt/java"))) &&
+            assertTrue(loaded.exists(_.lifecycle == Map("compile" -> Seq("app.compile")))) &&
+            assertTrue(loaded.exists(_.validate.scalafmtEnabled)) &&
+            assertTrue(loaded.exists(_.validate.scalafmtTarget.contains("__.checkFormat")))
         },
         test("allows PKL to override YAML-derived values") {
             val root       = tempPath(s"pkl-override-${JSystem.nanoTime()}")
-            val moduleRoot = Path(root, "module-b")
-            val repoYaml   = Path(root, "mill-interceptor.yaml")
-            val repoPkl    = Path(root, "mill-interceptor.pkl")
+            val moduleRoot = root / "module-b"
+            val repoYaml   = root / "mill-interceptor.yaml"
+            val repoPkl    = root / "mill-interceptor.pkl"
 
             val yaml =
                 """mill:
@@ -69,21 +66,21 @@ object ConfigLoaderSpec extends KyoSpecDefault:
                   |}
                   |""".stripMargin
 
-            for
-                _ <- root.removeAll
-                _ <- writeFile(repoYaml, yaml)
-                _ <- writeFile(repoPkl, pkl)
-                loaded <- ConfigLoader.load(repoRoot = root, moduleRoot = moduleRoot)
-                _ <- root.removeAll
-            yield
-                assertTrue(loaded.mill.executable == "./mill") &&
-                assertTrue(loaded.lifecycle == Map("compile" -> Seq("core.compile")))
+            os.remove.all(root)
+            writeFile(repoYaml, yaml)
+            writeFile(repoPkl, pkl)
+            val loaded = ConfigLoader.load(repoRoot = root, moduleRoot = moduleRoot)
+            os.remove.all(root)
+
+            assertTrue(loaded.isRight) &&
+            assertTrue(loaded.exists(_.mill.executable == "./mill")) &&
+            assertTrue(loaded.exists(_.lifecycle == Map("compile" -> Seq("core.compile"))))
         },
         test("applies module overrides after repository defaults") {
             val root         = tempPath(s"module-override-${JSystem.nanoTime()}")
-            val moduleRoot   = Path(root, "module-c")
-            val repoYaml     = Path(root, "mill-interceptor.yaml")
-            val moduleConfig = Path(moduleRoot, "mill-interceptor.yaml")
+            val moduleRoot   = root / "module-c"
+            val repoYaml     = root / "mill-interceptor.yaml"
+            val moduleConfig = moduleRoot / "mill-interceptor.yaml"
 
             val repoYamlText =
                 """lifecycle:
@@ -100,46 +97,35 @@ object ConfigLoaderSpec extends KyoSpecDefault:
                   |    - interceptor.inspect
                   |""".stripMargin
 
-            for
-                _ <- root.removeAll
-                _ <- writeFile(repoYaml, repoYamlText)
-                _ <- writeFile(moduleConfig, moduleYamlText)
-                loaded <- ConfigLoader.load(repoRoot = root, moduleRoot = moduleRoot)
-                _ <- root.removeAll
-            yield
-                assertTrue(loaded.lifecycle == Map("test" -> Seq("module.test"))) &&
-                assertTrue(loaded.goals == Map("inspect-plan" -> Seq("interceptor.inspect")))
+            os.remove.all(root)
+            writeFile(repoYaml, repoYamlText)
+            writeFile(moduleConfig, moduleYamlText)
+            val loaded = ConfigLoader.load(repoRoot = root, moduleRoot = moduleRoot)
+            os.remove.all(root)
+
+            assertTrue(loaded.isRight) &&
+            assertTrue(loaded.exists(_.lifecycle == Map("test" -> Seq("module.test")))) &&
+            assertTrue(loaded.exists(_.goals == Map("inspect-plan" -> Seq("interceptor.inspect"))))
         },
         test("reports malformed config with the source path") {
             val root       = tempPath(s"malformed-${JSystem.nanoTime()}")
-            val moduleRoot = Path(root, "module-d")
-            val repoYaml   = Path(root, "mill-interceptor.yaml")
+            val moduleRoot = root / "module-d"
+            val repoYaml   = root / "mill-interceptor.yaml"
 
-            for
-                _ <- root.removeAll
-                _ <- writeFile(repoYaml, "mill: [")
-                exit <- Abort.run[ConfigLoadException](ConfigLoader.load(root, moduleRoot))
-                _ <- root.removeAll
-            yield
-                assertTrue(
-                    exit match
-                        case kyo.Result.Error(error: ConfigLoadException) =>
-                            error.getMessage.contains(repoYaml.toString)
-                        case _ => false
-                )
+            os.remove.all(root)
+            writeFile(repoYaml, "mill: [")
+            val result = ConfigLoader.load(root, moduleRoot)
+            os.remove.all(root)
+
+            assertTrue(
+                result match
+                    case Left(error: ConfigLoadException) =>
+                        error.getMessage.contains(repoYaml.toString)
+                    case _ => false
+            )
         }
     )
 
-    private def writeFile(path: Path, contents: String): Unit < Sync =
-        for
-            _ <- ensureParentDirectory(path)
-            _ <- path.write(contents)
-        yield ()
-
-    private def ensureParentDirectory(path: Path): Unit < Sync =
-        Sync.defer {
-            val parent = path.toJava.getParent
-            if parent != null then
-                val _ = Files.createDirectories(parent)
-            ()
-        }
+    private def writeFile(path: os.Path, contents: String): Unit =
+        os.makeDir.all(path / os.up)
+        os.write(path, contents)
