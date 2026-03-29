@@ -33,7 +33,7 @@ object MillRunnerSpec extends KyoSpecDefault:
         )
 
     def spec: Spec[Any, Any] = suite("MillRunner")(
-        test("renders probe steps as mill resolve commands with the module working directory") {
+        test("renders probe steps as mill resolve commands with the repo root working directory") {
             val plan = MillExecutionPlan(
                 request = request(),
                 executionMode = ExecutionMode.Strict,

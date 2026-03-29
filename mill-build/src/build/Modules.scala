@@ -159,6 +159,8 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
     Seq(s"${pomSettings().organization}:${artifactId()}:${publishVersion()}")
   }
 
+  // Keep these parameter declarations in sync with the @Parameter fields in
+  // modules/mill-interceptor-maven-plugin/src/io/eleven19/mill/interceptor/maven/plugin/mojo/AbstractForwardingMojo.scala
   private val forwardingMojoParameters: String =
     """|      <parameters>
        |        <parameter>
