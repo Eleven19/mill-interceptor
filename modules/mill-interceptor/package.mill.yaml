@@ -5,6 +5,7 @@ mainClass: io.eleven19.mill.interceptor.Main
 
 mvnDeps:
   - com.github.alexarchambault::case-app::2.1.0
+  - com.lihaoyi::os-lib::0.11.4
   - com.outr::scribe::3.18.0
   - com.softwaremill.ox::core::1.0.4
   - com.github.ghostdogpr::purelogic::0.2.0
