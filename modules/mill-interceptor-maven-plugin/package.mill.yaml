@@ -10,9 +10,7 @@ moduleDeps:
 
 mvnDeps:
   - com.outr::scribe::3.18.0
-  - io.getkyo::kyo-core::1.0-RC1
-  - io.getkyo::kyo-direct:1.0-RC1
-  - io.getkyo::kyo-prelude:1.0-RC1
+  - com.github.ghostdogpr::purelogic::0.2.0
   - javax.inject:javax.inject:1
   - org.apache.maven:maven-core:3.9.9
   - org.apache.maven:maven-plugin-api:3.9.9
@@ -28,7 +26,6 @@ object test:
   mvnDeps:
     - dev.zio::zio-test::2.1.24
     - dev.zio::zio-test-sbt::2.1.24
-    - io.getkyo::kyo-zio-test::1.0-RC1
 
 object itest:
   extends:
@@ -37,4 +34,3 @@ object itest:
   mvnDeps:
     - dev.zio::zio-test::2.1.24
     - dev.zio::zio-test-sbt::2.1.24
-    - io.getkyo::kyo-zio-test::1.0-RC1
