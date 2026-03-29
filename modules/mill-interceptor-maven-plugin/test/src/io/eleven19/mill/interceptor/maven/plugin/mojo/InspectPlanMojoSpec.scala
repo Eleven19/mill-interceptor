@@ -54,7 +54,7 @@ object InspectPlanMojoSpec extends KyoSpecDefault:
             assertTrue(log.infoMessages.exists(_.contains("probe: millw resolve __.checkFormat"))) &&
             assertTrue(log.infoMessages.exists(_.contains("invoke: millw __.checkFormat"))) &&
             assertTrue(log.infoMessages.exists(_.contains("invoke: millw app.validate"))) &&
-            assertTrue(log.infoMessages.count(_.contains("cwd: /repo/modules/app")) == 3)
+            assertTrue(log.infoMessages.count(_.contains("cwd: /repo")) == 3)
         },
         test("falls back to the module root when Maven does not provide an execution root directory") {
             val mojo = new DerivedContextInspectPlanMojo

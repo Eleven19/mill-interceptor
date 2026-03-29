@@ -195,6 +195,47 @@ object MavenPluginIntegrationSpec extends KyoSpecDefault:
                 assertTrue(!compileApp.output.contains("missing.compile")) &&
                 assertTrue(compileApp.output.contains("BUILD SUCCESS"))
         },
+        test("applies module-level PKL overrides over repository YAML in a multi-module reactor") {
+            val tempDir    = tempPath(s"pkl-override-${JSystem.nanoTime()}")
+            val localRepo  = Path(tempDir, "m2-repository")
+            val fixtureDir = Path(tempDir, "fixture")
+
+            for
+                _ <- tempDir.removeAll
+                _ <- tempDir.mkDir
+                mavenCmd <- resolveMavenExecutable(tempDir)
+                _ <- copyFixtureDirectory("fixtures/pkl-module-override", fixtureDir)
+                _ <- installRepoMillLauncher(fixtureDir)
+                install <- installRequiredArtifacts(mavenCmd, tempDir, localRepo)
+                compileLib <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "-pl",
+                        "lib",
+                        "compile"
+                    ),
+                    fixtureDir
+                )
+                compileApp <- runCommand(
+                    Seq(
+                        mavenCmd,
+                        s"-Dmaven.repo.local=${absolute(localRepo)}",
+                        "-pl",
+                        "app",
+                        "compile"
+                    ),
+                    fixtureDir
+                )
+                _ <- tempDir.removeAll
+            yield
+                assertTrue(install.exitCode == 0) &&
+                assertTrue(compileLib.exitCode != 0) &&
+                assertTrue(compileLib.output.contains("missing.compile")) &&
+                assertTrue(compileApp.exitCode == 0) &&
+                assertTrue(!compileApp.output.contains("missing.compile")) &&
+                assertTrue(compileApp.output.contains("BUILD SUCCESS"))
+        },
         test("fails clearly in strict mode when a configured lifecycle target is unavailable") {
             val tempDir    = tempPath(s"strict-${JSystem.nanoTime()}")
             val localRepo  = Path(tempDir, "m2-repository")

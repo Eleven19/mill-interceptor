@@ -159,14 +159,22 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
     Seq(s"${pomSettings().organization}:${artifactId()}:${publishVersion()}")
   }
 
+  private val mojoDescriptorMetaClass =
+    "io.eleven19.mill.interceptor.maven.plugin.MojoDescriptorMeta"
+
   private def pluginDescriptor(
       organization: String,
       description: String,
       publishedArtifactId: String,
-      version: String
+      version: String,
+      forwardingParamsXml: String
   ): String =
     val mojos = supportedGoals
       .map { goal =>
+        val isForwarding = goal._2 != describeImplementation
+        val paramsAndConfig =
+          if isForwarding then forwardingParamsXml
+          else "      <parameters/>\n      <configuration/>"
         s"""    <mojo>
       <goal>${goal._1}</goal>
       <description>${goal._3}</description>
@@ -175,8 +183,7 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
       <instantiationStrategy>per-lookup</instantiationStrategy>
       <executionStrategy>once-per-session</executionStrategy>
       <threadSafe>true</threadSafe>
-      <parameters/>
-      <configuration/>
+$paramsAndConfig
     </mojo>"""
       }
       .mkString("\n")
@@ -198,6 +205,11 @@ $mojos
 """
 
   def generatedPluginResources = Task {
+    val compiled = compile()
+    val cpEntries = (compiled.classes.path +: compileClasspath().toSeq.map(_.path)).map(_.toString)
+    val forwardingParamsXml = os.proc("java", "-cp", cpEntries.mkString(java.io.File.pathSeparator), mojoDescriptorMetaClass)
+      .call(cwd = Task.dest)
+      .out.text()
     val pom = pomSettings()
     val descriptorDir = Task.dest / "META-INF" / "maven"
     os.makeDir.all(descriptorDir)
@@ -207,7 +219,8 @@ $mojos
         pom.organization,
         pom.description,
         artifactId(),
-        publishVersion()
+        publishVersion(),
+        forwardingParamsXml
       ),
       createFolders = true
     )
@@ -230,8 +243,8 @@ $mojos
       }
   }
 
-  override def compileResources = Task {
-    super.compileResources() ++ Seq(generatedPluginResources())
+  override def resources = Task {
+    super.resources() ++ Seq(generatedPluginResources())
   }
 
   override def pomPackagingType = "maven-plugin"
