@@ -9,10 +9,12 @@ object ConfigLoader:
     /** Discover, merge, and finalize repo and module config into one effective view. */
     def load(repoRoot: os.Path, moduleRoot: os.Path): Either[ConfigLoadException, EffectiveConfig] =
         val discovered = ConfigDiscovery.discover(repoRoot, moduleRoot)
-        discovered.foldLeft[Either[ConfigLoadException, ConfigOverlay]](Right(ConfigOverlay())) {
-            case (Right(current), source) => loadOverlay(source).map(current.merge)
-            case (left, _)               => left
-        }.map(_.toEffectiveConfig)
+        discovered
+            .foldLeft[Either[ConfigLoadException, ConfigOverlay]](Right(ConfigOverlay())) {
+                case (Right(current), source) => loadOverlay(source).map(current.merge)
+                case (left, _)                => left
+            }
+            .map(_.toEffectiveConfig)
 
     private def loadOverlay(
         source: DiscoveredConfigSource
@@ -27,5 +29,4 @@ object ConfigLoader:
             content.as[ConfigOverlay] match
                 case Right(decoded) => Right(decoded)
                 case Left(error)    => Left(ConfigLoadException(path, error.toString))
-        catch
-            case error: Throwable => Left(ConfigLoadException(path, error.getMessage.nn, error))
+        catch case error: Throwable => Left(ConfigLoadException(path, error.getMessage.nn, error))

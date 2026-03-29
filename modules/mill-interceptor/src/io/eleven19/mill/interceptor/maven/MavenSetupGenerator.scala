@@ -22,9 +22,9 @@ object MavenSetupGenerator:
     ): Either[IllegalArgumentException, List[GeneratedSetupFile]] =
         for
             repoRoot <- detectRepoRoot(startPath)
-            files     = plannedFiles(repoRoot, options.format, extensionVersion)
-            _        <- validateWritable(files, options.force)
-            _         = if !options.dryRun then writeFiles(files)
+            files = plannedFiles(repoRoot, options.format, extensionVersion)
+            _ <- validateWritable(files, options.force)
+            _ = if !options.dryRun then writeFiles(files)
         yield files.map(file => GeneratedSetupFile(file.path, file.content))
 
     def renderExtensionsXml(extensionVersion: String): String =
@@ -135,9 +135,11 @@ object MavenSetupGenerator:
         def loop(current: java.nio.file.Path | Null): Either[IllegalArgumentException, os.Path] =
             current match
                 case null =>
-                    Left(new IllegalArgumentException(
-                        s"Could not find repo root from ${startPath}. Expected a parent containing .git"
-                    ))
+                    Left(
+                        new IllegalArgumentException(
+                            s"Could not find repo root from ${startPath}. Expected a parent containing .git"
+                        )
+                    )
                 case path if path.resolve(".git").toFile.exists() => Right(os.Path(path))
                 case path                                         => loop(path.getParent)
 

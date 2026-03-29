@@ -39,14 +39,16 @@ object MillRunner:
 
         val live: SubprocessExecutor = new SubprocessExecutor:
             def run(command: Seq[String], workingDirectory: os.Path, environment: Map[String, String]): Int =
-                val result = os.proc(command).call(
-                    cwd = workingDirectory,
-                    env = environment,
-                    stdin = os.Inherit,
-                    stdout = os.Inherit,
-                    stderr = os.Inherit,
-                    check = false
-                )
+                val result = os
+                    .proc(command)
+                    .call(
+                        cwd = workingDirectory,
+                        env = environment,
+                        stdin = os.Inherit,
+                        stdout = os.Inherit,
+                        stderr = os.Inherit,
+                        check = false
+                    )
                 result.exitCode
 
     /** Render a plan without running subprocesses. */
@@ -62,7 +64,7 @@ object MillRunner:
         executor: SubprocessExecutor = SubprocessExecutor.live,
         sink: ExecutionEventSink = ExecutionEventSink.noop
     ): RunnerResult =
-        val executable   = resolveExecutable(plan.request, config)
+        val executable    = resolveExecutable(plan.request, config)
         val forwardedArgs = forwardedPropertyArgs(plan.request)
         executeSteps(
             plan.steps,

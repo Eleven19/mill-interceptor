@@ -27,10 +27,13 @@ object Gradle:
 
                 val millArgs = millTasks.flatMap(_.toArgs)
                 scribe.info(s"Executing: mill ${millArgs.mkString(" ")}")
-                val exitCode = os.proc("mill" +: millArgs).call(
-                    stdin = os.Inherit,
-                    stdout = os.Inherit,
-                    stderr = os.Inherit,
-                    check = false
-                ).exitCode
+                val exitCode = os
+                    .proc("mill" +: millArgs)
+                    .call(
+                        stdin = os.Inherit,
+                        stdout = os.Inherit,
+                        stderr = os.Inherit,
+                        check = false
+                    )
+                    .exitCode
                 if exitCode != 0 then throw new RuntimeException(s"Mill exited with code $exitCode")

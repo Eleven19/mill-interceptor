@@ -41,8 +41,8 @@ object Cli:
 
     /** Parse CLI arguments into a [[CliResult]].
       *
-      * Returns a pure [[CliResult]] or a `Left[IllegalArgumentException]` for invalid input, keeping the
-      * parsing itself testable and composable.
+      * Returns a pure [[CliResult]] or a `Left[IllegalArgumentException]` for invalid input, keeping the parsing itself
+      * testable and composable.
       */
     def parse(args: List[String]): Either[IllegalArgumentException, CliResult] =
         args match

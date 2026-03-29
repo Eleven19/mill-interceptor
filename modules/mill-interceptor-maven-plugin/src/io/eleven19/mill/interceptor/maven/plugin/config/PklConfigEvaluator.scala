@@ -18,7 +18,7 @@ object PklConfigEvaluator:
             finally evaluator.close()
         catch
             case error: ConfigLoadException => Left(error)
-            case error: Throwable => Left(ConfigLoadException(path, error.getMessage.nn, error))
+            case error: Throwable           => Left(ConfigLoadException(path, error.getMessage.nn, error))
 
     private def toRawMap(module: PModule): Map[String, Any] =
         module.getProperties.asScala.toMap.view.mapValues(convertValue).toMap
