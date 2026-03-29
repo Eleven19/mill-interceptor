@@ -159,89 +159,21 @@ trait MavenPluginSupport extends mill.Module with PublishModule with SonatypeCen
     Seq(s"${pomSettings().organization}:${artifactId()}:${publishVersion()}")
   }
 
-  // Keep these parameter declarations in sync with the @Parameter fields in
-  // modules/mill-interceptor-maven-plugin/src/io/eleven19/mill/interceptor/maven/plugin/mojo/AbstractForwardingMojo.scala
-  private val forwardingMojoParameters: String =
-    """|      <parameters>
-       |        <parameter>
-       |          <name>repoRootDirectory</name>
-       |          <type>java.io.File</type>
-       |          <required>true</required>
-       |          <editable>false</editable>
-       |          <description>Root directory of the repository</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>moduleRootDirectory</name>
-       |          <type>java.io.File</type>
-       |          <required>true</required>
-       |          <editable>false</editable>
-       |          <description>Base directory of the current Maven module</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>mavenSession</name>
-       |          <type>org.apache.maven.execution.MavenSession</type>
-       |          <required>false</required>
-       |          <editable>false</editable>
-       |          <description>The current Maven session</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>mavenProject</name>
-       |          <type>org.apache.maven.project.MavenProject</type>
-       |          <required>false</required>
-       |          <editable>false</editable>
-       |          <description>The current Maven project</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>artifactId</name>
-       |          <type>java.lang.String</type>
-       |          <required>true</required>
-       |          <editable>false</editable>
-       |          <description>The project artifact ID</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>packaging</name>
-       |          <type>java.lang.String</type>
-       |          <required>true</required>
-       |          <editable>false</editable>
-       |          <description>The project packaging type</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>groupId</name>
-       |          <type>java.lang.String</type>
-       |          <required>true</required>
-       |          <editable>false</editable>
-       |          <description>The project group ID</description>
-       |        </parameter>
-       |        <parameter>
-       |          <name>sessionUserProperties</name>
-       |          <type>java.util.Properties</type>
-       |          <required>false</required>
-       |          <editable>false</editable>
-       |          <description>User properties from the Maven session</description>
-       |        </parameter>
-       |      </parameters>
-       |      <configuration>
-       |        <repoRootDirectory implementation="java.io.File" default-value="${session.executionRootDirectory}"/>
-       |        <moduleRootDirectory implementation="java.io.File" default-value="${project.basedir}"/>
-       |        <mavenSession implementation="org.apache.maven.execution.MavenSession" default-value="${session}"/>
-       |        <mavenProject implementation="org.apache.maven.project.MavenProject" default-value="${project}"/>
-       |        <artifactId implementation="java.lang.String" default-value="${project.artifactId}"/>
-       |        <packaging implementation="java.lang.String" default-value="${project.packaging}"/>
-       |        <groupId implementation="java.lang.String" default-value="${project.groupId}"/>
-       |        <sessionUserProperties implementation="java.util.Properties" default-value="${session.userProperties}"/>
-       |      </configuration>""".stripMargin
+  private val mojoDescriptorMetaClass =
+    "io.eleven19.mill.interceptor.maven.plugin.MojoDescriptorMeta"
 
   private def pluginDescriptor(
       organization: String,
       description: String,
       publishedArtifactId: String,
-      version: String
+      version: String,
+      forwardingParamsXml: String
   ): String =
     val mojos = supportedGoals
       .map { goal =>
         val isForwarding = goal._2 != describeImplementation
         val paramsAndConfig =
-          if isForwarding then forwardingMojoParameters
+          if isForwarding then forwardingParamsXml
           else "      <parameters/>\n      <configuration/>"
         s"""    <mojo>
       <goal>${goal._1}</goal>
@@ -273,6 +205,11 @@ $mojos
 """
 
   def generatedPluginResources = Task {
+    val compiled = compile()
+    val cpEntries = (compiled.classes.path +: compileClasspath().toSeq.map(_.path)).map(_.toString)
+    val forwardingParamsXml = os.proc("java", "-cp", cpEntries.mkString(java.io.File.pathSeparator), mojoDescriptorMetaClass)
+      .call(cwd = Task.dest)
+      .out.text()
     val pom = pomSettings()
     val descriptorDir = Task.dest / "META-INF" / "maven"
     os.makeDir.all(descriptorDir)
@@ -282,7 +219,8 @@ $mojos
         pom.organization,
         pom.description,
         artifactId(),
-        publishVersion()
+        publishVersion(),
+        forwardingParamsXml
       ),
       createFolders = true
     )
@@ -305,8 +243,8 @@ $mojos
       }
   }
 
-  override def compileResources = Task {
-    super.compileResources() ++ Seq(generatedPluginResources())
+  override def resources = Task {
+    super.resources() ++ Seq(generatedPluginResources())
   }
 
   override def pomPackagingType = "maven-plugin"
