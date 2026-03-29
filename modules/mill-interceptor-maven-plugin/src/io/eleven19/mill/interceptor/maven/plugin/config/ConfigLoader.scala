@@ -9,13 +9,14 @@ object ConfigLoader:
 
     /** Discover, merge, and finalize repo and module config into one effective view. */
     def load(repoRoot: os.Path, moduleRoot: os.Path): Either[ConfigLoadException, EffectiveConfig] =
-        Abort[ConfigLoadException]:
+        Abort {
             val discovered = ConfigDiscovery.discover(repoRoot, moduleRoot)
             discovered
                 .foldLeft(ConfigOverlay()) { (current, source) =>
                     current.merge(loadOverlay(source))
                 }
                 .toEffectiveConfig
+        }
 
     private def loadOverlay(
         source: DiscoveredConfigSource

@@ -20,12 +20,13 @@ object MavenSetupGenerator:
         options: MavenSetupOptions,
         extensionVersion: String
     ): Either[IllegalArgumentException, List[GeneratedSetupFile]] =
-        Abort[IllegalArgumentException]:
+        Abort {
             val repoRoot = detectRepoRoot(startPath)
             val files    = plannedFiles(repoRoot, options.format, extensionVersion)
             validateWritable(files, options.force)
             if !options.dryRun then writeFiles(files)
             files.map(file => GeneratedSetupFile(file.path, file.content))
+        }
 
     def renderExtensionsXml(extensionVersion: String): String =
         val safeVersion = extensionVersion
