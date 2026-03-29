@@ -6,7 +6,6 @@ import io.eleven19.mill.interceptor.maven.plugin.mojo.MavenExecutionContext
 import java.io.File
 import org.apache.maven.execution.MavenSession
 import org.apache.maven.project.MavenProject
-import kyo.Path
 import scala.jdk.CollectionConverters.*
 
 /** Extension-side adapter for deriving lifecycle interception inputs from Maven session state.
@@ -53,8 +52,8 @@ object LifecycleInterceptionAdapter:
         MavenExecutionContext(
             kind = ExecutionRequestKind.LifecyclePhase,
             requestedName = phase,
-            repoRoot = Path(repoRootFile.getAbsolutePath),
-            moduleRoot = Path(moduleRootFile.getAbsolutePath),
+            repoRoot = os.Path(java.nio.file.Paths.get(repoRootFile.getAbsolutePath)),
+            moduleRoot = os.Path(java.nio.file.Paths.get(moduleRootFile.getAbsolutePath)),
             module = ModuleRef(
                 artifactId = Option(project.getArtifactId).getOrElse("unknown-artifact"),
                 packaging = Option(project.getPackaging).filter(_.nonEmpty).getOrElse("jar"),
