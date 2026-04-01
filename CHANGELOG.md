@@ -16,6 +16,25 @@ leading `v`.
 
 ### Documentation
 
+### CI
+
+## [0.4.0-rc.2] - 2026-04-01
+
+### Added
+
+- Added a cross-platform Node.js `milli.mjs` launcher for GitHub Releases alongside the native archives, assembly jar, and shell launchers.
+
+### Changed
+
+- Migrated the interceptor and Maven plugin implementation from Kyo to Ox plus direct PureLogic-style code paths.
+
+### Fixed
+
+- Fixed Maven plugin config loading precedence and added focused integration coverage for PKL module overrides.
+- Fixed strict-mode lifecycle handling so explicitly unmapped Maven phases fail clearly instead of silently succeeding.
+
+### Documentation
+
 - Documented the shared manual release flow that dispatches GitHub Releases and Maven Central publication together for the same version.
 - Introduced a generated documentation site with Scala 3 Scaladoc prose pages under `docs/_docs` and `docs/sidebar.yml`, and migrated core README/plugin guidance into the published site.
 
