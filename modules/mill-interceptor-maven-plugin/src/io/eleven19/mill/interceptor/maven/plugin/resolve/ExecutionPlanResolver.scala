@@ -35,6 +35,17 @@ object ExecutionPlanResolver:
         val lifecycleSteps = baseline.lifecycleMappings.get(request.requestedName) match
             case Some(targets) if targets.nonEmpty =>
                 Seq(PlanStep.InvokeMill(targets))
+            case Some(_)
+                if baseline.explicitLifecycleOverrides.contains(request.requestedName) &&
+                    baseline.executionMode == ExecutionMode.Strict =>
+                Seq(
+                    PlanStep.Fail(
+                        message = s"Lifecycle phase '${request.requestedName}' is explicitly unmapped in strict mode",
+                        guidance = Seq(
+                            "Remove the empty lifecycle override or map the phase in mill-interceptor.yaml or mill-interceptor.pkl"
+                        )
+                    )
+                )
             case Some(_) =>
                 Seq.empty
             case None =>

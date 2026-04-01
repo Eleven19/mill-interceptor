@@ -18,6 +18,7 @@ final case class ValidateBaseline(
 final case class LifecycleBaseline(
     executionMode: ExecutionMode,
     lifecycleMappings: Map[String, Seq[String]],
+    explicitLifecycleOverrides: Set[String],
     validate: ValidateBaseline
 ) derives CanEqual
 
@@ -47,6 +48,7 @@ object LifecycleBaseline:
         LifecycleBaseline(
             executionMode = ExecutionMode.fromString(config.mode),
             lifecycleMappings = defaultLifecycleMappings ++ config.lifecycle,
+            explicitLifecycleOverrides = config.lifecycle.keySet,
             validate = ValidateBaseline(
                 scalafmt = resolveScalafmtHook(config, properties)
             )

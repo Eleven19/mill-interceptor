@@ -23,6 +23,7 @@ object LifecycleBaselineSpec extends ZIOSpecDefault:
                     "deploy" -> Seq("compile", "test", "jar", "publish")
                 )
             ) &&
+            assertTrue(baseline.explicitLifecycleOverrides.isEmpty) &&
             assertTrue(
                 baseline.validate.scalafmt == Some(
                     ValidateScalafmtHook(
@@ -44,6 +45,7 @@ object LifecycleBaselineSpec extends ZIOSpecDefault:
 
             assertTrue(baseline.lifecycleMappings("compile") == Seq("core.compile")) &&
             assertTrue(baseline.lifecycleMappings("test") == Seq("core.compile", "core.test")) &&
+            assertTrue(baseline.explicitLifecycleOverrides == Set("compile", "test")) &&
             assertTrue(baseline.lifecycleMappings("package") == Seq("compile", "test", "jar"))
         },
         test("disables the optional validate scalafmt hook via config or property override") {

@@ -238,6 +238,59 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
             assertTrue(compilePhase.exitCode != 0) &&
             assertTrue(compilePhase.output.contains("BUILD FAILURE"))
         },
+        test("fails clearly in strict mode when configured lifecycle phases are explicitly unmapped") {
+            val tempDir    = tempPath(s"strict-unmapped-${JSystem.nanoTime()}")
+            val localRepo  = tempDir / "m2-repository"
+            val fixtureDir = tempDir / "fixture"
+
+            try os.remove.all(tempDir) catch case _: Exception => ()
+            os.makeDir.all(tempDir)
+            val mavenCmd = resolveMavenExecutable(tempDir)
+            copyFixtureDirectory("fixtures/strict-unmapped-phases", fixtureDir)
+            installRepoMillLauncher(fixtureDir)
+            val install = installRequiredArtifacts(mavenCmd, tempDir, localRepo)
+            writeStrictUnmappedConfig(fixtureDir, "compile")
+            val compilePhase = runCommand(
+                Seq(
+                    mavenCmd,
+                    s"-Dmaven.repo.local=${absolute(localRepo)}",
+                    "compile"
+                ),
+                fixtureDir
+            )
+            writeStrictUnmappedConfig(fixtureDir, "test")
+            val testPhase = runCommand(
+                Seq(
+                    mavenCmd,
+                    s"-Dmaven.repo.local=${absolute(localRepo)}",
+                    "test"
+                ),
+                fixtureDir
+            )
+            writeStrictUnmappedConfig(fixtureDir, "package")
+            val packagePhase = runCommand(
+                Seq(
+                    mavenCmd,
+                    s"-Dmaven.repo.local=${absolute(localRepo)}",
+                    "package"
+                ),
+                fixtureDir
+            )
+            try os.remove.all(tempDir) catch case _: Exception => ()
+
+            def assertStrictUnmappedFailure(result: CommandResult, phase: String) =
+                val outputLower = result.output.toLowerCase
+                assertTrue(result.exitCode != 0) &&
+                assertTrue(result.output.contains("BUILD FAILURE")) &&
+                assertTrue(outputLower.contains("strict")) &&
+                assertTrue(result.output.contains(phase)) &&
+                assertTrue(!result.output.contains("missing."))
+
+            assertTrue(install.exitCode == 0) &&
+            assertStrictUnmappedFailure(compilePhase, "compile") &&
+            assertStrictUnmappedFailure(testPhase, "test") &&
+            assertStrictUnmappedFailure(packagePhase, "package")
+        },
         test("publishes locally and executes the placeholder goal through Maven") {
             val tempDir    = tempPath(s"run-${JSystem.nanoTime()}")
             val localRepo  = tempDir / "m2-repository"
@@ -353,6 +406,17 @@ object MavenPluginIntegrationSpec extends ZIOSpecDefault:
         val target = targetDir / "mill"
         os.copy(os.Path(source), target, replaceExisting = true)
         val _ = target.toIO.setExecutable(true, false)
+
+    private def writeStrictUnmappedConfig(targetDir: os.Path, phase: String): Unit =
+        os.write.over(
+            targetDir / "mill-interceptor.yaml",
+            s"""mode: strict
+               |lifecycle:
+               |  $phase: []
+               |validate:
+               |  scalafmtEnabled: false
+               |""".stripMargin
+        )
 
     private def copyFixtureDirectory(resourceDir: String, targetDir: os.Path): Unit =
         val resourceUri = MavenPluginIntegrationSpec.getClass.getClassLoader.getResource(resourceDir).toURI

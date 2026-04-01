@@ -104,6 +104,25 @@ object ExecutionPlanResolverSpec extends ZIOSpecDefault:
                 )
             )
         },
+        test("produces strict failures for explicitly unmapped lifecycle phases") {
+            val plan = ExecutionPlanResolver.resolve(
+                request = request(ExecutionRequestKind.LifecyclePhase, "compile"),
+                config = EffectiveConfig(
+                    lifecycle = Map("compile" -> Seq.empty)
+                )
+            )
+
+            assertTrue(
+                plan.steps == Seq(
+                    PlanStep.Fail(
+                        message = "Lifecycle phase 'compile' is explicitly unmapped in strict mode",
+                        guidance = Seq(
+                            "Remove the empty lifecycle override or map the phase in mill-interceptor.yaml or mill-interceptor.pkl"
+                        )
+                    )
+                )
+            )
+        },
         test("adds validate scalafmt probe and invocation before validate mappings") {
             val plan = ExecutionPlanResolver.resolve(
                 request = request(ExecutionRequestKind.LifecyclePhase, "validate"),
