@@ -15,6 +15,7 @@ express the need.
 
 ## Articles
 
+- **[User-facing agent skills](agent-skills.md)** — `agent/skills/` copyable workflows for mill-interceptor users, and the Claude Code plugin with `/mill-interceptor:*` slash commands.
 - **[Beads Worktrees](beads-worktrees.md)** — How to create tracker-aware worktrees, how to recognize a broken local `.beads` stub, and how to repair a worktree back to the root beads store.
 - **[Maintaining the Changelog](changelog.md)** — How `CHANGELOG.md` is structured, how `[Unreleased]` is maintained, and what has to exist before a release can be published.
 - **[Logging with Scribe](logging-with-scribe.md)** — How Kyo’s logging works and how we switched this app to use Scribe as the backend (implementing `Log.Unsafe`, wiring with `Log.let`).
