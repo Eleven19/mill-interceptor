@@ -18,6 +18,12 @@ leading `v`.
 
 ### CI
 
+## [0.4.0-rc.3] - 2026-04-04
+
+### Changed
+
+- No functional changes since `0.4.0-rc.2`; continues the `0.4.0` prerelease track with a full republish of GitHub release assets and Maven Central coordinates.
+
 ## [0.4.0-rc.2] - 2026-04-01
 
 ### Added
