@@ -62,6 +62,18 @@ instead of inventing a parallel process:
 - `docs/contributing/changelog.md`
 - `docs/contributing/releasing.md`
 
+## User-facing agent skills (mill-interceptor)
+
+Skills for **end users** adopting mill-interceptor (install, Maven extension, config,
+operations) live under **`agent/skills/`**. Users can copy them into their own agent
+tooling or read them from this repository; they are not maintainer automation.
+
+- `agent/skills/README.md` (index)
+- `agent/skills/mill-interceptor-setup/SKILL.md`
+- `agent/skills/mill-interceptor-maven-extension/SKILL.md`
+- `agent/skills/mill-interceptor-configuration/SKILL.md`
+- `agent/skills/mill-interceptor-operations/SKILL.md`
+
 <!-- BEGIN BEADS INTEGRATION -->
 ## Issue Tracking with bd (beads)
 

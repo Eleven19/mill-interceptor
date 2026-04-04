@@ -28,6 +28,10 @@ Use the supporting repo docs instead of duplicating process text:
 - `docs/contributing/changelog.md`
 - `docs/contributing/releasing.md`
 
+**User-facing skills** (for people using mill-interceptor in their projects, not
+maintainers): see `agent/skills/README.md` and the `mill-interceptor-*` skill files
+under `agent/skills/`.
+
 For beads tracker work in this repo, run commands from the root checkout or
 from worktrees created with `bd worktree create`. If a worktree has `.beads`
 but no `.beads/redirect`, it is misconfigured; use
