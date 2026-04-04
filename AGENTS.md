@@ -68,6 +68,11 @@ Skills for **end users** adopting mill-interceptor (install, Maven extension, co
 operations) live under **`agent/skills/`**. Users can copy them into their own agent
 tooling or read them from this repository; they are not maintainer automation.
 
+**Claude Code:** install the plugin at `claude-plugins/mill-interceptor` to get slash
+commands `/mill-interceptor:setup`, `/mill-interceptor:maven-extension`,
+`/mill-interceptor:configuration`, `/mill-interceptor:operations` (see
+`claude-plugins/mill-interceptor/README.md`).
+
 - `agent/skills/README.md` (index)
 - `agent/skills/mill-interceptor-setup/SKILL.md`
 - `agent/skills/mill-interceptor-maven-extension/SKILL.md`

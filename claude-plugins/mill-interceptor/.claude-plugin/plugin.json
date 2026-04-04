@@ -1,0 +1,17 @@
+{
+  "name": "mill-interceptor",
+  "description": "User workflows for mill-interceptor: install (milli), Maven core extension, YAML/Pkl config, and day-to-day operations.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Eleven19",
+    "url": "https://github.com/Eleven19/mill-interceptor"
+  },
+  "repository": "https://github.com/Eleven19/mill-interceptor",
+  "homepage": "https://eleven19.github.io/mill-interceptor/",
+  "keywords": [
+    "mill",
+    "maven",
+    "build-tool",
+    "mill-interceptor"
+  ]
+}

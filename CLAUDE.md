@@ -32,6 +32,11 @@ Use the supporting repo docs instead of duplicating process text:
 maintainers): see `agent/skills/README.md` and the `mill-interceptor-*` skill files
 under `agent/skills/`.
 
+**Claude Code slash commands:** install `claude-plugins/mill-interceptor`, then use
+`/mill-interceptor:setup`, `/mill-interceptor:maven-extension`,
+`/mill-interceptor:configuration`, `/mill-interceptor:operations` (see
+`claude-plugins/mill-interceptor/README.md`).
+
 For beads tracker work in this repo, run commands from the root checkout or
 from worktrees created with `bd worktree create`. If a worktree has `.beads`
 but no `.beads/redirect`, it is misconfigured; use
